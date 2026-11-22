@@ -22,7 +22,8 @@ while IFS='|' read -r BKEY BNAME BDESC BICON; do
     -F "files=@$ICON;type=image/png")
   CODE=$(echo "$RESP" | tail -1)
   BODY=$(echo "$RESP" | sed '$d')
-  ID=$(echo "$BODY" | sed -nE 's/.*"id":([0-9]+).*/\1/p')
+  # The badge's own id is the first "id" in the response (later ones are the universe/place).
+  ID=$(echo "$BODY" | grep -oE '"id":[0-9]+' | head -1 | cut -d: -f2)
   if [ "$CODE" = "200" ] && [ -n "$ID" ]; then
     echo "$BKEY $ID"
   else
