@@ -82,6 +82,7 @@ Each week has one headline feature. Pick content according to what the data says
 - [ ] **Badges:** add the API key permission `legacy-badges` (create/manage) for this universe, then run `bash Assets/Blender/scripts/create_badges.sh` and paste the ids into `Config/BadgeConfig.luau`. Free quota only, so it may take a few days.
 - [ ] **NewExclusive notification:** create the string in Creator Dashboard > Engagement > Notifications ("A new limited dino just arrived: {dino}!"), put the id in `Config/NotificationConfig.luau`, and add a send when the rotation changes (needs a scheduled sender; Roblox servers can only notify on events).
 - [ ] **Maturity questionnaire:** complete it so the rating can be All Ages / 9+.
+- [ ] **Analytics alerts:** once the game has live traffic (Roblox enrols it in performance monitoring), add `universe.analytics.alert:write` to the key and run `bash Tools/create_alerts.sh`.
 - [ ] **Auto-translation:** turn it on in Creator Dashboard > Localization.
 
 ## 7. Update checklist (every release)

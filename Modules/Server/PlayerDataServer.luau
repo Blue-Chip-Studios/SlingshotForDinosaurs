@@ -10,8 +10,10 @@
     before anyone reads or writes.
 ]]
 
+local DataStoreService = game:GetService("DataStoreService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local ServerStorage = game:GetService("ServerStorage")
 
 local Module = require(ReplicatedStorage.Shared.Module)
@@ -125,6 +127,34 @@ function mPlayerData.Set(self, oPlayer: Player, sKey: string, vValue: any)
             oReplica:Set({ sKey }, DeepClone(vNew))
         end
     end)
+end
+
+-- Studio QA only: backs up this player's data to a dated DataStore key, then resets
+-- every profile key to the template (PurchaseIds kept so old receipts never re-grant).
+-- The caller kicks the player so every system restarts from a clean profile.
+function mPlayerData.QAResetSave(self, oPlayer: Player): (boolean, string)
+    if not RunService:IsStudio() or not tReady[oPlayer] then return false, "Studio only" end
+    local tSnapshot = {}
+    for sKey in ProfileConfig.ProfileTemplate do
+        tSnapshot[sKey] = DeepClone(self:Get(oPlayer, sKey))
+    end
+    -- Cash is added by the currency module, not the template.
+    tSnapshot.Cash = self:Get(oPlayer, "Cash")
+    local sBackupKey = `Backup_{ProfileConfig.Prefix}{oPlayer.UserId}_{os.date("!%Y%m%d%H%M")}`
+    local oStore = DataStoreService:GetDataStore(ProfileConfig.StoreName)
+    local bOk, sErr = pcall(oStore.SetAsync, oStore, sBackupKey, tSnapshot)
+    if not bOk then return false, "Backup failed, nothing reset: " .. tostring(sErr) end
+    for sKey, vDefault in ProfileConfig.ProfileTemplate do
+        if sKey ~= "PurchaseIds" and sKey ~= "Cash" then
+            self:Set(oPlayer, sKey, DeepClone(vDefault))
+        end
+    end
+    SMProfile:ModifyAsync(oPlayer, "Cash", function()
+        return 0
+    end, "CurrencyReplica", function(oReplica, nNew)
+        oReplica:Set({ "Cash" }, nNew)
+    end)
+    return true, sBackupKey
 end
 
 -- Cash goes through BCDK's "CurrencyReplica" (created by SMCurrency) so LMCurrency

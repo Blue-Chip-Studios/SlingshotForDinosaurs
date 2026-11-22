@@ -75,6 +75,19 @@ function mAdmin.PreloadAsync(self)
             local bOk2, sFiltered = pcall(oResult.GetNonChatStringForBroadcastAsync, oResult)
             if not bOk2 then return end
             oAnnounce:FireAllClients({ Text = sFiltered, Kind = "Admin" })
+        elseif sAction == "QA_ResetSave" then
+            -- Studio only: back up then wipe this account's save and leaderboard entries, then kick to rejoin fresh.
+            if not RunService:IsStudio() then return end
+            local bOk, sInfo = PlayerDataServer:QAResetSave(oPlayer)
+            print("[Admin] QA_ResetSave:", bOk, sInfo)
+            if not bOk then return end
+            local DataStoreService = game:GetService("DataStoreService")
+            for _, sStore in { "SFD_BestDistance_v1", "SFD_Income_v1" } do
+                local oStore = DataStoreService:GetOrderedDataStore(sStore)
+                pcall(oStore.RemoveAsync, oStore, tostring(oPlayer.UserId))
+            end
+            task.wait(2)
+            oPlayer:Kick("Save reset (backup: " .. sInfo .. "). Rejoin to play as a new player.")
         elseif sAction == "QA_Rerolls" or sAction == "QA_FillPark" or sAction == "QA_Exclusive" or sAction == "QA_Gift" then
             -- QA helpers: Studio only, so they can never hand out items in a live server.
             if not RunService:IsStudio() then return end

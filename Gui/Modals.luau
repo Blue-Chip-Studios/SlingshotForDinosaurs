@@ -568,6 +568,7 @@ local function Admin(scope)
         -- QA helpers (the server also refuses these outside Studio).
         table.insert(tButtons, { "🧪 QA: +3 rerolls", "Blue", { Action = "QA_Rerolls" } })
         table.insert(tButtons, { "🦕 QA: fill park", "Orange", { Action = "QA_FillPark" } })
+        table.insert(tButtons, { "♻️ QA: reset my save", "Red", { Action = "QA_ResetSave" } })
     end
     local tChildren = {}
     for i, t in tButtons do
