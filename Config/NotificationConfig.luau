@@ -21,6 +21,6 @@ return {
 
     Messages = {
         -- "🎁 {giver} gifted you the {pass} pass! Hop in to use it."
-        GiftReceived = { MessageId = "", Params = { "giver", "pass" } },
+        GiftReceived = { MessageId = "7a95acfe-c3ef-9d4f-aa1b-56b9928a79a0", Params = { "giver", "pass" } },
     },
 }
