@@ -138,17 +138,34 @@ local function ApplyMutation(oModel: Model, sMutation: string)
                 o.Color = o.Color:Lerp(cTint, 0.7)
                 o.Material = Enum.Material.Ice
             elseif sMutation == "Magma" then
-                o.Color = o.Color:Lerp(Color3.fromHex("2A140F"), 0.6)
-                if o.Name == "Accent" or o.Name:match("Stripe") or o.Name:match("Crest") or o.Name:match("Sail") or o.Name:match("Tail2") or o.Name:match("Plates") or o.Name:match("Frill") then
-                    o.Color = cTint
+                -- Charred black rock with glowing lava on the belly, stripes, crests and sails.
+                local bGlow = o.Name == "Accent" or o.Name == "Belly" or o.Name:match("Stripe") or o.Name:match("Crest") or o.Name:match("Sail") or o.Name:match("Tail2") or o.Name:match("Plates") or o.Name:match("Frill")
+                if bGlow then
+                    o.Color = if o.Name == "Belly" then Color3.fromHex("FF8A1F") else cTint
                     o.Material = Enum.Material.Neon
+                else
+                    o.Color = Color3.fromHex("231A18")
+                    o.Material = Enum.Material.Basalt
                 end
             elseif sMutation == "Toxic" then
-                o.Color = o.Color:Lerp(cTint, 0.6)
+                -- Radioactive lime with glowing green markings and a sickly yellow belly.
+                if o.Name == "Accent" then
+                    o.Color = Color3.fromHex("7CFF2E")
+                    o.Material = Enum.Material.Neon
+                elseif o.Name == "Belly" then
+                    o.Color = Color3.fromHex("E6FF5C")
+                else
+                    o.Color = Color3.fromHex("8BE01E"):Lerp(o.Color, 0.15)
+                end
             elseif sMutation == "Cosmic" then
                 o.Color = o.Color:Lerp(Color3.fromHex("2A1050"), 0.75)
                 o.Material = Enum.Material.Glass
                 o.Reflectance = 0.1
+                if o.Name == "Accent" then
+                    -- Glowing pink markings, like the cosmic aura.
+                    o.Color = Color3.fromHex("FF5EDB")
+                    o.Material = Enum.Material.Neon
+                end
             end
         end
     end

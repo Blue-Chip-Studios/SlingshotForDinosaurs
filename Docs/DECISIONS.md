@@ -126,3 +126,9 @@ Significant autonomous (BCDK Recommended) decisions, newest last. Each entry: wh
     - **Brachiosaurus:** a new plan with a long upright neck, a nose crest and taller front legs.
 
     They come to about 3.0–4.1k triangles each. Portraits are re-rendered and the limited-dino product icon is updated. `dino_generator.py` (v1) is marked superseded.
+62. **Mutations on v2 models.** Golden and Frost carried over well. Magma looked muddy, because v2 models have less Accent area and only that glowed, and Toxic looked like a normal green dino. Changes:
+    - **Magma:** charred black basalt with glowing lava on the belly and Accent parts (stripes, crests, sails, frills, spikes).
+    - **Toxic:** a vivid lime body, a yellow belly and neon green markings.
+    - **Cosmic:** glowing pink markings added.
+
+    Eyes, teeth and horns (EyeWhite) are never tinted.
