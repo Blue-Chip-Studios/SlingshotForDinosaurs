@@ -10,6 +10,8 @@ Derived from `Docs/UI/References/` (01-06) and the Stylized art direction. These
 > - **Windows:** an Ink frame around a light-grey inset body, with white-to-grey cards.
 > - **No emoji** anywhere in UI text.
 >
+> The next-goal bar uses the same language: square, Ink outline, solid dark track, a flat green fill with a darker base strip and top highlight, and a target icon breaking out on the left.
+>
 > Each HUD button has its own hue: Shop green, Rewards orange, Quests teal, Index blue, Passes gold, Invite pink. Tables below are updated to these values.
 
 ## Direction

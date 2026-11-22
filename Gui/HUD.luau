@@ -298,26 +298,45 @@ return function(scope, props)
                             },
                         }),
                         -- Next-goal bar: always tells the player what to chase next.
+                        -- Same language as the buttons: square, Ink outline, solid track, flat
+                        -- green fill with a highlight band, and a target icon breaking out on the left.
                         scope:New("Frame")({
                             Name = "NextGoal",
                             LayoutOrder = 3,
-                            BackgroundColor3 = Theme.Ink,
-                            BackgroundTransparency = 0.25,
-                            Size = UDim2.fromOffset(460, 34),
+                            BackgroundColor3 = Color3.fromHex("2A2733"),
+                            Size = UDim2.fromOffset(500, 42),
                             Visible = scope:Computed(function(use) return use(V.DataLoaded) and use(V.Hint) == "" end),
                             [Children] = {
-                                UI.Corner(scope, 999),
+                                UI.Corner(scope, Theme.Radius.Button),
+                                UI.Stroke(scope, Theme.Stroke.Button),
                                 scope:New("Frame")({
+                                    Name = "Fill",
                                     BackgroundColor3 = Theme.Variants.Green[1],
-                                    Position = UDim2.fromOffset(3, 3),
                                     Size = scope:Computed(function(use)
                                         local _, n = NextGoal(use)
-                                        n = math.clamp(n, 0, 1)
-                                        return UDim2.new(n, -6 * n, 1, -6)
+                                        return UDim2.fromScale(math.clamp(n, 0, 1), 1)
                                     end),
-                                    [Children] = UI.Corner(scope, 999),
+                                    [Children] = {
+                                        UI.Corner(scope, Theme.Radius.Button),
+                                        -- Darker base strip and top highlight, like a button face.
+                                        scope:New("Frame")({
+                                            BackgroundColor3 = Theme.Variants.Green[2], BorderSizePixel = 0,
+                                            AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.new(1, 0, 0, 7),
+                                            [Children] = UI.Corner(scope, Theme.Radius.Button),
+                                        }),
+                                        scope:New("Frame")({
+                                            BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.78, BorderSizePixel = 0,
+                                            Size = UDim2.new(1, 0, 0.4, 0),
+                                            [Children] = UI.Corner(scope, Theme.Radius.Button),
+                                        }),
+                                    },
                                 }),
-                                UI.Text(scope, { Text = scope:Computed(function(use) return (NextGoal(use)) end), TextSize = 20, StrokeThickness = 2.5 }),
+                                UI.Icon(scope, { Key = "Icon_Target", Size = UDim2.fromOffset(82, 82), AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, 4, 0.5, 0), ZIndex = 2 }),
+                                UI.Text(scope, {
+                                    Text = scope:Computed(function(use) return (NextGoal(use)) end),
+                                    TextSize = 24, StrokeThickness = 3, ZIndex = 2,
+                                    Position = UDim2.fromOffset(30, 0), Size = UDim2.new(1, -40, 1, 0),
+                                }),
                             },
                         }),
                         UI.Text(scope, {
