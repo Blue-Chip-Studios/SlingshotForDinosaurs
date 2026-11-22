@@ -13,19 +13,19 @@ return {
     -- Dinosaur models: MeshParts named Body / Belly / Accent / EyeWhite / Pupil, facing -Z.
     Dinos = {
         Compy = 92842992229098, -- v2 (dino_v2.py): smooth body, separate legs
-        Velociraptor = 118092507836783,
-        Parasaurolophus = 124074268962687,
-        Dilophosaurus = 75917254456602,
-        Baryonyx = 117727284453994,
-        Spinosaurus = 97925777024059,
-        Pachycephalosaurus = 99220922747784,
-        Ankylosaurus = 74087371517627,
+        Velociraptor = 84652737346204, -- v2
+        Parasaurolophus = 76360723125219, -- v2
+        Dilophosaurus = 71563285544183, -- v2
+        Baryonyx = 140603822609337, -- v2
+        Spinosaurus = 76363850440795, -- v2
+        Pachycephalosaurus = 115124775792165, -- v2
+        Ankylosaurus = 77953219734439, -- v2
         Triceratops = 121257269740875, -- v2
-        Cryolophosaurus = 97659964731129,
-        Therizinosaurus = 109355777925933,
-        Brachiosaurus = 139698062396202,
-        Carnotaurus = 83846600915891,
-        Giganotosaurus = 115556602917589,
+        Cryolophosaurus = 131966674438149, -- v2
+        Therizinosaurus = 112972479793807, -- v2
+        Brachiosaurus = 77244473319273, -- v2
+        Carnotaurus = 135527739801781, -- v2
+        Giganotosaurus = 73604210424398, -- v2
         TRex = 109273798018289, -- v2
     },
 
@@ -60,19 +60,19 @@ return {
     Images = {
         -- Dino portraits (reveal card, Index)
         Compy = 117633387552864,
-        Velociraptor = 126605374000454,
-        Parasaurolophus = 108181033958707,
-        Dilophosaurus = 118092053094630,
-        Baryonyx = 100726847136467,
-        Spinosaurus = 140016482712117,
-        Pachycephalosaurus = 127521791130391,
-        Ankylosaurus = 95493409847912,
+        Velociraptor = 97944565576352,
+        Parasaurolophus = 108660858358924,
+        Dilophosaurus = 104029374020379,
+        Baryonyx = 93737161770735,
+        Spinosaurus = 75317220732458,
+        Pachycephalosaurus = 125711589025988,
+        Ankylosaurus = 70865695391659,
         Triceratops = 114265819575656,
-        Cryolophosaurus = 117724001183925,
-        Therizinosaurus = 101136339215022,
-        Brachiosaurus = 99376331130817,
-        Carnotaurus = 130283684404995,
-        Giganotosaurus = 110040162228560,
+        Cryolophosaurus = 128686093282725,
+        Therizinosaurus = 103525720557858,
+        Brachiosaurus = 132295296167805,
+        Carnotaurus = 123558833694995,
+        Giganotosaurus = 97272805454215,
         TRex = 115798599236582,
         -- Shop items
         SlingshotItem = 99032474657018,

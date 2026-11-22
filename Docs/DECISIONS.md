@@ -111,3 +111,18 @@ Significant autonomous (BCDK Recommended) decisions, newest last. Each entry: wh
     - **Portraits:** toon outline and the corrected colours, matching the icons.
     - **Pilots:** Compy, T-Rex and Triceratops. The other 12 stay on v1 until the look is approved.
 60. **Walking legs.** `DinoModels.Pose` swings each leg about its hip; bipeds alternate legs, quadrupeds move diagonal pairs together. The park wander drives it, so the old whole-body waddle is reduced to a small bob. `PlaceAt` now caches each model's rest feet offset so swinging legs can't make it bob into the ground. v1 models have no legs, so `Pose` does nothing for them.
+61. **All 15 dinos on v2.** The other 12 species are built with the same generator and their signature features.
+    - **Velociraptor:** feather tuft and a sickle claw that moves with the leg.
+    - **Dilophosaurus:** twin crests and a neck frill.
+    - **Baryonyx:** croc snout and thumb claws.
+    - **Spinosaurus:** croc snout and a curved spined sail.
+    - **Cryolophosaurus:** a wavy fan crest.
+    - **Therizinosaurus:** an upright long neck, a feather mane and scythe claws.
+    - **Carnotaurus:** bull horns and tiny arms.
+    - **Giganotosaurus:** a big toothy head with brows.
+    - **Parasaurolophus:** a duck bill and a tube crest.
+    - **Pachycephalosaurus:** a knobbed dome.
+    - **Ankylosaurus:** a new plan with back spikes, side spikes and a club tail.
+    - **Brachiosaurus:** a new plan with a long upright neck, a nose crest and taller front legs.
+
+    They come to about 3.0–4.1k triangles each. Portraits are re-rendered and the limited-dino product icon is updated. `dino_generator.py` (v1) is marked superseded.

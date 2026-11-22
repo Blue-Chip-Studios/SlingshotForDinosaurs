@@ -1,5 +1,6 @@
 """
-SlingshotForDinosaurs: stylised dinosaur generator (Blender 5.x).
+SlingshotForDinosaurs: stylised dinosaur generator v1 (Blender 5.x).
+SUPERSEDED by dino_v2.py (all 15 species); kept for reference only.
 
 Builds chunky, toy-like stylised dinos from soft primitives on four shared
 body plans (Theropod, Quadruped, Sauropod, Ornithopod, plus Small = tiny
