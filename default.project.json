@@ -11,7 +11,8 @@
       "BCDKClient": {
         "$className": "Folder",
 
-        "LMGui": { "$path": "BCDK/Client/LMGui" }
+        "LMGui": { "$path": "BCDK/Client/LMGui" },
+        "LMCurrency": { "$path": "BCDK/Client/LMCurrency.luau" }
       },
 
       "ClientModules": {
@@ -71,7 +72,8 @@
       "BCDKServer": {
         "$className": "Folder",
 
-        "SMProfile": { "$path": "BCDK/Server/SMProfile.luau" }
+        "SMProfile": { "$path": "BCDK/Server/SMProfile.luau" },
+        "SMCurrency": { "$path": "BCDK/Server/SMCurrency.luau" }
       }
     },
 

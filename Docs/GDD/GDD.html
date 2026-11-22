@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SlingshotForDinosaurs: Game Design Document</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1E1B2E; --paper:#FFFBF2; --jungle:#2FB344; --jungle-d:#1E7F2F; --swamp:#6B8E23; --tar:#3A2F2A;
+  --ice:#5EC8F2; --lava:#FF6A1A; --lava-d:#C2410C; --gold:#FFC531; --cosmic:#8E44FF; --toxic:#9BE22D;
+  --frost:#9FE3FF; --magma:#FF4D1A; --sky:#4FC3F7; --muted:#6B6478; --line:#E9DFC9;
+  --dev:#2563EB; --bcdk:#E8590C;
+}
+*{box-sizing:border-box}
+html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 11pt/1.5 Nunito,Segoe UI,Arial,sans-serif}
+@page{size:A4;margin:16mm 15mm}
+h1,h2,h3,.display{font-family:"Lilita One","Arial Black",Impact,sans-serif;font-weight:400;letter-spacing:.3px}
+h2{font-size:22pt;margin:0 0 8px;color:var(--ink);display:flex;align-items:center;gap:10px}
+h2 .num{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:10px;background:var(--lava);color:#fff;font-size:15pt;border:3px solid var(--ink);box-shadow:0 3px 0 var(--ink)}
+h3{font-size:14pt;margin:16px 0 6px;color:var(--jungle-d)}
+p{margin:6px 0}
+section{page-break-before:always;break-before:page}
+section.flow{page-break-before:auto;break-before:auto;margin-top:22px}
+.tag{display:inline-block;font:800 7.5pt Nunito,sans-serif;text-transform:uppercase;letter-spacing:.6px;padding:2px 7px;border-radius:999px;color:#fff;vertical-align:middle;margin-left:4px}
+.dev{background:var(--dev)} .bcdk{background:var(--bcdk)}
+.why{color:var(--muted);font-style:italic}
+table{width:100%;border-collapse:separate;border-spacing:0;margin:8px 0 12px;font-size:9.5pt;break-inside:avoid}
+th{background:var(--ink);color:#fff;text-align:left;padding:6px 8px;font-weight:800}
+th:first-child{border-top-left-radius:8px} th:last-child{border-top-right-radius:8px}
+td{padding:5px 8px;border-bottom:1px solid var(--line);background:#fff;vertical-align:top}
+tr:nth-child(even) td{background:#FFF6E3}
+.card{background:#fff;border:3px solid var(--ink);border-radius:16px;padding:12px 14px;box-shadow:0 4px 0 var(--ink);margin:10px 0;break-inside:avoid}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.pill{display:inline-block;padding:3px 10px;border-radius:999px;border:2px solid var(--ink);font-weight:800;font-size:9pt;margin:2px}
+ul{margin:6px 0 6px 18px;padding:0} li{margin:2px 0}
+.legend{font-size:9pt;color:var(--muted)}
+.swatch{display:inline-block;width:14px;height:14px;border-radius:4px;border:2px solid var(--ink);vertical-align:-2px;margin-right:4px}
+/* Cover */
+.cover{height:265mm;position:relative;border-radius:24px;overflow:hidden;color:#fff;
+  background:linear-gradient(180deg,#4FC3F7 0%,#7FD6F7 38%,#2FB344 38%,#2FB344 52%,#6B8E23 52%,#6B8E23 64%,#3A2F2A 64%,#3A2F2A 74%,#5EC8F2 74%,#5EC8F2 86%,#FF6A1A 86%);border:4px solid var(--ink)}
+.cover .title{position:absolute;top:30mm;left:0;right:0;text-align:center}
+.cover h1{font-size:46pt;margin:0;line-height:1;color:#fff;-webkit-text-stroke:3px var(--ink);text-shadow:0 6px 0 var(--ink)}
+.cover .sub{font:900 14pt Nunito;margin-top:10px;text-shadow:0 2px 0 var(--ink)}
+.cover .meta{position:absolute;bottom:12mm;left:14mm;right:14mm;display:flex;justify-content:space-between;font-weight:800;text-shadow:0 2px 0 var(--ink)}
+.cover .band{position:absolute;left:14mm;font:400 13pt "Lilita One";text-shadow:0 2px 0 var(--ink)}
+.toc{columns:2;column-gap:24px;font-size:10pt}
+.toc div{break-inside:avoid;padding:2px 0;border-bottom:1px dotted var(--line)}
+.callout{border-left:6px solid var(--lava);background:#FFF0E6;padding:8px 12px;border-radius:0 12px 12px 0;margin:8px 0}
+svg text{font-family:Nunito,Arial,sans-serif}
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="cover">
+  <div class="title">
+    <h1>SLINGSHOT<br>FOR DINOSAURS</h1>
+    <div class="sub">Game Design Document · Vertical Slice v1.0</div>
+  </div>
+  <div class="band" style="top:125mm">JUNGLE</div>
+  <div class="band" style="top:158mm">SWAMP</div>
+  <div class="band" style="top:186mm">TAR PITS</div>
+  <div class="band" style="top:212mm">ICE AGE</div>
+  <div class="band" style="top:232mm">VOLCANO</div>
+  <svg style="position:absolute;right:16mm;top:92mm" width="190" height="210" viewBox="0 0 190 210" aria-hidden="true">
+    <path d="M40 200 L70 90 M150 200 L120 90" stroke="#1E1B2E" stroke-width="16" stroke-linecap="round"/>
+    <path d="M40 200 L70 90 M150 200 L120 90" stroke="#8B5A2B" stroke-width="10" stroke-linecap="round"/>
+    <path d="M70 92 Q95 150 120 92" stroke="#1E1B2E" stroke-width="6" fill="none"/>
+    <circle cx="95" cy="60" r="26" fill="#FFC531" stroke="#1E1B2E" stroke-width="5"/>
+    <path d="M95 20 L101 44 L125 40 L106 56 L118 78 L95 66 L72 78 L84 56 L65 40 L89 44Z" fill="#fff" opacity=".6"/>
+  </svg>
+  <div class="meta"><span>Blue Chip Studios · BCDK</span><span>Stylized · Mobile-first · Ages 7-15</span><span>22 Nov 2026</span></div>
+</div>
+
+<!-- TOC + KEY -->
+<section>
+<h2>Contents</h2>
+<div class="toc">
+<div>1 · High concept &amp; fantasy</div><div>2 · Audience &amp; platforms</div><div>3 · Design pillars</div><div>4 · Core loop</div>
+<div>5 · Session loop</div><div>6 · FTUE: first 20 seconds</div><div>7 · Controls</div><div>8 · Mechanics: launch, bounce, catch</div>
+<div>9 · Dinosaurs, sizes &amp; mutations</div><div>10 · Progression: slingshots, bait, power, enclosure</div><div>11 · World: the Canyon</div>
+<div>12 · Economy &amp; pacing</div><div>13 · Weather events &amp; Admin panel</div><div>14 · Social, multiplayer &amp; servers</div>
+<div>15 · Retention</div><div>16 · Monetisation: passes &amp; products</div><div>17 · UI/UX</div><div>18 · Art direction</div>
+<div>19 · Audio direction</div><div>20 · Analytics plan</div><div>21 · Technical architecture</div><div>22 · Performance &amp; platforms</div>
+<div>23 · Content pipeline</div><div>24 · Live-ops</div><div>25 · MVP scope (vertical slice)</div><div>26 · Post-launch</div>
+<div>27 · Risks</div><div>28 · Decisions</div>
+</div>
+<div class="card" style="margin-top:18px">
+<b>How to read this document.</b> Everything taken from the brief is tagged <span class="tag dev">Developer Requested</span>.
+Additions and changes are tagged <span class="tag bcdk">BCDK Recommended</span>, with a one-line reason in <span class="why">grey italics</span>.
+All numbers live in <code>Config/</code> and can be tuned live after launch.
+</div>
+
+<section class="flow">
+<h2><span class="num">1</span>High concept &amp; fantasy</h2>
+<p class="display" style="font-size:15pt;color:var(--lava-d)">“Pull back. Let go. Bounce. Catch a Colossal Cosmic T-Rex.”</p>
+<p><span class="tag dev">Developer Requested</span> A distance-launch simulator. You train slingshot power, fire bait down one long prehistoric canyon of biomes, catch the dinosaur it summons, and build a park enclosure that earns cash online and offline.</p>
+<p><b>Player fantasy:</b> the electric moment your bait rockets past five biomes on a lucky mid-air bounce, slams into the glowing volcano, and summons a 1-in-1,000 <b style="color:var(--cosmic)">Cosmic</b> T-Rex that towers over everyone else's park.</p>
+<p><b>Genre:</b> incremental simulator + collection (distance-launch loop with idle income, and mutation/size flex for social status).</p>
+</section>
+
+<section class="flow">
+<h2><span class="num">2</span>Audience &amp; platforms</h2>
+<div class="grid2">
+<div class="card"><b>Audience</b> <span class="tag dev">Dev</span><br>Ages 7-15. Short attention, high appetite for spectacle and rarity. Reading kept to big words and icons.</div>
+<div class="card"><b>Platforms</b> <span class="tag dev">Dev</span><br>Mobile &amp; tablet first. Single-thumb hold-to-power, giant tap-anywhere bounce. Full PC and console parity.</div>
+</div>
+</section>
+</section>
+
+<section>
+<h2><span class="num">3</span>Design pillars</h2>
+<div class="grid2">
+<div class="card"><h3 style="margin-top:0">⚡ Dopamine in 20 seconds</h3>First launch and first dinosaur within 20 s of spawning, and cash ticks up immediately. <span class="tag dev">Dev</span></div>
+<div class="card"><h3 style="margin-top:0">👀 See where you're going</h3>Every biome is visible straight ahead from the rim. Distant zones glow, so the goal is physical, not a menu. <span class="tag dev">Dev</span></div>
+<div class="card"><h3 style="margin-top:0">🎲 Every catch is a lottery</h3>Size × mutation rolls make each catch a reveal. Rare ones are flexed visibly in your park. <span class="tag dev">Dev</span></div>
+<div class="card"><h3 style="margin-top:0">👍 One thumb, zero tiny menus</h3>Big buttons, physical pedestals in the world, and almost no screen-based management. <span class="tag dev">Dev</span></div>
+</div>
+
+<h2 style="margin-top:22px"><span class="num">4</span>Core loop</h2>
+<svg viewBox="0 0 720 250" width="100%" role="img" aria-label="Core loop: Train, Launch, Catch, Place, Upgrade">
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#1E1B2E"/></marker></defs>
+  <g font-weight="800" font-size="15" text-anchor="middle">
+    <rect x="20"  y="20" width="150" height="70" rx="18" fill="#FFC531" stroke="#1E1B2E" stroke-width="4"/><text x="95" y="52">1 · TRAIN</text><text x="95" y="72" font-size="11" font-weight="700">Power on pads</text>
+    <rect x="285" y="20" width="150" height="70" rx="18" fill="#FF6A1A" stroke="#1E1B2E" stroke-width="4"/><text x="360" y="52" fill="#fff">2 · LAUNCH</text><text x="360" y="72" font-size="11" fill="#fff" font-weight="700">Hold · release · bounce</text>
+    <rect x="550" y="20" width="150" height="70" rx="18" fill="#8E44FF" stroke="#1E1B2E" stroke-width="4"/><text x="625" y="52" fill="#fff">3 · CATCH</text><text x="625" y="72" font-size="11" fill="#fff" font-weight="700">Species · size · mutation</text>
+    <rect x="420" y="160" width="150" height="70" rx="18" fill="#2FB344" stroke="#1E1B2E" stroke-width="4"/><text x="495" y="192" fill="#fff">4 · PLACE</text><text x="495" y="212" font-size="11" fill="#fff" font-weight="700">Enclosure earns $/s</text>
+    <rect x="150" y="160" width="150" height="70" rx="18" fill="#5EC8F2" stroke="#1E1B2E" stroke-width="4"/><text x="225" y="192">5 · UPGRADE</text><text x="225" y="212" font-size="11" font-weight="700">Slingshot · bait · slots</text>
+  </g>
+  <g stroke="#1E1B2E" stroke-width="4" fill="none" marker-end="url(#ar)">
+    <path d="M172 55 H280"/><path d="M437 55 H545"/><path d="M625 92 Q625 195 575 195"/><path d="M418 195 H305"/><path d="M190 158 Q120 120 95 95"/>
+  </g>
+</svg>
+<p><span class="tag dev">Developer Requested</span> Train → Launch with a timed bounce → Catch (size and mutation roll) → Place in the enclosure (cash online and offline) → Upgrade to reach deeper biomes.</p>
+<p><span class="tag bcdk">BCDK Recommended</span> Each upgrade track has one job. <b>Slingshots = distance</b>, <b>Bait = luck</b>, <b>Power = distance (grind)</b>, <b>Enclosure = earning capacity</b>. <span class="why">Players always know why they're buying, and the shop needs no explanation.</span></p>
+</section>
+
+<section>
+<h2><span class="num">5</span>Session loop</h2>
+<table>
+<tr><th>Moment</th><th>What happens</th><th>Hook</th></tr>
+<tr><td>Join</td><td>Spawn on your plot at the launch rim. "Welcome Back" popup shows offline cash.</td><td>Instant reward <span class="tag dev">Dev</span></td></tr>
+<tr><td>0-5 min</td><td>Spend offline cash on the next slingshot or bait at a pedestal, then launch and catch.</td><td>Visible upgrade</td></tr>
+<tr><td>5-15 min</td><td>Train power, push into the next biome, fill and replace slots.</td><td>Biome gate in sight</td></tr>
+<tr><td>Every 20 min</td><td>Meteor Storm / Ice Age event: sky changes, mutation odds jump.</td><td>Appointment play <span class="tag dev">Dev</span></td></tr>
+<tr><td>Leave</td><td>Enclosure keeps earning (50%, up to 8 h).</td><td>Return tomorrow <span class="tag bcdk">BCDK</span></td></tr>
+</table>
+
+<h2 style="margin-top:20px"><span class="num">6</span>FTUE: the first 20 seconds</h2>
+<p><span class="tag dev">Developer Requested</span> First launch and first catch within 20 seconds. Every step is an analytics onboarding funnel step and is persisted, so rejoining players resume where they left off.</p>
+<table>
+<tr><th>#</th><th>Step (target time)</th><th>Teaching</th></tr>
+<tr><td>1</td><td>Spawn already holding the Twig Slingshot, facing the canyon (0 s)</td><td>Big pulsing "HOLD TO PULL" hand icon. No text wall.</td></tr>
+<tr><td>2</td><td>Hold → power meter fills → release (≈3 s)</td><td>Charge feel: rubber creak, camera pulls back.</td></tr>
+<tr><td>3</td><td>Follow-cam flight; a geyser appears; giant "TAP!" prompt with slow-mo (≈6 s)</td><td>Mid-air bounce. Guaranteed Perfect on the first try.</td></tr>
+<tr><td>4</td><td>Bait lands in the Jungle; dino summoned with a reveal card (≈10 s)</td><td>Catch + size/mutation reveal. First catch is a guaranteed <b>Big</b> Velociraptor.</td></tr>
+<tr><td>5</td><td>Dino walks onto your plot; cash ticks above it (≈15 s)</td><td>Enclosure income. First $ shown.</td></tr>
+<tr><td>6</td><td>Arrow → Training Pad; stand to gain Power (≈30 s)</td><td>Power = distance.</td></tr>
+<tr><td>7</td><td>Arrow → Bamboo Slingshot pedestal when affordable</td><td>Upgrade loop. FTUE complete.</td></tr>
+</table>
+<p><span class="tag bcdk">BCDK Recommended</span> Guaranteed Perfect first bounce and a guaranteed Big first catch. <span class="why">The first catch must feel special, and teaching rarity needs a visible example.</span></p>
+</section>
+
+<section>
+<h2><span class="num">7</span>Controls</h2>
+<table>
+<tr><th>Action</th><th>Touch</th><th>Keyboard / mouse</th><th>Controller</th></tr>
+<tr><td>Aim</td><td>Drag thumb left/right while holding</td><td>Mouse move</td><td>Left stick</td></tr>
+<tr><td>Charge &amp; release</td><td>Hold anywhere / lift</td><td>Hold LMB or Space / release</td><td>Hold R2 / release</td></tr>
+<tr><td>Mid-air bounce</td><td>Tap anywhere (giant prompt)</td><td>Click / Space</td><td>A / R2</td></tr>
+<tr><td>Train boost</td><td>Tap the TRAIN button on a pad</td><td>Click / E</td><td>X</td></tr>
+<tr><td>Buy at pedestal</td><td>ProximityPrompt + big buttons</td><td>E</td><td>X</td></tr>
+<tr><td>Menus</td><td>Side buttons</td><td>Click / hotkeys</td><td>D-pad select, B back</td></tr>
+</table>
+<p>All input goes through action bindings (<code>ContextActionService</code>) with no hardcoded keys. Every screen is controller-navigable with visible focus states.</p>
+
+<h2 style="margin-top:20px"><span class="num">8</span>Mechanics</h2>
+<h3>Launch</h3>
+<p><b>Distance (m) = Power × Slingshot multiplier × Charge (0.5-1.0) × (1 + Bounce bonus) × event/admin multipliers.</b> Charge fills over 1.2 s and holding past full gives no penalty. <span class="tag bcdk">BCDK</span> <span class="why">Kids should never lose a launch for over-holding.</span></p>
+<h3>Mid-air bounce <span class="tag dev">Dev</span></h3>
+<p>Each flight passes 1-3 geysers or ledges along its arc, computed by the server from the launch seed. Tapping inside a window bounces the bait: <b>Perfect +35%</b> (±0.12 s), <b>Good +20%</b> (±0.25 s), <b>OK +10%</b> (±0.4 s). Each bounce also adds <b>+10% luck</b> to the catch roll. A missed window means no penalty. Slow-mo (0.4×) during windows on mobile.</p>
+<h3>Follow-cam <span class="tag dev">Dev</span></h3>
+<p>Spring-damped camera behind and above the bait, widening FOV with speed. A short impact shake and zoom-in on the reveal, then a fast fly-back to the player.</p>
+<h3>Catch</h3>
+<p>The landing biome sets the species pool. The server rolls species (bait luck), then size, then mutation. A reveal card appears, the dino model drops in with VFX, and then it walks to your plot. <b>Full enclosure</b> → "Replace weakest / Sell for 60 s of income" popup, with an <i>Auto-replace weaker</i> toggle. <span class="tag bcdk">BCDK</span> <span class="why">No inventory management, and no catch is ever wasted.</span></p>
+<h3>Training</h3>
+<p>Stand on a pad: +Power every 1 s × pad multiplier. Tapping TRAIN adds up to 5 extra trains/s (server rate-limited). <span class="tag bcdk">BCDK</span> <span class="why">Passive gain is mobile-friendly; tapping gives active players an edge.</span></p>
+</section>
+
+<section>
+<h2><span class="num">9</span>Dinosaurs, sizes &amp; mutations</h2>
+<p><span class="tag dev">Developer Requested</span> 15 species across 5 biomes, 6 mutations and size scaling (Tiny to Colossal), each multiplying cash per second and visibly changing the model.</p>
+<table>
+<tr><th>Biome</th><th>Common (70%)</th><th>Rare (25%)</th><th>Legendary (5%)</th></tr>
+<tr><td><span class="swatch" style="background:var(--jungle)"></span>Jungle</td><td>Compy · $1/s</td><td>Velociraptor · $3/s</td><td>Parasaurolophus · $10/s</td></tr>
+<tr><td><span class="swatch" style="background:var(--swamp)"></span>Swamp</td><td>Dilophosaurus · $25/s</td><td>Baryonyx · $80/s</td><td>Spinosaurus · $250/s</td></tr>
+<tr><td><span class="swatch" style="background:var(--tar)"></span>Tar Pits</td><td>Pachycephalosaurus · $600/s</td><td>Ankylosaurus · $2,000/s</td><td>Triceratops · $6,000/s</td></tr>
+<tr><td><span class="swatch" style="background:var(--ice)"></span>Ice Age</td><td>Cryolophosaurus · $15K/s</td><td>Therizinosaurus · $50K/s</td><td>Brachiosaurus · $150K/s</td></tr>
+<tr><td><span class="swatch" style="background:var(--lava)"></span>Volcano</td><td>Carnotaurus · $400K/s</td><td>Giganotosaurus · $1.3M/s</td><td>Tyrannosaurus Rex · $4M/s</td></tr>
+</table>
+<div class="grid2">
+<div>
+<h3>Size roll</h3>
+<table><tr><th>Size</th><th>Chance</th><th>Scale</th><th>Cash ×</th></tr>
+<tr><td>Tiny</td><td>35%</td><td>0.6</td><td>0.5</td></tr><tr><td>Normal</td><td>45%</td><td>1.0</td><td>1</td></tr>
+<tr><td>Big</td><td>14%</td><td>1.35</td><td>2</td></tr><tr><td>Huge</td><td>5%</td><td>1.75</td><td>5</td></tr>
+<tr><td>Colossal</td><td>1%</td><td>2.5</td><td>15</td></tr></table>
+</div>
+<div>
+<h3>Mutation roll</h3>
+<table><tr><th>Mutation</th><th>Chance</th><th>Cash ×</th></tr>
+<tr><td>Normal</td><td>85%</td><td>1</td></tr>
+<tr><td><span class="swatch" style="background:var(--gold)"></span>Golden</td><td>8%</td><td>3</td></tr>
+<tr><td><span class="swatch" style="background:var(--frost)"></span>Frost</td><td>4%</td><td>5</td></tr>
+<tr><td><span class="swatch" style="background:var(--magma)"></span>Magma</td><td>2%</td><td>8</td></tr>
+<tr><td><span class="swatch" style="background:var(--toxic)"></span>Toxic</td><td>0.9%</td><td>12</td></tr>
+<tr><td><span class="swatch" style="background:var(--cosmic)"></span>Cosmic</td><td>0.1% (1 in 1,000)</td><td>25</td></tr></table>
+</div></div>
+<p><b>Luck</b> (bait × bounces × events) applies as <code>p' = 1 − (1 − p)^luck</code> to every non-default outcome, so rare outcomes scale smoothly and never exceed 100%. Mutations recolour the model and add a neon aura and particles, and Cosmic gets a starfield shader-style texture. A Colossal Cosmic T-Rex earns <b>$1.5B/s</b>.</p>
+</section>
+
+<section>
+<h2><span class="num">10</span>Progression</h2>
+<div class="grid2">
+<div>
+<h3>Slingshots: distance</h3>
+<table><tr><th>Slingshot</th><th>× Dist</th><th>Cash</th><th>R$</th></tr>
+<tr><td>Twig</td><td>3</td><td>Free</td><td>-</td></tr>
+<tr><td>Bamboo</td><td>8</td><td>$150</td><td>29</td></tr>
+<tr><td>Bone</td><td>20</td><td>$2,500</td><td>49</td></tr>
+<tr><td>Tar-Rubber</td><td>50</td><td>$40K</td><td>99</td></tr>
+<tr><td>Mammoth Tusk</td><td>140</td><td>$600K</td><td>199</td></tr>
+<tr><td>Obsidian</td><td>400</td><td>$9M</td><td>399</td></tr>
+<tr><td>Meteorite</td><td>1,200</td><td>$150M</td><td>799</td></tr></table>
+</div>
+<div>
+<h3>Bait: luck</h3>
+<table><tr><th>Bait</th><th>Luck</th><th>Cash</th><th>R$</th></tr>
+<tr><td>Berries</td><td>1.0</td><td>Free</td><td>-</td></tr>
+<tr><td>Fish</td><td>1.5</td><td>$500</td><td>29</td></tr>
+<tr><td>Raw Steak</td><td>2.5</td><td>$8K</td><td>79</td></tr>
+<tr><td>Golden Egg</td><td>4</td><td>$120K</td><td>149</td></tr>
+<tr><td>Amber Mosquito</td><td>7</td><td>$2M</td><td>299</td></tr>
+<tr><td>Meteor Meat</td><td>12</td><td>$40M</td><td>599</td></tr></table>
+</div></div>
+<p><span class="tag dev">Developer Requested</span> Side-by-side <b>Cash</b> and <b>Robux</b> buy buttons on every pedestal. <span class="tag bcdk">BCDK</span> The Robux price only shows for items one or two tiers ahead of your current one. <span class="why">Skipping ten tiers would break pacing and feel pay-to-win.</span></p>
+<div class="grid2">
+<div>
+<h3>Training pads</h3>
+<table><tr><th>Pad</th><th>Unlock</th><th>Power/s</th></tr>
+<tr><td>Pebble Pad</td><td>Start</td><td>1</td></tr><tr><td>Boulder Pad</td><td>500 Power</td><td>5</td></tr>
+<tr><td>Fossil Pad</td><td>10K Power</td><td>40</td></tr><tr><td>Lava Pad</td><td>250K Power</td><td>400</td></tr></table>
+</div>
+<div>
+<h3>Enclosure slots</h3>
+<table><tr><th>Slots</th><th>Cost</th></tr>
+<tr><td>6</td><td>Start</td></tr><tr><td>8</td><td>$1K</td></tr><tr><td>10</td><td>$25K</td></tr><tr><td>12</td><td>$500K</td></tr><tr><td>15</td><td>$10M</td></tr><tr><td>18</td><td>$250M</td></tr><tr><td>+4</td><td>VIP pass</td></tr></table>
+</div></div>
+</section>
+
+<section>
+<h2><span class="num">11</span>World: the Canyon</h2>
+<p><span class="tag dev">Developer Requested</span> One continuous valley stretching straight ahead from the launch rim. All five biomes are visible, and the far ones glow.</p>
+<svg viewBox="0 0 720 160" width="100%" role="img" aria-label="Canyon layout: rim with 8 plots, then Jungle, Swamp, Tar Pits, Ice Age, Volcano">
+<g stroke="#1E1B2E" stroke-width="3">
+<rect x="5" y="40" width="90" height="80" rx="10" fill="#FFC531"/>
+<rect x="95" y="50" width="120" height="60" fill="#2FB344"/>
+<rect x="215" y="50" width="120" height="60" fill="#6B8E23"/>
+<rect x="335" y="50" width="120" height="60" fill="#3A2F2A"/>
+<rect x="455" y="50" width="120" height="60" fill="#5EC8F2"/>
+<path d="M575 110 L640 30 L705 110 Z" fill="#FF6A1A"/>
+</g>
+<g font-weight="800" font-size="12" text-anchor="middle">
+<text x="50" y="76">RIM</text><text x="50" y="92" font-size="10">8 plots · pads</text>
+<text x="155" y="85" fill="#fff">JUNGLE</text><text x="275" y="85" fill="#fff">SWAMP</text><text x="395" y="85" fill="#fff">TAR PITS</text><text x="515" y="85">ICE AGE</text><text x="640" y="95" fill="#fff">VOLCANO</text>
+<text x="155" y="135" font-size="10">0-150 m</text><text x="275" y="135" font-size="10">150-1K m</text><text x="395" y="135" font-size="10">1K-8K m</text><text x="515" y="135" font-size="10">8K-60K m</text><text x="640" y="135" font-size="10">60K-500K m</text>
+</g></svg>
+<p><span class="tag bcdk">BCDK Recommended</span> <b>Displayed meters are decoupled from world size.</b> Each biome is a 400-stud segment, and meters map piecewise and logarithmically into it, so the whole canyon is about 2,100 studs. <span class="why">Simulator numbers must grow exponentially, but the world must fit on a low-end phone and stay fully visible from the rim.</span></p>
+<ul>
+<li><b>Rim:</b> 8 enclosure plots in an arc facing the canyon, the central launch platform, the training station, and the slingshot and bait pedestals.</li>
+<li><b>Jungle:</b> fat-canopy trees, ferns, bright greens. <b>Swamp:</b> mangroves, lily pads, mist. <b>Tar Pits:</b> bubbling black pools, bones, amber rocks.</li>
+<li><b>Ice Age:</b> glaciers, frozen dinos in ice. <b>Volcano:</b> a towering cone with a lava glow visible from the rim, and an eruption on Meteor Storms.</li>
+<li>Geysers and ledges (bounce points) line the canyon floor, and biome gates have floating distance signs.</li>
+</ul>
+<h2 style="margin-top:18px"><span class="num">12</span>Economy &amp; pacing</h2>
+<table>
+<tr><th>Sources</th><th>Sinks</th></tr>
+<tr><td>Enclosure income (per second, online)<br>Offline income: 50% rate, cap 8 h (12 h VIP) <span class="tag bcdk">BCDK</span><br>Selling a catch (60 s of its income)<br>Cash packs (Robux)</td><td>Slingshots · Bait · Enclosure slots<br>Training pads (Power-gated, free)<br>Mutation Reroll potions (Robux, or a free daily reward)</td></tr>
+</table>
+<p><b>Target pacing (vertical slice):</b> reach Swamp by ~2 min, Tar Pits by ~8 min, Ice Age by ~25 min, Volcano by ~60 min of active play. Every value in <code>Config/</code> is live-tunable once analytics show real behaviour.</p>
+</section>
+
+<section>
+<h2><span class="num">13</span>Weather events &amp; Admin panel</h2>
+<p><span class="tag dev">Developer Requested</span> A recurring 20-minute world cycle: <b>15 min clear + 5 min event</b>, alternating:</p>
+<div class="grid2">
+<div class="card" style="background:#FFE2D1"><b>☄️ Meteor Storm</b><br>Dark red sky, falling meteors with impact craters, the volcano erupts. Mutation odds ×3, and Magma and Cosmic ×5.</div>
+<div class="card" style="background:#DDF4FF"><b>❄️ Ice Age</b><br>Snow, frost fog, cyan sky. Frost odds ×6 and size odds ×2.</div>
+</div>
+<p>A countdown widget on the HUD (bottom-right) shows the next event. <span class="tag dev">Dev</span> A <b>Server-Wide Meteor Storm</b> dev product (149 R$) starts or extends a 5-minute storm and credits the buyer server-wide.</p>
+<h3>Admin Abuse panel <span class="tag dev">Dev</span></h3>
+<p>Developer-only (UserId allowlist plus group-rank check on the server). Trigger Meteor Storm or Ice Age, set server luck ×2/×5/×10 for N minutes, force the next launch for everyone to roll a rare spawn, and broadcast an announcement. Every admin action is logged to analytics.</p>
+
+<h2 style="margin-top:18px"><span class="num">14</span>Social, multiplayer &amp; servers</h2>
+<ul>
+<li><span class="tag dev">Dev</span> <b>8-player servers</b> for locked 60 FPS on low-end mobile.</li>
+<li>Every plot is visible from the rim, so rare dinos are flexed by being there. A server announcement plays for Huge+, any mutation above Golden, and every Legendary.</li>
+<li><span class="tag bcdk">BCDK</span> Leaderboard columns <b>Best Distance</b> and <b>$/s</b>. <span class="why">Status is the main motivator for this audience.</span></li>
+<li>Other players' launches render as light client-side arcs. Only your own launch gets the follow-cam.</li>
+</ul>
+</section>
+
+<section>
+<h2><span class="num">15</span>Retention</h2>
+<table>
+<tr><th>System</th><th>Why it returns players</th><th>Scope</th></tr>
+<tr><td>Offline earnings + Welcome Back popup</td><td>Daily check-in pays out <span class="tag dev">Dev</span></td><td>Slice</td></tr>
+<tr><td>Weather cycle every 20 min</td><td>Appointment play, mutation chase <span class="tag dev">Dev</span></td><td>Slice</td></tr>
+<tr><td>Dino Index (15 species × 6 mutations)</td><td>Collection goal, 90 entries <span class="tag bcdk">BCDK</span></td><td>Slice</td></tr>
+<tr><td>Daily reward streak (7 days, free Reroll on day 3 and 7)</td><td>Habit <span class="tag bcdk">BCDK</span></td><td>Post-slice</td></tr>
+<tr><td>Rebirth into DNA (permanent ×multiplier)</td><td>Long-term loop (formula flexible) <span class="tag dev">Dev</span></td><td>Post-slice</td></tr>
+</table>
+
+<h2 style="margin-top:18px"><span class="num">16</span>Monetisation</h2>
+<h3>Gamepasses <span class="tag dev">Developer Requested</span></h3>
+<table>
+<tr><th>Pass</th><th>R$</th><th>Effect</th></tr>
+<tr><td>2× Cash</td><td>99</td><td>Doubles all enclosure income, online and offline</td></tr>
+<tr><td>2× Slingshot Power</td><td>149</td><td>Doubles Power gained from training</td></tr>
+<tr><td>Auto-Launch</td><td>199</td><td>Toggle: launches automatically at full charge with "Good" bounces</td></tr>
+<tr><td>VIP Enclosure</td><td>299</td><td>+4 slots, golden fence and nameplate, 12 h offline cap, ×1.25 income <span class="tag bcdk">BCDK details</span></td></tr>
+</table>
+<h3>Developer products</h3>
+<table>
+<tr><th>Product</th><th>R$</th><th>Effect</th></tr>
+<tr><td>Server-Wide Meteor Storm <span class="tag dev">Dev</span></td><td>149</td><td>Starts or extends a 5-min storm for everyone, with buyer credit</td></tr>
+<tr><td>Mutation Reroll potion <span class="tag dev">Dev</span></td><td>49 · 3-pack 129</td><td>Reroll one dino's mutation. <b>Odds shown before purchase</b> <span class="tag bcdk">BCDK</span></td></tr>
+<tr><td>Limited Exclusive Dino "Celestial Raptor" <span class="tag dev">Dev</span></td><td>499</td><td>Earns 1,000% of your best <i>other</i> dino's income. One per player, limited window <span class="tag bcdk">BCDK cap</span></td></tr>
+<tr><td>Slingshot / bait skips <span class="tag dev">Dev</span></td><td>29-799</td><td>Robux button beside the Cash button on pedestals (next one or two tiers only)</td></tr>
+<tr><td>Cash packs <span class="tag bcdk">BCDK</span></td><td>29 / 99 / 249</td><td>10 / 45 / 150 minutes of current income <span class="why">Scales with progress, so it never goes stale</span></td></tr>
+<tr><td>Starter Pack <span class="tag bcdk">BCDK</span></td><td>99 (once)</td><td>Bone Slingshot + Raw Steak bait + 1 Reroll <span class="why">High-value first purchase</span></td></tr>
+</table>
+<p><b>Ethics for 7-15:</b> no fake "was" prices, no countdown pressure on core items, no gated "close" buttons, and odds disclosed for every paid random item. Receipts are idempotent (PurchaseIds saved in the profile). <span class="tag bcdk">BCDK</span></p>
+</section>
+
+<section>
+<h2><span class="num">17</span>UI/UX</h2>
+<p>Built from the supplied references (<code>Docs/UI/References/</code>). The full spec is in <code>Docs/UI/DesignSystem.md</code>.</p>
+<ul>
+<li><b>Shape language:</b> chunky rounded rectangles (12-16 px radius), 3-4 px dark outline, 4 px drop shadow "lip" under buttons.</li>
+<li><b>Type:</b> Fredoka One for display (white, dark stroke) and Fredoka/Gotham for body. Big numbers everywhere.</li>
+<li><b>Colour coding:</b> Shop = green, Index = blue, Pass = gold, red = close/unaffordable, orange = affordable, purple = premium/Robux.</li>
+<li><b>HUD:</b> left button stack (Shop, Index, Passes), bottom-left Cash and Power, bottom-right event timer, right column of pass/offer icons, top-centre biome/distance banner. The centre of the screen is kept clear for launching.</li>
+<li><b>Moments:</b> "NEW!" catch reveal card (sticker, size and mutation chips, $/s), Welcome Back popup, enclosure-full choice popup, event banner.</li>
+<li>Safe-area aware, minimum 64 px touch targets, controller focus rings, UIScale per device.</li>
+</ul>
+<h2 style="margin-top:18px"><span class="num">18</span>Art direction: Stylized</h2>
+<p><span class="tag dev">Developer Requested</span> Bright, chunky, high-saturation stylized prehistoric world with crisp silhouettes, neon mutation auras and dramatic impact particles.</p>
+<div style="margin:6px 0">
+<span class="pill"><span class="swatch" style="background:#2FB344"></span>Jungle #2FB344</span>
+<span class="pill"><span class="swatch" style="background:#6B8E23"></span>Swamp #6B8E23</span>
+<span class="pill"><span class="swatch" style="background:#3A2F2A"></span>Tar #3A2F2A</span>
+<span class="pill"><span class="swatch" style="background:#5EC8F2"></span>Ice #5EC8F2</span>
+<span class="pill"><span class="swatch" style="background:#FF6A1A"></span>Lava #FF6A1A</span>
+<span class="pill"><span class="swatch" style="background:#1E1B2E"></span>Outline #1E1B2E</span>
+</div>
+<ul>
+<li><b>Dinos:</b> chunky stylised proportions (big heads, stubby limbs, readable silhouettes), 1.5-3k triangles each, one shared 512 px gradient atlas, and mutations as colour and material swaps plus aura particles.</li>
+<li><b>World:</b> Blender modular kit per biome (rocks, trees, props, cliff walls) with soft bevels and exaggerated shapes. Distant biomes use low-poly silhouettes and emissive accents so they glow from the rim.</li>
+<li><b>Lighting:</b> Future, warm sun, soft shadows, light atmosphere haze, gentle saturation and bloom. Each event gets its own Lighting/Atmosphere preset.</li>
+<li><b>VFX:</b> star bursts, soft puffs, swooshes, ground-impact rings and dust. Bait trail colour by bait tier.</li>
+</ul>
+<h2 style="margin-top:18px"><span class="num">19</span>Audio direction</h2>
+<p>Playful, punchy and prehistoric: rubber creak and twang, whooshes, bouncy geyser "boing", deep roar on reveal (pitch by size), a sparkle layer by mutation, coin ticks, and a short jungle-drum music loop with event stingers. Generated with ElevenLabs where available, with Toolbox fallbacks documented.</p>
+</section>
+
+<section>
+<h2><span class="num">20</span>Analytics plan</h2>
+<p>All events go through <code>AnalyticsServer</code>, with a typed catalogue in <code>Config/AnalyticsConfig.luau</code>. Client UI events use one validated, rate-limited remote.</p>
+<table>
+<tr><th>Funnel / type</th><th>Events</th></tr>
+<tr><td>Onboarding (LogOnboardingFunnelStepEvent)</td><td>1 Joined · 2 FirstCharge · 3 FirstLaunch · 4 FirstBounce · 5 FirstCatch · 6 FirstPlacement · 7 FirstTrain · 8 FirstUpgrade (complete)</td></tr>
+<tr><td>Shop funnel</td><td>PedestalViewed → PurchasePrompted → Succeeded / Failed / Cancelled (per item, Cash vs Robux)</td></tr>
+<tr><td>Economy (LogEconomyEvent)</td><td>Sources: EnclosureIncome (batched per minute), OfflineIncome, SellCatch, CashPack · Sinks: Slingshot, Bait, Slot</td></tr>
+<tr><td>Progression (LogProgressionEvent)</td><td>BiomeReached (first time per biome), SlingshotTier, BaitTier, SlotTier, PadUnlocked</td></tr>
+<tr><td>Custom (LogCustomEvent)</td><td>Launch (distance band), Bounce (quality), Catch (rarity / size / mutation), EnclosureFullChoice, WeatherEventStarted, AdminAction, WelcomeBackCollected, IndexOpened</td></tr>
+</table>
+
+<h2 style="margin-top:18px"><span class="num">21</span>Technical architecture</h2>
+<table>
+<tr><th>Layer</th><th>Modules</th></tr>
+<tr><td>BCDK</td><td>SMProfile (ProfileStore + Replica), SMCurrency/LMCurrency (Cash), LMGui (Fusion screens)</td></tr>
+<tr><td>Server (<code>Modules/Server</code>)</td><td>PlayerDataServer (stats replica) · PlotServer · TrainingServer · LaunchServer · CatchServer · EnclosureServer (income + offline) · ShopServer · WeatherServer · AdminServer · MonetizationServer · AnalyticsServer · FTUEServer · LeaderboardServer</td></tr>
+<tr><td>Client (<code>Modules/Client</code>)</td><td>InputController · LaunchController (charge, follow-cam, flight playback, bounce) · PlotController (dino models, auras) · WeatherController · TrainingController · FTUEController · SoundController</td></tr>
+<tr><td>Shared / Config</td><td>CanyonMath (meters ↔ world, deterministic trajectory), Rng · Dino/Biome/Size/Mutation/Slingshot/Bait/Pad/Enclosure/Weather/Monetization/Analytics/Currency/Profile configs</td></tr>
+<tr><td>Gui (Fusion)</td><td>HUD · RevealCard · WelcomeBack · EnclosureFull · Shop · Index · Passes · EventBanner · AdminPanel · Components/ (Button, Panel, Chip, Currency)</td></tr>
+</table>
+<div class="callout"><b>Launch flow (server-authoritative):</b> client <i>RequestLaunch(charge, aim)</i> → server validates the cooldown and computes base meters, a seed and bounce windows → client animates the deterministic arc → client <i>Bounce(t)</i> → server checks t against the windows (±tolerance, server clock) → server finalises meters → rolls species, size and mutation → saves → <i>CatchResult</i> to the client → reveal.</div>
+<p><b>Data:</b> ProfileConfig schema v1 with Version and migration hook. Keys: Cash, Power, Slingshot, Bait, Slots, Dinos[] {Id, Species, Size, Mutation, CaughtAt}, Index{}, BestDistance, LastOnline, FTUEStep, Passes cache, PurchaseIds{}, Settings{AutoReplace}.</p>
+</section>
+
+<section>
+<h2><span class="num">22</span>Performance &amp; platforms</h2>
+<ul>
+<li>8-player servers. StreamingEnabled with the canyon's far silhouettes as persistent low-poly models.</li>
+<li>Dinos are visual-only client models: the server holds data only, and clients build and pool dino models from the shared replica. Animation is client-side and only updates within 250 studs.</li>
+<li>Launches replicate intent plus seed; other clients reconstruct arcs locally. No physics bodies for bait.</li>
+<li>Income is computed server-side once per second per player and replicated as a single value; the cash-tick visuals are client-side.</li>
+<li>Budgets: under 120k visible triangles on mobile, a shared texture atlas, and under 40 active particle emitters.</li>
+</ul>
+<h2 style="margin-top:18px"><span class="num">23</span>Content pipeline</h2>
+<p><b>Blender MCP</b> (stylised dinos, biome kits, slingshots, pedestals) → FBX export to <code>Assets/Exports</code> → Open Cloud upload with the <code>.env</code> key (upload script only) → asset IDs into Config. <b>ElevenLabs</b> for SFX and music. UI art as images with 9-slice.</p>
+<h2 style="margin-top:18px"><span class="num">24</span>Live-ops</h2>
+<p>Saturday "Admin Abuse" live events (as the brief describes) using the Admin panel. New biome drops (Sky Islands, Deep Ocean), limited exclusive dinos on rotation, event mutations (e.g. Halloween "Spooky"), and server-side config overrides for prices and odds.</p>
+</section>
+
+<section>
+<h2><span class="num">25</span>MVP scope: vertical slice</h2>
+<table>
+<tr><th>Feature</th><th>Slice</th></tr>
+<tr><td>8 enclosure plots at the rim, 1 training station (4 pads)</td><td>✅ <span class="tag dev">Dev</span></td></tr>
+<tr><td>5 linear biomes (Jungle, Swamp, Tar Pits, Ice Age, Volcano)</td><td>✅ <span class="tag dev">Dev</span></td></tr>
+<tr><td>15 species, 5 sizes, 6 mutations with visual scaling and colour</td><td>✅ <span class="tag dev">Dev</span></td></tr>
+<tr><td>Follow-cam slingshot + mid-air bounce</td><td>✅ <span class="tag dev">Dev</span></td></tr>
+<tr><td>Offline earnings + Welcome Back</td><td>✅ <span class="tag dev">Dev</span></td></tr>
+<tr><td>20-min weather cycle (Meteor Storm + Ice Age) + Admin panel</td><td>✅ <span class="tag dev">Dev</span></td></tr>
+<tr><td>Shop pedestals (Cash + Robux), 4 passes, Meteor Storm product, Reroll, Exclusive Dino</td><td>✅ <span class="tag dev">Dev</span></td></tr>
+<tr><td>FTUE, analytics, Index, leaderboard</td><td>✅ <span class="tag bcdk">BCDK</span></td></tr>
+<tr><td>Daily rewards, rebirth/DNA, more biomes, trading</td><td>Post-slice</td></tr>
+</table>
+<h2 style="margin-top:18px"><span class="num">26</span>Post-launch</h2>
+<p>Rebirth (DNA fusion), daily streak, quests, more biomes and species, seasonal mutations, a trading hub (only with strong anti-scam UX), private servers, and friend boosts.</p>
+
+<h2 style="margin-top:18px"><span class="num">27</span>Risks</h2>
+<table>
+<tr><th>Risk</th><th>Mitigation</th></tr>
+<tr><td>15 stylised dino models + animations is the largest art cost</td><td>Shared rig archetypes (biped theropod, quadruped, long-neck), modular parts, and procedural idle/walk animation</td></tr>
+<tr><td>Long visible canyon vs low-end FPS</td><td>Compressed world mapping, LOD silhouettes, streaming, and an early mobile profile</td></tr>
+<tr><td>Bounce-timing exploits</td><td>Server-owned windows and clock, bounded bonus, and cooldown equal to flight duration</td></tr>
+<tr><td>Exclusive Dino runaway economy</td><td>One per player, based on the best <i>other</i> dino</td></tr>
+<tr><td>Paid randomness compliance (Reroll)</td><td>Odds shown before purchase, and a free source via events and rewards</td></tr>
+<tr><td>Game is group-owned; analytics API not grantable over MCP</td><td>Use in-game AnalyticsService events, read in the Creator Dashboard</td></tr>
+</table>
+
+<h2 style="margin-top:18px"><span class="num">28</span>Decisions (BCDK Recommended)</h2>
+<ul>
+<li>Displayed distance decoupled from world size (piecewise log mapping, 400 studs per biome).</li>
+<li>Server-authoritative launch, bounce windows and catch rolls.</li>
+<li>Auto-train on pads plus tap-to-boost.</li>
+<li>Offline income at 50%, capped at 8 h (12 h VIP).</li>
+<li>Enclosure-full choice popup with an auto-replace toggle.</li>
+<li>Exclusive Dino: one per player, based on the best other dino.</li>
+<li>Robux skips only one or two tiers ahead. Odds disclosed. No dark patterns.</li>
+<li>Guaranteed Perfect first bounce and Big first catch.</li>
+<li>Added: Dino Index, leaderboard, Starter Pack, cash packs scaled to income.</li>
+</ul>
+<p class="legend">Full log: <code>Docs/DECISIONS.md</code></p>
+</section>
+
+</body>
+</html>
