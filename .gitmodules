@@ -1,0 +1,3 @@
+[submodule "BCDK"]
+	path = BCDK
+	url = https://github.com/Blue-Chip-Studios/BCDK

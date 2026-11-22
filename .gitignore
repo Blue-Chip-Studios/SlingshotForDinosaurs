@@ -1,0 +1,19 @@
+# Project place file
+/SlingshotForDinosaurs.rbxlx
+/SlingshotForDinosaurs.rbxl
+
+# Roblox Studio lock files
+/*.rbxlx.lock
+/*.rbxl.lock
+
+# Wally packages (restore with `wally install`)
+/Packages
+/ServerPackages
+/DevPackages
+
+# Secrets (.env.example is committed instead)
+.env
+*.env
+
+# Generated
+sourcemap.json

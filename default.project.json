@@ -1,0 +1,92 @@
+{
+  "name": "SlingshotForDinosaurs",
+  "servePort": 52063,
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "Packages": {
+        "$path": "Packages"
+      },
+      "BCDKClient": {
+        "$className": "Folder",
+
+        "LMGui": { "$path": "BCDK/Client/LMGui" }
+      },
+
+      "ClientModules": {
+        "$path": "Modules/Client"
+      },
+
+      "Gui": {
+        "$path": "Gui"
+      },
+
+      "Shared": {
+        "$path": "Modules/Shared"
+      },
+
+      "BCDKShared": {
+        "$path": "BCDK/Shared/Shared"
+      },
+
+      "ReplicaShared": { "$path": "BCDK/Shared/Dependencies/Replica/src/ReplicatedStorage/ReplicaShared" },
+
+      "External": {
+        "$className": "Folder",
+
+        "Replica": {
+          "$className": "Folder",
+
+          "ReplicaClient": { "$path": "BCDK/Shared/Dependencies/Replica/src/ReplicatedStorage/ReplicaClient.luau" },
+          "ReplicaServer": { "$path": "BCDK/Shared/Dependencies/Replica/src/ServerScriptService/ReplicaServer.luau" }
+        },
+        "ProfileStore": { "$path": "BCDK/Shared/Dependencies/ProfileStore" }
+      },
+
+      "Config": {
+        "$path": "Config"
+      }
+    },
+
+    "ReplicatedFirst": {
+      "$path": "Scripts/First"
+    },
+
+    "ServerScriptService": {
+      "ServerScripts": {
+        "$path": "Scripts/Server"
+      }
+    },
+
+    "ServerStorage": {
+      "ServerModules": {
+        "$path": "Modules/Server"
+      },
+
+      "External": {
+        "$className": "Folder"
+      },
+
+      "BCDKServer": {
+        "$className": "Folder",
+
+        "SMProfile": { "$path": "BCDK/Server/SMProfile.luau" }
+      }
+    },
+
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "ClientScripts": {
+          "$path": "Scripts/Client"
+        }
+      },
+
+      "StarterCharacterScripts": {
+        "CharacterScripts": {
+          "$path": "Scripts/Character"
+        }
+      }
+    }
+  }
+}
