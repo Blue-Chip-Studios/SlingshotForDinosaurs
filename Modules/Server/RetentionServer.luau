@@ -21,10 +21,12 @@ local Remote = require(ReplicatedStorage.BCDKShared.Remote)
 local RetentionConfig = require(ReplicatedStorage.Config.RetentionConfig)
 local GameConfig = require(ReplicatedStorage.Config.GameConfig)
 local QuestPicker = require(ReplicatedStorage.Shared.QuestPicker)
+local SocialConfig = require(ReplicatedStorage.Config.SocialConfig)
 
 local PlayerDataServer = require(ServerStorage.ServerModules.PlayerDataServer)
 local AnalyticsServer = require(ServerStorage.ServerModules.AnalyticsServer)
 local EnclosureServer = require(ServerStorage.ServerModules.EnclosureServer)
+local BadgeServer = require(ServerStorage.ServerModules.BadgeServer)
 
 local tBusy: { [Player]: boolean } = {}
 
@@ -79,6 +81,9 @@ function mRetention.GetLuckMultiplier(self, oPlayer: Player): number
     end
     local tStreak = RetentionConfig.PerfectStreak
     local iStreak = math.min(PlayerDataServer:Get(oPlayer, "PerfectStreak") or 0, tStreak.MaxSteps)
+    -- Playing with friends: +10% luck per friend here (SocialServer sets FriendsHere).
+    local iFriends = math.min(oPlayer:GetAttribute("FriendsHere") or 0, SocialConfig.FriendLuckMaxFriends)
+    n *= 1 + iFriends * SocialConfig.FriendLuckPerFriend
     return n * (1 + iStreak * tStreak.LuckPerStep)
 end
 
@@ -236,6 +241,7 @@ function mRetention.PreloadAsync(self)
             PlayerDataServer:Set(oPlayer, "Slingshot", "Twig")
             PlayerDataServer:Set(oPlayer, "Bait", "Berries")
             PlayerDataServer:Set(oPlayer, "Rebirths", iRebirths + 1)
+            BadgeServer:Award(oPlayer, "Rebirth")
             AnalyticsServer:Progression(oPlayer, "Rebirth", Enum.AnalyticsProgressionType.Complete, iRebirths + 1)
             tResult = { Ok = true, Rebirths = iRebirths + 1 }
         else

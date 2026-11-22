@@ -60,6 +60,8 @@ local tValues = {
     Income = 0,
     OnPad = 0,
     IsAdmin = false,
+    FriendsHere = 0,
+    GroupMember = false,
 
     -- Navigation
     Modal = "", -- "" | "Shop" | "Index" | "Passes" | "Offer" | "Admin" | "Reroll"

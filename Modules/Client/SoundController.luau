@@ -53,14 +53,14 @@ function mSound.PreloadAsync(self)
 end
 
 function mSound.StartAsync(self)
-    -- Looping prehistoric ambience bed (stands in for music until a music track exists).
+    -- Looping prehistoric ambience bed under the music (MusicController).
     local iId = AssetConfig.Sounds.Ambience
     if not iId then return end
     local o = Instance.new("Sound")
     o.Name = "Ambience"
     o.SoundId = "rbxassetid://" .. iId
     o.Looped = true
-    o.Volume = 0.35
+    o.Volume = 0.2
     o.Parent = SoundService
     o:Play()
 end

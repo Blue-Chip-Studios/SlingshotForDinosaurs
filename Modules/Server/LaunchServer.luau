@@ -33,6 +33,7 @@ local WeatherServer = require(ServerStorage.ServerModules.WeatherServer)
 local FTUEServer = require(ServerStorage.ServerModules.FTUEServer)
 local CatchRoller = require(ServerStorage.ServerModules.CatchRoller)
 local RetentionServer = require(ServerStorage.ServerModules.RetentionServer)
+local BadgeServer = require(ServerStorage.ServerModules.BadgeServer)
 
 type Flight = {
     Id: number,
@@ -133,6 +134,16 @@ local function Finalise(oPlayer: Player, tFlight: Flight)
     RetentionServer:Track(oPlayer, "Launch", 1)
     if DinoConfig.Species[sSpecies].Rarity ~= "Common" then RetentionServer:Track(oPlayer, "Rare", 1) end
     if sMutation ~= "Normal" then RetentionServer:Track(oPlayer, "Mutated", 1) end
+
+    -- Badges
+    BadgeServer:Award(oPlayer, "FirstCatch")
+    if sMutation ~= "Normal" then BadgeServer:Award(oPlayer, "FirstMutation") end
+    if sMutation == "Cosmic" then BadgeServer:Award(oPlayer, "Cosmic") end
+    if sSize == "Colossal" then BadgeServer:Award(oPlayer, "Colossal") end
+    if DinoConfig.Species[sSpecies].Rarity == "Legendary" then BadgeServer:Award(oPlayer, "Legendary") end
+    for _, t in DinoConfig.Biomes do
+        if t.MinMeters > 0 and nMeters >= t.MinMeters then BadgeServer:Award(oPlayer, "Biome_" .. t.Id) end
+    end
     if sSize == "Big" or sSize == "Huge" or sSize == "Colossal" then RetentionServer:Track(oPlayer, "Big", 1) end
     AnalyticsServer:Custom(oPlayer, "Catch", DinoConfig.GetIncome(tDino), AnalyticsServer:Fields(DinoConfig.Species[sSpecies].Rarity, sSize, sMutation))
     AnalyticsServer:Custom(oPlayer, "Launch", nMeters, AnalyticsServer:Fields(tBiome.Id, tostring(tFlight.Bounces)))

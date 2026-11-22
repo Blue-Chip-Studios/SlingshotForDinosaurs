@@ -22,6 +22,12 @@ return {
     Custom = {
         Launch = true,
         NotificationOptIn = true,
+        SessionStart = true,
+        SessionEnd = true,
+        BadgeEarned = true,
+        InviteSent = true,
+        GroupJoined = true,
+        FavoritePrompted = true,
         GiftSent = true,
         Bounce = true,
         Catch = true,

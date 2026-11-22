@@ -54,3 +54,13 @@ Significant autonomous (BCDK Recommended) decisions, newest last. Each entry: wh
 36. **Voice chat disabled** via the Open Cloud universe API (`voiceChatEnabled = false`). Note: the age rating comes from the maturity questionnaire, not the voice setting.
 37. **Experience notifications:** the opt-in prompt appears once, after 10 launches (13+ eligible users only, per Roblox). `NotificationServer` sends through Open Cloud with a key held in a Roblox Secret (`NotificationsKey`). It's a no-op until that secret and the message ids in `Config/NotificationConfig` exist. First use: "GiftReceived" for recipients who were offline.
 38. **QA helpers `QA_Exclusive` and `QA_Gift`** join the Studio-only admin actions.
+
+## 2026-11-22: Social, badges, music, analytics
+
+39. **Badges** (`BadgeConfig`, `BadgeServer`): 10 badges (first catch, first mutation, 4 biome badges, Legendary, Colossal, Cosmic, first rebirth). Creating them through the API needs the `legacy-badges` key permission. `create_badges.sh` uses only the free daily quota (`expectedCost=0`), so it never spends group Robux. Ids of 0 are skipped in game until then.
+40. **Friends:** an Invite button (SocialService), plus +10% luck per friend in the server (max 3), shown as a HUD chip. Co-op play is the cheapest growth loop.
+41. **Community group:** Roblox has no API to create a group (it costs Robux and is web-only), so the existing owner group "Blue Chip Games" is the community. Members earn +10% income, and there's one automatic join prompt after 15 launches plus a HUD button for non-members.
+42. **Music:** Roblox-licensed APM tracks (free, no licensing risk): a shuffled upbeat playlist with a storm track that crossfades in during weather events, and a "Mute Music" toggle. The ElevenLabs connector has no music generation.
+43. **Favourite prompt:** shown once, on the first mutated catch after 8 launches (a happy moment). Asking on join hurts conversion.
+44. **Session and acquisition analytics:** SessionStart/SessionEnd custom events carry the join source (launchData `src:<source>:<campaign>`, notification, invite, teleport or Roblox) and a length bucket. `Tools/AnalyticsReport.ps1` pulls KPIs, funnels, custom events and sponsored ad spend from the Open Cloud Analytics Query API. `Docs/UPDATE_PLAN.md` holds the targets, decision rules and roadmap.
+45. **Asset 203785492 warning** comes from the Rojo Studio plugin's sound player (a "Pop Close Sound" loaded as the wrong type), not the game. It doesn't occur in live servers. While tracking it, the guide beam's missing built-in texture was replaced with a Blender chevron.

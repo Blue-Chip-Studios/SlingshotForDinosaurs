@@ -106,7 +106,7 @@ function mGuide.StartAsync(self)
     oTargetPart.Parent = Workspace
     oTargetAttachment = Instance.new("Attachment", oTargetPart)
     oBeam = Instance.new("Beam")
-    oBeam.Texture = "rbxasset://textures/ui/Controls/RotateArrowIcon.png"
+    oBeam.Texture = "rbxassetid://102547060932195" -- GuideChevron (Blender, Assets/Exports/Icons)
     oBeam.TextureMode = Enum.TextureMode.Static
     oBeam.TextureLength = 4
     oBeam.TextureSpeed = 2

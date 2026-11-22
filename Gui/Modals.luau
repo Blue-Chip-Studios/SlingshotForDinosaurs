@@ -373,6 +373,7 @@ local function Passes(scope)
                     scope:New("UIListLayout")({ FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 14), HorizontalAlignment = Enum.HorizontalAlignment.Center }),
                     Toggle(scope, "AutoReplace", "Auto-Replace weaker"),
                     Toggle(scope, "AutoLaunch", "Auto-Launch", "AutoLaunch"),
+                    Toggle(scope, "MusicOff", "Mute Music"),
                 },
             }),
         },

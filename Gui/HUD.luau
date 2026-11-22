@@ -19,9 +19,11 @@ local WeatherConfig = require(ReplicatedStorage.Config.WeatherConfig)
 local UI = require(script.Parent.Components.UI)
 local Nav = require(script.Parent.Components.Nav)
 local LaunchController = require(ReplicatedStorage.ClientModules.LaunchController)
+local SocialController = require(ReplicatedStorage.ClientModules.SocialController)
 local Players = game:GetService("Players")
 local QuestPicker = require(ReplicatedStorage.Shared.QuestPicker)
 local RetentionConfig = require(ReplicatedStorage.Config.RetentionConfig)
+local SocialConfig = require(ReplicatedStorage.Config.SocialConfig)
 local DinoConfig = require(ReplicatedStorage.Config.DinoConfig)
 local ExclusiveRotation = require(ReplicatedStorage.Shared.ExclusiveRotation)
 
@@ -118,20 +120,37 @@ return function(scope, props)
                     BackgroundTransparency = 1,
                     AnchorPoint = Vector2.new(0, 0.5),
                     Position = UDim2.new(0, 16, 0.42, 0),
-                    Size = UDim2.fromOffset(220, 400),
+                    Size = UDim2.fromOffset(220, 480),
                     [Children] = {
-                        scope:New("UIListLayout")({ Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder }),
-                        UI.Button(scope, { Name = "Shop", Variant = "Green", IconKey = "Icon_Bag", Text = "Shop", Size = UDim2.fromOffset(210, 68), LayoutOrder = 1,
+                        scope:New("UIListLayout")({ Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }),
+                        UI.Button(scope, { Name = "Shop", Variant = "Green", IconKey = "Icon_Bag", Text = "Shop", Size = UDim2.fromOffset(210, 60), LayoutOrder = 1,
                             Badge = scope:Computed(NextAffordable), OnClick = function() Nav.Open("Shop") end }),
-                        UI.Button(scope, { Name = "Rewards", Variant = "Orange", IconKey = "Icon_Gift", Text = "Rewards", Size = UDim2.fromOffset(210, 68), LayoutOrder = 2,
+                        UI.Button(scope, { Name = "Rewards", Variant = "Orange", IconKey = "Icon_Gift", Text = "Rewards", Size = UDim2.fromOffset(210, 60), LayoutOrder = 2,
                             Badge = scope:Computed(function(use) use(V.Now) return use(V.DataLoaded) and use(V.LastDailyDay) ~= QuestPicker.Today() end),
                             OnClick = function() Nav.Open("Rewards") end }),
-                        UI.Button(scope, { Name = "Quests", Variant = "Blue", IconKey = "Icon_Target", Text = "Quests", Size = UDim2.fromOffset(210, 68), LayoutOrder = 3,
+                        UI.Button(scope, { Name = "Quests", Variant = "Blue", IconKey = "Icon_Target", Text = "Quests", Size = UDim2.fromOffset(210, 60), LayoutOrder = 3,
                             Badge = scope:Computed(QuestReady), OnClick = function() Nav.Open("Quests") end }),
-                        UI.Button(scope, { Name = "Index", Variant = "Blue", IconKey = "Icon_Book", Text = "Index", Size = UDim2.fromOffset(210, 68), LayoutOrder = 4,
+                        UI.Button(scope, { Name = "Index", Variant = "Blue", IconKey = "Icon_Book", Text = "Index", Size = UDim2.fromOffset(210, 60), LayoutOrder = 4,
                             OnClick = function() Nav.Open("Index") end }),
-                        UI.Button(scope, { Name = "Passes", Variant = "Gold", IconKey = "Icon_Star", Text = "Passes", Size = UDim2.fromOffset(210, 68), LayoutOrder = 5,
+                        UI.Button(scope, { Name = "Passes", Variant = "Gold", IconKey = "Icon_Star", Text = "Passes", Size = UDim2.fromOffset(210, 60), LayoutOrder = 5,
                             OnClick = function() Nav.Open("Passes") end }),
+                        -- Social row: Invite (full width) or Invite + Join Group side by side for non-members.
+                        scope:New("Frame")({
+                            Name = "SocialRow",
+                            BackgroundTransparency = 1,
+                            LayoutOrder = 6,
+                            Size = UDim2.fromOffset(210, 60),
+                            [Children] = {
+                                UI.Button(scope, { Name = "Invite", Variant = "Green", Text = "👥 Invite",
+                                    TextSize = 24,
+                                    Size = scope:Computed(function(use) return UDim2.fromOffset(if use(V.GroupMember) then 210 else 102, 60) end),
+                                    OnClick = function() task.spawn(SocialController.Invite, SocialController) end }),
+                                UI.Button(scope, { Name = "Group", Variant = "Purple", Text = "🦖 +10%", TextSize = 22,
+                                    AnchorPoint = Vector2.new(1, 0), Position = UDim2.fromScale(1, 0), Size = UDim2.fromOffset(102, 60),
+                                    Visible = scope:Computed(function(use) return use(V.DataLoaded) and not use(V.GroupMember) end),
+                                    OnClick = function() task.spawn(SocialController.PromptGroup, SocialController) end }),
+                            },
+                        }),
                     },
                 }),
 
@@ -267,6 +286,12 @@ return function(scope, props)
                                         return `🔥 Perfect x{use(V.PerfectStreak)} (+{math.floor(n * RetentionConfig.PerfectStreak.LuckPerStep * 100)}% luck)`
                                     end),
                                     Visible = scope:Computed(function(use) return use(V.PerfectStreak) >= 2 end) }),
+                                UI.Chip(scope, { LayoutOrder = 4, Color = Theme.Variants.Blue[2],
+                                    Text = scope:Computed(function(use)
+                                        local n = math.min(use(V.FriendsHere), SocialConfig.FriendLuckMaxFriends)
+                                        return `👥 Friends +{math.floor(n * SocialConfig.FriendLuckPerFriend * 100 + 0.5)}% luck`
+                                    end),
+                                    Visible = scope:Computed(function(use) return use(V.FriendsHere) > 0 end) }),
                             },
                         }),
                         -- Next-goal bar: always tells the player what to chase next.

@@ -20,6 +20,7 @@ local GameConfig = require(ReplicatedStorage.Config.GameConfig)
 local ShopConfig = require(ReplicatedStorage.Config.ShopConfig)
 local MonetizationConfig = require(ReplicatedStorage.Config.MonetizationConfig)
 local RetentionConfig = require(ReplicatedStorage.Config.RetentionConfig)
+local SocialConfig = require(ReplicatedStorage.Config.SocialConfig)
 local ExclusiveRotation = require(ReplicatedStorage.Shared.ExclusiveRotation)
 
 local PlayerDataServer = require(ServerStorage.ServerModules.PlayerDataServer)
@@ -71,6 +72,7 @@ function mEnclosure.GetIncome(self, oPlayer: Player): number
     if HasPass(oPlayer, "DoubleCash") then nTotal *= 2 end
     if HasPass(oPlayer, "VIP") then nTotal *= 1.25 end
     if oPlayer:GetAttribute("Premium") then nTotal *= 1 + RetentionConfig.PremiumIncomeBonus end
+    if oPlayer:GetAttribute("GroupMember") then nTotal *= 1 + SocialConfig.GroupIncomeBonus end
     return nTotal
 end
 
@@ -197,7 +199,7 @@ function mEnclosure.PreloadAsync(self)
     oSetSetting:OnServerEvent(function(oPlayer: Player, tPayload)
         if typeof(tPayload) ~= "table" or typeof(tPayload.Value) ~= "boolean" then return end
         local sKey = tPayload.Key
-        if sKey ~= "AutoReplace" and sKey ~= "AutoLaunch" then return end
+        if sKey ~= "AutoReplace" and sKey ~= "AutoLaunch" and sKey ~= "MusicOff" then return end
         if sKey == "AutoLaunch" and not HasPass(oPlayer, "AutoLaunch") then return end
         PlayerDataServer:Update(oPlayer, "Settings", function(t)
             t = t or {}

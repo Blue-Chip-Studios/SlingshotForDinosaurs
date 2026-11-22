@@ -60,7 +60,56 @@ function mAnalytics.StartAsync(self)
     end
 end
 
+
+-- ===== Sessions & acquisition =====
+-- Where a player came from, for comparing ads/links/invites in the dashboard:
+--   * launchData "src:<source>:<campaign>"  -> e.g. src:tiktok:launch1 (put it on
+--     external links: roblox.com/games/start?placeId=<id>&launchData=src%3Atiktok%3Alaunch1)
+--   * a notification's launchData (its message name) -> "Notification"
+--   * ReferredByPlayerId > 0 (invite / share link) -> "Invite"
+--   * otherwise "Roblox" (home, search, sponsored ads: split in the Acquisition dashboard)
+local tSession: { [Player]: { nStart: number, sSource: string, sCampaign: string } } = {}
+
+local function JoinSource(oPlayer: Player): (string, string)
+    local bOk, tJoin = pcall(oPlayer.GetJoinData, oPlayer)
+    if not bOk or typeof(tJoin) ~= "table" then return "Roblox", "-" end
+    local sLaunch = if typeof(tJoin.LaunchData) == "string" then tJoin.LaunchData:sub(1, 60) else ""
+    local sSrc, sCampaign = sLaunch:match("^src:([%w_%-]+):?([%w_%-]*)")
+    if sSrc then return sSrc, if sCampaign ~= "" then sCampaign else "-" end
+    if sLaunch ~= "" then return "Notification", sLaunch:match("^[%w_]+") or "-" end
+    if (tJoin.ReferredByPlayerId or 0) > 0 then return "Invite", "-" end
+    if tJoin.SourcePlaceId and tJoin.SourcePlaceId ~= game.PlaceId then return "Teleport", tostring(tJoin.SourcePlaceId) end
+    return "Roblox", "-"
+end
+
+local function LengthBucket(nMinutes: number): string
+    if nMinutes < 2 then return "0-2m" elseif nMinutes < 5 then return "2-5m" elseif nMinutes < 15 then return "5-15m"
+    elseif nMinutes < 30 then return "15-30m" elseif nMinutes < 60 then return "30-60m" end
+    return "60m+"
+end
+
+function mAnalytics.PlayerAdded(self, oPlayer: Player)
+    local sSource, sCampaign = JoinSource(oPlayer)
+    tSession[oPlayer] = { nStart = os.clock(), sSource = sSource, sCampaign = sCampaign }
+    oPlayer:SetAttribute("JoinSource", sSource)
+    self:Custom(oPlayer, "SessionStart", 1, self:Fields(sSource, sCampaign))
+end
+
+function mAnalytics.GetSource(self, oPlayer: Player): string
+    return tSession[oPlayer] and tSession[oPlayer].sSource or "Roblox"
+end
+
+local function EndSession(self, oPlayer: Player)
+    local t = tSession[oPlayer]
+    if not t then return end
+    tSession[oPlayer] = nil
+    local nMinutes = (os.clock() - t.nStart) / 60
+    -- Value = minutes played; fields let the dashboard break playtime down by source.
+    self:Custom(oPlayer, "SessionEnd", math.floor(nMinutes * 10 + 0.5) / 10, self:Fields(t.sSource, t.sCampaign, LengthBucket(nMinutes)))
+end
+
 function mAnalytics.PlayerRemoving(self, oPlayer: Player)
+    EndSession(self, oPlayer)
     tOnboardingDone[oPlayer] = nil
     tUIBudget[oPlayer] = nil
     tIncomeBatch[oPlayer] = nil
