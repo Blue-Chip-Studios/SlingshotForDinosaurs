@@ -152,19 +152,47 @@ function mPlot.PreloadAsync(self)
 end
 
 function mPlot.StartAsync(self)
-    -- Gentle idle bob + look-around for nearby dinos (cheap: CFrame only, no physics).
-    RunService.Heartbeat:Connect(function()
+    -- Procedural wander: each nearby dino idles, then waddles to a random spot inside its
+    -- plot (bob + side-to-side roll while walking). CFrame only, no physics or rigs.
+    local oRandom = Random.new()
+    RunService.Heartbeat:Connect(function(nDt)
         local oCamera = Workspace.CurrentCamera
         if not oCamera then return end
         local vCam = oCamera.CFrame.Position
         local nT = os.clock()
-        for _, tPlot in tPlots do
+        for iPlot, tPlot in tPlots do
+            local tLayout = WorldLayout.Plot(iPlot)
             for _, t in tPlot do
-                if (t.vHome - vCam).Magnitude < ANIMATE_DISTANCE and t.oModel.Parent then
-                    local nBob = math.abs(math.sin(nT * 2 + t.nPhase)) * 0.25
-                    local nYaw = math.sin(nT * 0.5 + t.nPhase) * 0.5
-                    local vLook = (CFrame.Angles(0, nYaw, 0) * CFrame.new(t.vLook)).Position
-                    DinoModels.PlaceAt(t.oModel, t.vHome + Vector3.new(0, nBob, 0), vLook)
+                local tw = t :: any
+                tw.vPos = tw.vPos or t.vHome
+                if (tw.vPos - vCam).Magnitude < ANIMATE_DISTANCE and t.oModel.Parent then
+                    tw.nNextMove = tw.nNextMove or (nT + oRandom:NextNumber(0.5, 4))
+                    if not tw.vTarget and nT >= tw.nNextMove then
+                        local vHalf = tLayout.Size / 2 - Vector3.new(5, 0, 6)
+                        tw.vTarget = tLayout.Center + Vector3.new(oRandom:NextNumber(-vHalf.X, vHalf.X), 0, oRandom:NextNumber(-vHalf.Z, vHalf.Z))
+                    end
+                    local nBob, nRoll = math.abs(math.sin(nT * 2 + t.nPhase)) * 0.12, 0
+                    if tw.vTarget then
+                        local vTo = tw.vTarget - tw.vPos
+                        local nDist = Vector3.new(vTo.X, 0, vTo.Z).Magnitude
+                        local nSpeed = 4 * math.clamp(t.oModel:GetScale(), 0.6, 2)
+                        if nDist < 0.5 then
+                            tw.vTarget = nil
+                            tw.nNextMove = nT + oRandom:NextNumber(2, 6)
+                        else
+                            local vDir = Vector3.new(vTo.X, 0, vTo.Z).Unit
+                            tw.vPos += vDir * math.min(nDist, nSpeed * nDt)
+                            -- Turn smoothly toward the walk direction.
+                            t.vLook = t.vLook:Lerp(vDir, math.min(1, nDt * 5))
+                            local nStep = nT * 9 + t.nPhase
+                            nBob = math.abs(math.sin(nStep)) * 0.35
+                            nRoll = math.sin(nStep) * 0.07
+                        end
+                    end
+                    DinoModels.PlaceAt(t.oModel, tw.vPos + Vector3.new(0, nBob, 0), t.vLook)
+                    if nRoll ~= 0 then
+                        t.oModel:PivotTo(t.oModel:GetPivot() * CFrame.Angles(0, 0, nRoll))
+                    end
                 end
             end
         end

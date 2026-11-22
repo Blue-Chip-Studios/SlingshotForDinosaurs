@@ -17,10 +17,17 @@ Pipeline: Blender scripts (`Assets/Blender/scripts/`) → FBX/PNG in `Assets/Exp
 
 | Item | Where | Plan |
 |---|---|---|
-| Biome floors and canyon walls (flat parts) | `WorldBuilder.BuildCanyon` | Blender cliff-wall and floor kit per biome |
-| Rim ground, cliff face, rails, plot fences, signs | `WorldBuilder.BuildRim/BuildPlots` | Blender rim kit (fence, signpost, cliff) |
-| Training pads (neon slabs) | `WorldBuilder.BuildTraining` | Blender pads themed per tier |
-| HUD icons (emoji) on side buttons | `Gui/HUD.luau` | Icon set rendered in Blender |
-| Pass and product icons (Roblox default) | Creator Dashboard | Blender-rendered icons, then patch via Open Cloud |
+| Biome floors (flat parts with materials) | `WorldBuilder.BuildCanyon` | Blender floor tiles per biome (walls are done) |
+| Rim ground, cliff face, rails, plot fences | `WorldBuilder.BuildRim/BuildPlots` | Fences kept as parts for performance (a modelled fence would add ~130k triangles); rim cliff next |
 | Music loop | none | Needs the full ElevenLabs connector (this connector has no music) |
-| Dino animation (idle bob only) | `PlotController` | Rigged walk/idle cycles |
+| Dino animation (procedural wander + waddle) | `PlotController` | Rigged skeletal cycles if wanted later |
+
+## Added in the second art pass
+
+| Item | Source | Config |
+|---|---|---|
+| Canyon cliff walls (stylised strata, tinted per biome, randomised) | `world_props.py` CliffWall | `AssetConfig.World` |
+| Training pads (stone ring + glowing centre tinted per tier) | `world_props.py` TrainingPad | `AssetConfig.World` |
+| Biome decoration: grass clumps, bones, ice crystals | `world_props.py` | `AssetConfig.World` |
+| 16 outlined toon icons (HUD buttons, pills, pass/offer cards) | `icons.py` | `AssetConfig.Images` |
+| Pass and developer product icons on Roblox | `set_monetization_icons.sh` | Open Cloud PATCH |

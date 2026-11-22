@@ -47,7 +47,7 @@ local function Pill(scope, props)
         LayoutOrder = props.LayoutOrder,
         [Children] = {
             UI.Corner(scope, 999),
-            UI.Text(scope, { Text = props.Icon, TextSize = 40, Size = UDim2.fromOffset(64, 64), NoStroke = true }),
+            UI.Icon(scope, { Key = props.Icon, Size = UDim2.fromOffset(60, 60), Position = UDim2.fromOffset(4, 2) }),
             UI.Text(scope, {
                 Text = props.Text,
                 TextSize = 44,
@@ -85,13 +85,13 @@ return function(scope, props)
                     Size = UDim2.fromOffset(220, 340),
                     [Children] = {
                         scope:New("UIListLayout")({ Padding = UDim.new(0, 12), SortOrder = Enum.SortOrder.LayoutOrder }),
-                        UI.Button(scope, { Name = "Shop", Variant = "Green", Icon = "🛒", Text = "Shop", Size = UDim2.fromOffset(210, 74), LayoutOrder = 1,
+                        UI.Button(scope, { Name = "Shop", Variant = "Green", IconKey = "Icon_Bag", Text = "Shop", Size = UDim2.fromOffset(210, 74), LayoutOrder = 1,
                             Badge = scope:Computed(NextAffordable), OnClick = function() Nav.Open("Shop") end }),
-                        UI.Button(scope, { Name = "Index", Variant = "Blue", Icon = "📖", Text = "Index", Size = UDim2.fromOffset(210, 74), LayoutOrder = 2,
+                        UI.Button(scope, { Name = "Index", Variant = "Blue", IconKey = "Icon_Book", Text = "Index", Size = UDim2.fromOffset(210, 74), LayoutOrder = 2,
                             OnClick = function() Nav.Open("Index") end }),
-                        UI.Button(scope, { Name = "Passes", Variant = "Gold", Icon = "⭐", Text = "Passes", Size = UDim2.fromOffset(210, 74), LayoutOrder = 3,
+                        UI.Button(scope, { Name = "Passes", Variant = "Gold", IconKey = "Icon_Star", Text = "Passes", Size = UDim2.fromOffset(210, 74), LayoutOrder = 3,
                             OnClick = function() Nav.Open("Passes") end }),
-                        UI.Button(scope, { Name = "Admin", Variant = "Purple", Icon = "🛠", Text = "Admin", Size = UDim2.fromOffset(210, 64), TextSize = 24, LayoutOrder = 4,
+                        UI.Button(scope, { Name = "Admin", Variant = "Purple", IconKey = "Icon_Wrench", IconSize = 44, Text = "Admin", Size = UDim2.fromOffset(210, 64), TextSize = 24, LayoutOrder = 4,
                             Visible = V.IsAdmin, OnClick = function() Nav.Open("Admin") end }),
                     },
                 }),
@@ -105,12 +105,12 @@ return function(scope, props)
                     Size = UDim2.fromOffset(96, 330),
                     [Children] = {
                         scope:New("UIListLayout")({ Padding = UDim.new(0, 12), SortOrder = Enum.SortOrder.LayoutOrder, HorizontalAlignment = Enum.HorizontalAlignment.Right }),
-                        UI.Button(scope, { Name = "Offer", Variant = "Purple", Icon = "🦖", IconSize = 44, Size = UDim2.fromOffset(92, 92), LayoutOrder = 1,
+                        UI.Button(scope, { Name = "Offer", Variant = "Purple", IconKey = "Velociraptor", IconSize = 80, Size = UDim2.fromOffset(92, 92), LayoutOrder = 1,
                             Badge = scope:Computed(function(use) return not use(V.ExclusiveDino) end),
                             OnClick = function() Nav.Open("Offer") end }),
-                        UI.Button(scope, { Name = "Storm", Variant = "Red", Icon = "☄️", IconSize = 44, Size = UDim2.fromOffset(92, 92), LayoutOrder = 2,
+                        UI.Button(scope, { Name = "Storm", Variant = "Red", IconKey = "Icon_Meteor", IconSize = 76, Size = UDim2.fromOffset(92, 92), LayoutOrder = 2,
                             OnClick = function() Nav.PromptProduct("MeteorStorm") end }),
-                        UI.Button(scope, { Name = "Reroll", Variant = "Blue", Icon = "🧪", IconSize = 40, Size = UDim2.fromOffset(92, 92), LayoutOrder = 3,
+                        UI.Button(scope, { Name = "Reroll", Variant = "Blue", IconKey = "Icon_Potion", IconSize = 72, Size = UDim2.fromOffset(92, 92), LayoutOrder = 3,
                             OnClick = function() Nav.Open("Reroll") end,
                             [Children] = UI.Text(scope, {
                                 Text = scope:Computed(function(use) return "x" .. use(V.Rerolls) end),
@@ -134,11 +134,11 @@ return function(scope, props)
                             TextSize = 28, Color = Theme.Cash, XAlign = Enum.TextXAlignment.Left,
                             Size = UDim2.fromOffset(300, 30), LayoutOrder = 1,
                         }),
-                        Pill(scope, { Name = "Cash", Icon = "💵", Color = Theme.Cash, LayoutOrder = 2,
+                        Pill(scope, { Name = "Cash", Icon = "Icon_Cash", Color = Theme.Cash, LayoutOrder = 2,
                             Text = scope:Computed(function(use) return Format.Cash(use(V.Cash)) end),
                             [Children] = UI.Button(scope, { Name = "BuyCash", Variant = "Purple", Text = "+", TextSize = 34, Size = UDim2.fromOffset(52, 52),
                                 AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -6, 0.5, 0), OnClick = function() Nav.Open("Offer") end }) }),
-                        Pill(scope, { Name = "Power", Icon = "⚡", Color = Theme.Power, LayoutOrder = 3,
+                        Pill(scope, { Name = "Power", Icon = "Icon_Power", Color = Theme.Power, LayoutOrder = 3,
                             Text = scope:Computed(function(use) return Format.Number(use(V.Power)) end) }),
                     },
                 }),
@@ -149,7 +149,10 @@ return function(scope, props)
                     BackgroundColor3 = Theme.Ink,
                     BackgroundTransparency = 0.3,
                     AnchorPoint = Vector2.new(1, 1),
-                    Position = UDim2.new(1, -16, 1, -16),
+                    -- On touch devices Roblox's jump button owns the bottom-right corner; sit above it.
+                    Position = scope:Computed(function(use)
+                        return if use(UI.IsTouch) then UI.TouchWeatherPosition else UDim2.new(1, -16, 1, -16)
+                    end),
                     Size = UDim2.fromOffset(340, 96),
                     [Children] = {
                         UI.Corner(scope, 18),
@@ -243,7 +246,7 @@ return function(scope, props)
                         UI.Button(scope, {
                             Name = "Launch",
                             Variant = "Orange",
-                            Icon = "🎯",
+                            IconKey = "Icon_Target", IconSize = 70,
                             Text = scope:Computed(function(use) return if use(V.Charging) then "LET GO!" else "HOLD" end),
                             TextSize = 44,
                             Size = UDim2.fromOffset(300, 120),
@@ -258,7 +261,7 @@ return function(scope, props)
                 UI.Button(scope, {
                     Name = "Train",
                     Variant = "Gold",
-                    Icon = "💪",
+                    IconKey = "Icon_Muscle", IconSize = 70,
                     Text = "TRAIN!",
                     TextSize = 44,
                     Size = UDim2.fromOffset(300, 120),

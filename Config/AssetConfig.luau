@@ -47,6 +47,13 @@ return {
         Bait_GoldenEgg = 139274410998847,
         Bait_AmberMosquito = 104951567041903,
         Bait_MeteorMeat = 128989995866679,
+        CliffWall = 138097440252146,
+        FenceSegment = 139284654638072,
+        Signpost = 128995671270016,
+        TrainingPad = 110135813692547,
+        GrassClump = 81031363976889,
+        Bones = 115852318422328,
+        Crystal = 127805842040289,
     },
 
     -- Images (rbxassetid) for UI icons / portraits.
@@ -75,6 +82,23 @@ return {
         Bait_GoldenEgg = 140339826667206,
         Bait_AmberMosquito = 81487227930950,
         Bait_MeteorMeat = 97852309002124,
+        -- HUD / pass / product icons (outlined toon renders, Assets/Blender/scripts/icons.py)
+        Icon_Bag = 98602693971885,
+        Icon_Book = 98278404588713,
+        Icon_Cash = 121100110999666,
+        Icon_Crown = 107846158388952,
+        Icon_DoubleCash = 87923111761619,
+        Icon_DoublePower = 79046801508353,
+        Icon_Gear = 101171407989556,
+        Icon_Gift = 119240055714099,
+        Icon_Meteor = 111530885556560,
+        Icon_Muscle = 78413149196094,
+        Icon_Potion = 95608064290941,
+        Icon_Power = 112028159200665,
+        Icon_Star = 88844767322558,
+        Icon_Target = 77218155705653,
+        Icon_Vault = 139686365495000,
+        Icon_Wrench = 106638791128750,
     },
 
     -- Sounds (rbxassetid) keyed by SoundController names.

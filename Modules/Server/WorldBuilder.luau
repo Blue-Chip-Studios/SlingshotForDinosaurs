@@ -188,8 +188,33 @@ local function BuildCanyon()
         local nMidZ = nZ0 - nLen / 2
         Part({ Name = "TEMP_Floor", Size = Vector3.new(nHalf * 2, 4, nLen), Position = Vector3.new(0, CanyonMath.FloorY - 2, nMidZ), Color = Color3.fromHex(tLook.Floor), Material = tLook.Material, Parent = oBiome })
         local nWallHeight = 110 + i * 12
+        local bCliffAsset = ReplicatedStorage:FindFirstChild("Assets") and ReplicatedStorage.Assets.World:FindFirstChild("CliffWall") ~= nil
         for _, nSide in { -1, 1 } do
-            Part({ Name = "TEMP_Wall", Size = Vector3.new(24, nWallHeight, nLen), Position = Vector3.new(nSide * (nHalf + 12), nWallHeight / 2 - 4, nMidZ), Color = Color3.fromHex(tLook.Wall), Material = Enum.Material.Rock, Parent = oBiome })
+            if bCliffAsset then
+                -- Blender cliff modules (100 studs wide at scale 2.5), facing into the canyon, tinted per biome.
+                local cWall = Color3.fromHex(tLook.Wall)
+                local tTint = { Rock = cWall:Lerp(Color3.new(1, 1, 1), 0.12), RockDark = cWall:Lerp(Color3.new(0, 0, 0), 0.25), Leaves = Color3.fromHex(tLook.Leaves) }
+                -- Overlapping modules with random scale, depth and height offsets so the strata don't read as tiles.
+                for k = 0, 4 do
+                    local nScale = oRandom:NextNumber(2.1, 2.9)
+                    local vPos = Vector3.new(nSide * (nHalf + oRandom:NextNumber(10, 22)), CanyonMath.FloorY - oRandom:NextNumber(4, 30), nZ0 - 40 - k * 82)
+                    local cf = CFrame.lookAt(vPos, vPos + Vector3.new(-nSide, 0, 0)) * CFrame.Angles(0, math.rad(oRandom:NextNumber(-8, 8)), math.rad(oRandom:NextNumber(-4, 4)))
+                    PlaceProp("CliffWall", cf, nScale, function() end, tTint).Parent = oBiome
+                end
+                -- Invisible collider keeps the canyon edge solid and cheap.
+                Part({ Name = "WallCollider", Size = Vector3.new(24, nWallHeight, nLen), Position = Vector3.new(nSide * (nHalf + 12), nWallHeight / 2 - 4, nMidZ), Transparency = 1, Parent = oBiome })
+            else
+                Part({ Name = "TEMP_Wall", Size = Vector3.new(24, nWallHeight, nLen), Position = Vector3.new(nSide * (nHalf + 12), nWallHeight / 2 - 4, nMidZ), Color = Color3.fromHex(tLook.Wall), Material = Enum.Material.Rock, Parent = oBiome })
+            end
+        end
+        -- Biome decoration from the Blender kit (cheap, small props).
+        local tDecor = ({ Jungle = { "GrassClump", 2.2 }, Swamp = { "GrassClump", 2.6 }, TarPits = { "Bones", 2 }, IceAge = { "Crystal", 2.5 } })[tBiome.Id]
+        if tDecor then
+            local tTint = if tBiome.Id == "Swamp" then { Leaves = Color3.fromHex("6B8E23") } else nil
+            for _ = 1, 16 do
+                local vPos = Vector3.new(oRandom:NextNumber(-nHalf + 15, nHalf - 15), CanyonMath.FloorY, nZ0 - oRandom:NextNumber(15, nLen - 15))
+                PlaceProp(tDecor[1], CFrame.new(vPos) * CFrame.Angles(0, oRandom:NextNumber(0, 6.28), 0), tDecor[2] * oRandom:NextNumber(0.8, 1.3), function() end, tTint).Parent = oBiome
+            end
         end
         -- Biome gate: an arch of two pillars + a floating sign readable from the rim
         if i > 1 then
@@ -297,6 +322,12 @@ local function BuildTraining()
         local vPos = WorldLayout.Pad(i)
         local oPad = Part({ Name = "Pad" .. i, Size = WorldLayout.PadSize, Position = vPos + Vector3.new(0, 0.5, 0), Color = tPad.Color, Material = Enum.Material.Neon, Parent = oTraining })
         oPad:SetAttribute("PadIndex", i)
+        -- Blender pad on top; the flat part stays as an invisible floor + label anchor.
+        local bPadAsset = ReplicatedStorage:FindFirstChild("Assets") and ReplicatedStorage.Assets.World:FindFirstChild("TrainingPad") ~= nil
+        if bPadAsset then
+            oPad.Transparency = 1
+            PlaceProp("TrainingPad", CFrame.new(vPos), 1.05, function() end, { Glow = tPad.Color }).Parent = oTraining
+        end
         local sReq = if tPad.RequiredPower > 0 then `\nNeeds {Format.Number(tPad.RequiredPower)} Power` else ""
         Label(oPad, `{tPad.Name}\n+{Format.Number(tPad.PowerPerTick)} Power/s{sReq}`, 22, Color3.fromHex("FFE14D"), Vector3.new(0, 7, 0))
     end

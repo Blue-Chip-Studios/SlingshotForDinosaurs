@@ -306,14 +306,14 @@ end
 local function Passes(scope)
     local tCards = {}
     local tOrder = { "DoubleCash", "DoublePower", "AutoLaunch", "VIP" }
-    local tIcons = { DoubleCash = "💵", DoublePower = "⚡", AutoLaunch = "🤖", VIP = "👑" }
+    local tIcons = { DoubleCash = "Icon_DoubleCash", DoublePower = "Icon_DoublePower", AutoLaunch = "Icon_Gear", VIP = "Icon_Crown" }
     for i, sKey in tOrder do
         local tPass = MonetizationConfig.Passes[sKey]
         local bOwned = scope:Computed(function(use) return (use(V.Passes) or {})[sKey] == true end)
         tCards[i] = Card(scope, {
             LayoutOrder = i,
             [Children] = {
-                UI.Text(scope, { Text = tIcons[sKey], TextSize = 64, NoStroke = true, Position = UDim2.fromOffset(0, 8), Size = UDim2.new(1, 0, 0, 70) }),
+                UI.Icon(scope, { Key = tIcons[sKey], AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 4), Size = UDim2.fromOffset(80, 80) }),
                 UI.Text(scope, { Text = tPass.Name, TextSize = 28, TextScaled = true, Position = UDim2.fromOffset(10, 80), Size = UDim2.new(1, -20, 0, 36) }),
                 UI.Text(scope, { Text = tPass.Description, TextSize = 19, Color = Theme.Ink, NoStroke = true, Font = Theme.Body, TextWrapped = true,
                     Position = UDim2.fromOffset(10, 118), Size = UDim2.new(1, -20, 0, 90), YAlign = Enum.TextYAlignment.Top }),
@@ -368,7 +368,7 @@ local function OfferCard(scope, props)
         LayoutOrder = props.LayoutOrder,
         Size = props.Size or UDim2.fromOffset(250, 330),
         [Children] = {
-            UI.Text(scope, { Text = props.Icon, TextSize = 70, NoStroke = true, Position = UDim2.fromOffset(0, 6), Size = UDim2.new(1, 0, 0, 80) }),
+            UI.Icon(scope, { Key = props.Icon, AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 4), Size = UDim2.fromOffset(84, 84) }),
             UI.Text(scope, { Text = tProduct.Name, TextSize = 28, TextScaled = true, Position = UDim2.fromOffset(10, 86), Size = UDim2.new(1, -20, 0, 36) }),
             UI.Text(scope, { Text = props.Description, TextSize = 19, Color = Theme.Ink, NoStroke = true, Font = Theme.Body, TextWrapped = true,
                 Position = UDim2.fromOffset(10, 124), Size = UDim2.new(1, -20, 0, 120), YAlign = Enum.TextYAlignment.Top }),
@@ -392,16 +392,16 @@ local function Offer(scope)
         return (t.StartsAt == 0 or nNow >= t.StartsAt) and (t.EndsAt == 0 or nNow < t.EndsAt)
     end)()
     local tCards = {
-        OfferCard(scope, { Key = "ExclusiveDino", Icon = "🦖", LayoutOrder = 1,
+        OfferCard(scope, { Key = "ExclusiveDino", Icon = "Velociraptor", LayoutOrder = 1,
             Description = `Limited! A Huge Cosmic raptor that earns {GameConfig.ExclusiveDinoMultiplier * 100}% of your best dino's income. One per player.`,
             Visible = scope:Computed(function(use) return bExclusiveOpen and not use(V.ExclusiveDino) and Purchasable(MonetizationConfig.Products.ExclusiveDino) end) }),
-        OfferCard(scope, { Key = "StarterPack", Icon = "🎁", LayoutOrder = 2,
+        OfferCard(scope, { Key = "StarterPack", Icon = "Icon_Gift", LayoutOrder = 2,
             Description = "Bone Slingshot + Raw Steak bait + 1 Mutation Reroll. One time only.",
             Visible = scope:Computed(function(use) return not use(V.StarterPackBought) and Purchasable(MonetizationConfig.Products.StarterPack) end) }),
-        OfferCard(scope, { Key = "CashSmall", Icon = "💰", LayoutOrder = 3, Description = "10 minutes of your current income, instantly.", Visible = Purchasable(MonetizationConfig.Products.CashSmall) }),
-        OfferCard(scope, { Key = "CashMedium", Icon = "💰", LayoutOrder = 4, Description = "45 minutes of your current income, instantly.", Visible = Purchasable(MonetizationConfig.Products.CashMedium) }),
-        OfferCard(scope, { Key = "CashLarge", Icon = "🏦", LayoutOrder = 5, Description = "150 minutes of your current income, instantly.", Visible = Purchasable(MonetizationConfig.Products.CashLarge) }),
-        OfferCard(scope, { Key = "MeteorStorm", Icon = "☄️", LayoutOrder = 6, Description = "Start a 5-minute Meteor Storm for EVERYONE. Mutations x3!", Visible = Purchasable(MonetizationConfig.Products.MeteorStorm) }),
+        OfferCard(scope, { Key = "CashSmall", Icon = "Icon_Cash", LayoutOrder = 3, Description = "10 minutes of your current income, instantly.", Visible = Purchasable(MonetizationConfig.Products.CashSmall) }),
+        OfferCard(scope, { Key = "CashMedium", Icon = "Icon_Cash", LayoutOrder = 4, Description = "45 minutes of your current income, instantly.", Visible = Purchasable(MonetizationConfig.Products.CashMedium) }),
+        OfferCard(scope, { Key = "CashLarge", Icon = "Icon_Vault", LayoutOrder = 5, Description = "150 minutes of your current income, instantly.", Visible = Purchasable(MonetizationConfig.Products.CashLarge) }),
+        OfferCard(scope, { Key = "MeteorStorm", Icon = "Icon_Meteor", LayoutOrder = 6, Description = "Start a 5-minute Meteor Storm for EVERYONE. Mutations x3!", Visible = Purchasable(MonetizationConfig.Products.MeteorStorm) }),
     }
     return UI.Modal(scope, {
         Name = "Offer",

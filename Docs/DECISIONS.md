@@ -32,3 +32,6 @@ Significant autonomous (BCDK Recommended) decisions, newest last. Each entry: wh
 20. **Assets load by ID at runtime** (`AssetLoader`, in parallel, with a 6 s cap) rather than living in the place file. They stay version-controlled through config, and the world falls back to stand-ins if Roblox is slow.
 21. **Dinos are untextured meshes with named colour regions** (Body, Belly, Accent, EyeWhite, Pupil). The game colours them from `DinoConfig` and recolours them for mutations, so 15 species x 6 mutations need no texture variants.
 22. **No music loop yet.** The connected ElevenLabs connector only offers SFX and voice. Music needs the full ElevenLabs connector.
+23. **Procedural dino walk instead of rigged skeletal animation.** Dinos wander their plot with a waddle (bob + roll) and idle pauses, driven by client CFrames. This is cheap on mobile and works for all 15 species without rigs. Skeletal cycles can come later.
+24. **Plot fences stay as simple planks.** Modelled fence segments around 8 plots would add about 130k triangles, too much for the low-end mobile budget.
+25. **Bottom-right HUD widgets move up on touch devices**, so Roblox's jump button never covers the event timer.

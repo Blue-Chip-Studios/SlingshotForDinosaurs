@@ -22,7 +22,9 @@ local UI = {}
 -- ===== Responsive scale (one shared Value for every screen) =====
 local tRootScope = Fusion.scoped(Fusion)
 UI.Scale = tRootScope:Value(1)
-UI.IsTouch = tRootScope:Value(UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled)
+UI.IsTouch = tRootScope:Value(UserInputService.TouchEnabled)
+-- Bottom-right widgets move above Roblox's touch jump button (~120px tall at design scale).
+UI.TouchWeatherPosition = UDim2.new(1, -16, 1, -190)
 
 local function UpdateScale()
     local oCamera = Workspace.CurrentCamera
@@ -221,7 +223,17 @@ function UI.Button(scope, props)
                                 Padding = UDim.new(0, 8),
                                 SortOrder = Enum.SortOrder.LayoutOrder,
                             }),
-                            if props.Icon then UI.Text(scope, {
+                            if props.IconKey then scope:New("ImageLabel")({
+                                Name = "IconImage",
+                                BackgroundTransparency = 1,
+                                Image = (function()
+                                    local iId = require(ReplicatedStorage.Config.AssetConfig).Images[props.IconKey]
+                                    return if iId then "rbxassetid://" .. iId else ""
+                                end)(),
+                                ScaleType = Enum.ScaleType.Fit,
+                                Size = UDim2.fromOffset(props.IconSize or 52, props.IconSize or 52),
+                                LayoutOrder = 1,
+                            }) elseif props.Icon then UI.Text(scope, {
                                 Name = "Icon",
                                 Text = props.Icon,
                                 TextSize = props.IconSize or (props.TextSize or 28) + 4,

@@ -223,7 +223,70 @@ def bait_item(b, kind):
             b.box("Lava", (random.uniform(-0.5, 0.5), random.uniform(-0.5, 0.5), random.uniform(0.9, 1.4)), (0.35, 0.06, 0.05), rot=(0, 0, random.uniform(0, 180)), bevel=0.4)
 
 
+def cliff_wall(b):
+    # 40 wide (X) x 20 deep (Y) x ~70 tall chunky rock wall module with strata bands and a grassy cap.
+    random.seed(12)
+    for i in range(7):  # stacked, overlapping boulder strata form the face
+        for j in range(4):
+            x = -18 + j * 12 + random.uniform(-1.5, 1.5) + (6 if i % 2 else 0)
+            z = 5 + i * 10 + random.uniform(-1, 1)
+            s = random.uniform(7.5, 9.5)
+            b.ico("Rock" if i % 2 == 0 else "RockDark", (x, random.uniform(-1.0, 1.0), z), (s, 8, s * 0.7), sub=2, jitter=0.12)
+    for j in range(5):  # grass cap
+        b.ico("Leaves", (-18 + j * 9, 0, 73), (6.5, 8.5, 2.4), sub=2, jitter=0.12)
+
+
+def fence_segment(b):
+    for x in (-2.2, 2.2):
+        b.box("Wood", (x, 0, 1.6), (0.35, 0.35, 1.6), bevel=0.3)
+        b.cone("Wood", (x, 0, 3.45), 0.4, 0.5, verts=4) if hasattr(b, "cone") else b.cyl("Wood", (x, 0, 3.45), 0.4, 0.5, verts=4, r2=0)
+    for z in (1.2, 2.5):
+        b.box("Wood", (0, 0, z), (2.6, 0.18, 0.28), rot=(0, random.uniform(-3, 3), 0), bevel=0.3)
+
+
+def signpost(b):
+    b.box("Wood", (0, 0, 2.5), (0.3, 0.3, 2.5), bevel=0.3)
+    b.box("Wood", (0, -0.1, 4.6), (2.4, 0.2, 0.9), rot=(0, 3, 0), bevel=0.25)
+
+
+def training_pad(b):
+    b.cyl("Stone", (0, 0, 0.4), 8.6, 0.8, verts=24, bevel=0.15)
+    b.cyl("Glow", (0, 0, 0.85), 6.4, 0.2, verts=24)
+    for i in range(8):  # stone studs around the rim
+        a = i / 8 * math.tau
+        b.ico("Rock", (math.cos(a) * 7.6, math.sin(a) * 7.6, 1.0), (0.9, 0.9, 0.7), sub=1, jitter=0.1)
+
+
+def grass_clump(b):
+    random.seed(13)
+    for i in range(7):
+        a = random.uniform(0, math.tau)
+        b.cyl("Leaves", (math.cos(a) * 0.5, math.sin(a) * 0.5, 0.8), 0.25, 1.6, rot=(random.uniform(-25, 25), random.uniform(-25, 25), 0), verts=4, r2=0)
+
+
+def bones(b):
+    b.cyl("Stone", (0, 0, 0.4), 0.3, 4, rot=(0, 90, 0), verts=8)
+    for i in range(5):  # ribcage
+        b.torus("Stone", (-1.4 + i * 0.7, 0, 1.0), 0.9, 0.12, rot=(0, 90, 0))
+    b.ico("Stone", (2.4, 0, 0.7), (0.8, 0.6, 0.6), sub=2)
+
+
+def crystal(b):
+    random.seed(14)
+    for i in range(5):
+        a = random.uniform(0, math.tau)
+        h = random.uniform(2, 4.5)
+        b.cyl("Ice", (math.cos(a) * 0.7, math.sin(a) * 0.7, h / 2), 0.45, h, rot=(random.uniform(-20, 20), random.uniform(-20, 20), 0), verts=6, r2=0.05)
+
+
 PROPS = {
+    "CliffWall": cliff_wall,
+    "FenceSegment": fence_segment,
+    "Signpost": signpost,
+    "TrainingPad": training_pad,
+    "GrassClump": grass_clump,
+    "Bones": bones,
+    "Crystal": crystal,
     "JungleTree": jungle_tree,
     "SwampTree": swamp_tree,
     "Rock": rock,
