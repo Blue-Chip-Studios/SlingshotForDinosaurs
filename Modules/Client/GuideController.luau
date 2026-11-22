@@ -115,16 +115,18 @@ function mGuide.StartAsync(self)
     oTargetPart.Parent = Workspace
     oTargetAttachment = Instance.new("Attachment", oTargetPart)
     oBeam = Instance.new("Beam")
-    oBeam.Texture = "rbxassetid://121448058994618" -- GuideChevron (Blender, Assets/Exports/Icons)
+    -- Beams lay textures along their length using the image's vertical axis, and the arrow points at
+    -- Attachment0, so the TARGET is Attachment0 and the player Attachment1 (set below).
+    oBeam.Texture = "rbxassetid://75997844550545" -- GuideArrow (Assets/Exports/Icons/GuideArrow.png)
     oBeam.TextureMode = Enum.TextureMode.Static
     oBeam.TextureLength = 4
-    oBeam.TextureSpeed = 2
+    oBeam.TextureSpeed = -2 -- scroll toward the target (Attachment0)
     oBeam.Width0 = 2.5
     oBeam.Width1 = 2.5
     oBeam.Color = ColorSequence.new(Color3.fromHex("FFE14D"))
     oBeam.LightEmission = 0.8
     oBeam.FaceCamera = true
-    oBeam.Attachment1 = oTargetAttachment
+    oBeam.Attachment0 = oTargetAttachment
     oBeam.Parent = oTargetPart
 
     -- Pedestal prompts open the shop focused on that item.
@@ -152,7 +154,7 @@ function mGuide.StartAsync(self)
             local oAttachment = oRoot:FindFirstChild("SFD_GuideAttachment") or Instance.new("Attachment")
             oAttachment.Name = "SFD_GuideAttachment"
             oAttachment.Parent = oRoot
-            oBeam.Attachment0 = oAttachment :: Attachment
+            oBeam.Attachment1 = oAttachment :: Attachment
             oTargetPart.Position = vGoal + Vector3.new(0, 2, 0)
             bShow = (oRoot.Position - vGoal).Magnitude > 10
         end

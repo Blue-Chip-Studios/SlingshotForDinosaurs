@@ -30,7 +30,10 @@ function Format.Number(n: number): string
     else
         sNumber = string.format("%.2f", math.floor(nScaled * 100) / 100)
     end
-    sNumber = sNumber:gsub("%.?0+$", "")
+    -- Trim trailing zeros only after a decimal point ("1.50" -> "1.5", "2.00" -> "2"), never "500" -> "5".
+    if sNumber:find("%.") then
+        sNumber = (sNumber:gsub("0+$", ""):gsub("%.$", ""))
+    end
     return (if bNegative then "-" else "") .. sNumber .. tSuffixes[iTier + 1]
 end
 
