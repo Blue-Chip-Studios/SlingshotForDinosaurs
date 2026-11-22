@@ -28,6 +28,9 @@ return {
         AdminAction = true,
         WelcomeBackCollected = true,
         Reroll = true,
+        DailyClaim = true,
+        QuestComplete = true,
+        CodeRedeemed = true,
     },
 
     -- Client-reported UI events allowed through the UI remote

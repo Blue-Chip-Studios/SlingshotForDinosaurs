@@ -33,6 +33,7 @@ local EnclosureServer = require(ServerStorage.ServerModules.EnclosureServer)
 local ShopServer = require(ServerStorage.ServerModules.ShopServer)
 local WeatherServer = require(ServerStorage.ServerModules.WeatherServer)
 local PlotServer = require(ServerStorage.ServerModules.PlotServer)
+local RetentionServer = require(ServerStorage.ServerModules.RetentionServer)
 
 local tProductById: { [number]: string } = {}
 local tPassById: { [number]: string } = {}
@@ -66,6 +67,8 @@ local function GrantProduct(oPlayer: Player, sKey: string): boolean
             -- Already owned (shouldn't be promptable): compensate with rerolls rather than lose the purchase.
             PlayerDataServer:Set(oPlayer, "Rerolls", (PlayerDataServer:Get(oPlayer, "Rerolls") or 0) + 5)
         end
+    elseif sKind == "Luck" then
+        RetentionServer:AddLuckBoost(oPlayer, tProduct.Multiplier, tProduct.Minutes)
     elseif sKind == "Cash" then
         local nAmount = math.max(500, math.floor(EnclosureServer:GetIncome(oPlayer) * 60 * tProduct.Minutes))
         PlayerDataServer:AddCash(oPlayer, nAmount)

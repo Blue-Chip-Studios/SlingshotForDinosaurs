@@ -305,13 +305,14 @@ end
 
 local function Passes(scope)
     local tCards = {}
-    local tOrder = { "DoubleCash", "DoublePower", "AutoLaunch", "VIP" }
-    local tIcons = { DoubleCash = "Icon_DoubleCash", DoublePower = "Icon_DoublePower", AutoLaunch = "Icon_Gear", VIP = "Icon_Crown" }
+    local tOrder = { "DoubleCash", "DoublePower", "DoubleLuck", "AutoLaunch", "VIP" }
+    local tIcons = { DoubleCash = "Icon_DoubleCash", DoublePower = "Icon_DoublePower", DoubleLuck = "Icon_Star", AutoLaunch = "Icon_Gear", VIP = "Icon_Crown" }
     for i, sKey in tOrder do
         local tPass = MonetizationConfig.Passes[sKey]
         local bOwned = scope:Computed(function(use) return (use(V.Passes) or {})[sKey] == true end)
         tCards[i] = Card(scope, {
             LayoutOrder = i,
+            Size = UDim2.fromOffset(204, 330),
             [Children] = {
                 UI.Icon(scope, { Key = tIcons[sKey], AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 4), Size = UDim2.fromOffset(80, 80) }),
                 UI.Text(scope, { Text = tPass.Name, TextSize = 28, TextScaled = true, Position = UDim2.fromOffset(10, 80), Size = UDim2.new(1, -20, 0, 36) }),
@@ -402,6 +403,8 @@ local function Offer(scope)
         OfferCard(scope, { Key = "CashMedium", Icon = "Icon_Cash", LayoutOrder = 4, Description = "45 minutes of your current income, instantly.", Visible = Purchasable(MonetizationConfig.Products.CashMedium) }),
         OfferCard(scope, { Key = "CashLarge", Icon = "Icon_Vault", LayoutOrder = 5, Description = "150 minutes of your current income, instantly.", Visible = Purchasable(MonetizationConfig.Products.CashLarge) }),
         OfferCard(scope, { Key = "MeteorStorm", Icon = "Icon_Meteor", LayoutOrder = 6, Description = "Start a 5-minute Meteor Storm for EVERYONE. Mutations x3!", Visible = Purchasable(MonetizationConfig.Products.MeteorStorm) }),
+        OfferCard(scope, { Key = "LuckPotion", Icon = "Icon_Potion", LayoutOrder = 7, Description = "2x luck for 15 minutes. Drink more to add time.", Visible = Purchasable(MonetizationConfig.Products.LuckPotion) }),
+        OfferCard(scope, { Key = "SuperLuckPotion", Icon = "Icon_Potion", LayoutOrder = 8, Description = "5x luck for 15 minutes. Drink more to add time.", Visible = Purchasable(MonetizationConfig.Products.SuperLuckPotion) }),
     }
     return UI.Modal(scope, {
         Name = "Offer",
@@ -580,7 +583,9 @@ local function Admin(scope)
 end
 
 return function(scope, props)
-    local tBuilders = { Shop = Shop, Index = Index, Passes = Passes, Offer = Offer, Reroll = Reroll, Admin = Admin }
+    local RetentionModals = require(script.Parent.Components.RetentionModals)
+    local tBuilders = { Shop = Shop, Index = Index, Passes = Passes, Offer = Offer, Reroll = Reroll, Admin = Admin,
+        Rewards = RetentionModals.Rewards, Quests = RetentionModals.Quests, Rebirth = RetentionModals.Rebirth }
     local tModals = {}
     for sName, fnBuild in tBuilders do
         local oModal = fnBuild(scope)

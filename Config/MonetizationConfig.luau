@@ -14,6 +14,7 @@ return {
         DoubleCash = { Id = 2094102161, Price = 99, Name = "2x Cash", Description = "Doubles all enclosure income, online and offline." },
         DoublePower = { Id = 2096418101, Price = 149, Name = "2x Slingshot Power", Description = "Doubles Power from training." },
         AutoLaunch = { Id = 2092638260, Price = 199, Name = "Auto-Launch", Description = "Launches for you at full charge with Good bounces." },
+        DoubleLuck = { Id = 2093460329, Price = 249, Name = "2x Luck", Description = "Doubles your luck: rarer species, bigger sizes and more mutations." },
         VIP = { Id = 2093292202, Price = 299, Name = "VIP Enclosure", Description = "+4 slots, golden fence, 12h offline cap, 1.25x income." },
     },
 
@@ -26,6 +27,8 @@ return {
         CashMedium = { Id = 3734667512, Price = 99, Name = "Cash Crate", Kind = "Cash", Minutes = 45 },
         CashLarge = { Id = 3734667525, Price = 249, Name = "Cash Vault", Kind = "Cash", Minutes = 150 },
         StarterPack = { Id = 3734667534, Price = 99, Name = "Starter Pack", Kind = "StarterPack", OneTime = true },
+        LuckPotion = { Id = 3734723453, Price = 39, Name = "Luck Potion", Kind = "Luck", Multiplier = 2, Minutes = 15 },
+        SuperLuckPotion = { Id = 3734723473, Price = 99, Name = "Super Luck Potion", Kind = "Luck", Multiplier = 5, Minutes = 15 },
 
         Slingshot_Bamboo = { Id = 3734667545, Price = 29, Name = "Bamboo Slingshot", Kind = "Slingshot", Item = "Bamboo" },
         Slingshot_Bone = { Id = 3734667556, Price = 49, Name = "Bone Slingshot", Kind = "Slingshot", Item = "Bone" },

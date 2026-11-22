@@ -19,6 +19,7 @@ local DinoConfig = require(ReplicatedStorage.Config.DinoConfig)
 local GameConfig = require(ReplicatedStorage.Config.GameConfig)
 local ShopConfig = require(ReplicatedStorage.Config.ShopConfig)
 local MonetizationConfig = require(ReplicatedStorage.Config.MonetizationConfig)
+local RetentionConfig = require(ReplicatedStorage.Config.RetentionConfig)
 
 local PlayerDataServer = require(ServerStorage.ServerModules.PlayerDataServer)
 local AnalyticsServer = require(ServerStorage.ServerModules.AnalyticsServer)
@@ -62,6 +63,7 @@ function mEnclosure.GetIncome(self, oPlayer: Player): number
     end
     if HasPass(oPlayer, "DoubleCash") then nTotal *= 2 end
     if HasPass(oPlayer, "VIP") then nTotal *= 1.25 end
+    if oPlayer:GetAttribute("Premium") then nTotal *= 1 + RetentionConfig.PremiumIncomeBonus end
     return nTotal
 end
 

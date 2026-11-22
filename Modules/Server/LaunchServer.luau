@@ -32,6 +32,7 @@ local EnclosureServer = require(ServerStorage.ServerModules.EnclosureServer)
 local WeatherServer = require(ServerStorage.ServerModules.WeatherServer)
 local FTUEServer = require(ServerStorage.ServerModules.FTUEServer)
 local CatchRoller = require(ServerStorage.ServerModules.CatchRoller)
+local RetentionServer = require(ServerStorage.ServerModules.RetentionServer)
 
 type Flight = {
     Id: number,
@@ -86,7 +87,7 @@ local function Finalise(oPlayer: Player, tFlight: Flight)
     local nMeters = LandingFor(tFlight)
     local tBiome = DinoConfig.GetBiome(nMeters)
     local tBait = FindShopItem(ShopConfig.Bait, PlayerDataServer:Get(oPlayer, "Bait"))
-    local nLuck = tBait.Luck * (1 + GameConfig.Bounce.LuckPerBounce * tFlight.Bounces) * WeatherServer:GetServerLuck()
+    local nLuck = tBait.Luck * (1 + GameConfig.Bounce.LuckPerBounce * tFlight.Bounces) * WeatherServer:GetServerLuck() * RetentionServer:GetLuckMultiplier(oPlayer)
 
     local sSpecies, sSize, sMutation
     local bFirstCatch = (PlayerDataServer:Get(oPlayer, "TotalLaunches") or 0) == 0
@@ -129,6 +130,10 @@ local function Finalise(oPlayer: Player, tFlight: Flight)
         FTUEServer:Reach(oPlayer, "FirstPlacement")
     end
 
+    RetentionServer:Track(oPlayer, "Launch", 1)
+    if DinoConfig.Species[sSpecies].Rarity ~= "Common" then RetentionServer:Track(oPlayer, "Rare", 1) end
+    if sMutation ~= "Normal" then RetentionServer:Track(oPlayer, "Mutated", 1) end
+    if sSize == "Big" or sSize == "Huge" or sSize == "Colossal" then RetentionServer:Track(oPlayer, "Big", 1) end
     AnalyticsServer:Custom(oPlayer, "Catch", DinoConfig.GetIncome(tDino), AnalyticsServer:Fields(DinoConfig.Species[sSpecies].Rarity, sSize, sMutation))
     AnalyticsServer:Custom(oPlayer, "Launch", nMeters, AnalyticsServer:Fields(tBiome.Id, tostring(tFlight.Bounces)))
 
@@ -180,7 +185,7 @@ local function Plan(oPlayer: Player, tPayload): { [string]: any }
     local tSling = FindShopItem(ShopConfig.Slingshots, PlayerDataServer:Get(oPlayer, "Slingshot"))
     local nPower = PlayerDataServer:Get(oPlayer, "Power") or GameConfig.StartingPower
     local nChargeMult = GameConfig.MinCharge + (1 - GameConfig.MinCharge) * nCharge
-    local nBase = math.max(1, nPower * tSling.Multiplier * nChargeMult)
+    local nBase = math.max(1, nPower * tSling.Multiplier * nChargeMult * RetentionServer:GetRebirthBonus(oPlayer))
 
     iNextFlightId += 1
     local vOrigin = oRoot.Position + Vector3.new(0, 3, -3)
@@ -266,11 +271,13 @@ local function HandleBounce(oPlayer: Player, tPayload)
                     local nMeters, vLanding = LandingFor(tFlight)
                     oBounceResult:FireClient(oPlayer, { FlightId = tFlight.Id, Window = i, Quality = sQuality, Meters = nMeters, Landing = vLanding, EndsIn = tFlight.EndsAt - nNow })
                     FTUEServer:Reach(oPlayer, "FirstBounce")
+                    RetentionServer:OnBounce(oPlayer, sQuality)
                     AnalyticsServer:Custom(oPlayer, "Bounce", 1, AnalyticsServer:Fields(sQuality))
                 elseif nError < -nOK and nError > -1.0 then
                     -- Early tap: this window is lost (stops tap-spamming through every window).
                     tFlight.WindowState[i] = "Missed"
                     oBounceResult:FireClient(oPlayer, { FlightId = tFlight.Id, Window = i, Quality = "Miss" })
+                    RetentionServer:OnBounce(oPlayer, "Miss")
                 end
                 return
             end

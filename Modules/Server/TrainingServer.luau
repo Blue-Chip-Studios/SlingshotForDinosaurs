@@ -20,6 +20,7 @@ local ShopConfig = require(ReplicatedStorage.Config.ShopConfig)
 local PlayerDataServer = require(ServerStorage.ServerModules.PlayerDataServer)
 local AnalyticsServer = require(ServerStorage.ServerModules.AnalyticsServer)
 local FTUEServer = require(ServerStorage.ServerModules.FTUEServer)
+local RetentionServer = require(ServerStorage.ServerModules.RetentionServer)
 
 local tTapWindow: { [Player]: { nStart: number, nCount: number } } = {}
 local tUnlockedLogged: { [Player]: { [number]: boolean } } = {}
@@ -38,9 +39,10 @@ local function Train(oPlayer: Player, iPad: number): boolean
         return false
     end
     local tPasses = PlayerDataServer:Get(oPlayer, "Passes") or {}
-    local nGain = tPad.PowerPerTick * (if tPasses.DoublePower then 2 else 1)
+    local nGain = tPad.PowerPerTick * (if tPasses.DoublePower then 2 else 1) * RetentionServer:GetRebirthBonus(oPlayer)
     PlayerDataServer:Set(oPlayer, "Power", nPower + nGain)
     FTUEServer:Reach(oPlayer, "FirstTrain")
+    RetentionServer:Track(oPlayer, "Train", 1)
     -- Log pad unlocks once (the moment Power crosses a pad's requirement).
     for i, t in ShopConfig.Pads do
         if t.RequiredPower > 0 and nPower < t.RequiredPower and nPower + nGain >= t.RequiredPower then

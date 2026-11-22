@@ -38,3 +38,11 @@ Significant autonomous (BCDK Recommended) decisions, newest last. Each entry: wh
 26. **Paid rerolls never downgrade.** If the new mutation is worth less than the current one, the dino keeps its mutation and the player sees "No luck this time". Losing a Golden to a bought potion felt bad in QA, which matters for a 7-15 audience.
 27. **Biome floors and the rim use Roblox Terrain** (one material and colour per biome, plus pools, tar, glacier and lava patches) rather than Blender floor meshes. Terrain textures large ground areas far more cheaply, and the Blender kit covers the vertical surfaces.
 28. **QA admin tools (+3 rerolls, fill park) are Studio-only.** Both the client and the server refuse them in live servers.
+
+## 2026-11-22: Pre-launch retention + monetisation
+
+29. **Server size 8** set through the Places API.
+30. **New monetisation:** 2x Luck pass (249 R$), Luck Potion (2x for 15 min, 39 R$) and Super Luck Potion (5x for 15 min, 99 R$), with private servers at 50 R$. Potion time stacks rather than wasting overlap.
+31. **Retention systems** (`RetentionServer`, `Config/RetentionConfig`): a 7-day login streak (resets if a day is missed), 3 seeded daily quests plus a weekly quest, promo codes (LAUNCH, DINOPARK), Rebirth (+25% Power and distance each; keeps dinos, Index, slots and passes), a perfect-bounce streak (+5% luck per step, max +50%), and a +10% Premium income bonus. Every value is live-tunable.
+32. **Global leaderboards** (Farthest Launch, Top Earners) are physical boards on the rim, backed by OrderedDataStores, written every 3 minutes and on leave, and refreshed every 90 seconds.
+33. **Store page:** title "Slingshot For Dinosaurs", a description with feature bullets and codes, a Blender game icon, and 2 thumbnails in the reference style (chrome + pink 3D logo top-left, cheering avatars, giant Cosmic T-Rex, sunset sky). They're set via the Assets API and pending moderation.

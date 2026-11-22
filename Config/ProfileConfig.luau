@@ -34,5 +34,19 @@ return {
         PurchaseIds = {}, -- [PurchaseId] = unix time, receipt idempotency
         StarterPackBought = false,
         Settings = { AutoReplace = false, AutoLaunch = false },
+        -- Retention (RetentionConfig)
+        DailyStreak = 0,
+        LastDailyDay = 0,
+        QuestDay = 0,
+        QuestProgress = {}, -- [questId] = count (today)
+        QuestClaimed = {}, -- [questId] = true (today)
+        WeekIndex = 0,
+        WeeklyProgress = 0,
+        WeeklyClaimed = false,
+        CodesRedeemed = {}, -- [CODE] = unix time
+        Rebirths = 0,
+        LuckBoostMult = 1,
+        LuckBoostEndsAt = 0,
+        PerfectStreak = 0,
     },
 }

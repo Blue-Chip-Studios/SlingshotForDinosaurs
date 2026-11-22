@@ -40,6 +40,17 @@ local tValues = {
     Settings = {},
     ExclusiveDino = false,
     StarterPackBought = false,
+    DailyStreak = 0,
+    LastDailyDay = 0,
+    QuestDay = 0,
+    QuestProgress = {},
+    QuestClaimed = {},
+    WeeklyProgress = 0,
+    WeeklyClaimed = false,
+    Rebirths = 0,
+    LuckBoostMult = 1,
+    LuckBoostEndsAt = 0,
+    PerfectStreak = 0,
     DataLoaded = false,
 
     -- Player attributes

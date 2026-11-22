@@ -19,6 +19,10 @@ local WeatherConfig = require(ReplicatedStorage.Config.WeatherConfig)
 local UI = require(script.Parent.Components.UI)
 local Nav = require(script.Parent.Components.Nav)
 local LaunchController = require(ReplicatedStorage.ClientModules.LaunchController)
+local Players = game:GetService("Players")
+local QuestPicker = require(ReplicatedStorage.Shared.QuestPicker)
+local RetentionConfig = require(ReplicatedStorage.Config.RetentionConfig)
+local DinoConfig = require(ReplicatedStorage.Config.DinoConfig)
 
 local Children = Fusion.Children
 local V = Store.Values
@@ -36,6 +40,37 @@ local function NextAffordable(use): boolean
     end
     local tNextSlot = ShopConfig.Slots[use(V.SlotTier) + 1]
     return Check(ShopConfig.Slingshots, use(V.Slingshot)) or Check(ShopConfig.Bait, use(V.Bait)) or (tNextSlot ~= nil and nCash >= tNextSlot.Price)
+end
+
+-- True when any of today's quests (or the weekly) is finished but not claimed.
+local function QuestReady(use): boolean
+    if not use(V.DataLoaded) then return false end
+    local tProgress, tClaimed = use(V.QuestProgress) or {}, use(V.QuestClaimed) or {}
+    for _, tQuest in QuestPicker.Daily(Players.LocalPlayer.UserId) do
+        if not tClaimed[tQuest.Id] and (tProgress[tQuest.Id] or 0) >= tQuest.Goal then return true end
+    end
+    local tW = RetentionConfig.WeeklyQuest
+    return not use(V.WeeklyClaimed) and (use(V.WeeklyProgress) or 0) >= tW.Goal
+end
+
+-- The single most useful next goal: the next slingshot (cash progress) or the next biome (distance).
+local function NextGoal(use): (string, number)
+    local nCash = use(V.Cash)
+    for i, t in ShopConfig.Slingshots do
+        if t.Id == use(V.Slingshot) then
+            local tNext = ShopConfig.Slingshots[i + 1]
+            if tNext and nCash < tNext.Price then
+                return `Next: {tNext.Name} ({Format.Cash(tNext.Price)})`, nCash / tNext.Price
+            end
+        end
+    end
+    local nBest = use(V.BestDistance)
+    for _, tBiome in DinoConfig.Biomes do
+        if nBest < tBiome.MinMeters then
+            return `Next: reach {tBiome.Name} ({Format.Meters(tBiome.MinMeters)})`, nBest / tBiome.MinMeters
+        end
+    end
+    return "You reached the Volcano! Try a Rebirth", 1
 end
 
 local function Pill(scope, props)
@@ -81,18 +116,21 @@ return function(scope, props)
                     Name = "LeftStack",
                     BackgroundTransparency = 1,
                     AnchorPoint = Vector2.new(0, 0.5),
-                    Position = UDim2.new(0, 16, 0.45, 0),
-                    Size = UDim2.fromOffset(220, 340),
+                    Position = UDim2.new(0, 16, 0.42, 0),
+                    Size = UDim2.fromOffset(220, 400),
                     [Children] = {
-                        scope:New("UIListLayout")({ Padding = UDim.new(0, 12), SortOrder = Enum.SortOrder.LayoutOrder }),
-                        UI.Button(scope, { Name = "Shop", Variant = "Green", IconKey = "Icon_Bag", Text = "Shop", Size = UDim2.fromOffset(210, 74), LayoutOrder = 1,
+                        scope:New("UIListLayout")({ Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder }),
+                        UI.Button(scope, { Name = "Shop", Variant = "Green", IconKey = "Icon_Bag", Text = "Shop", Size = UDim2.fromOffset(210, 68), LayoutOrder = 1,
                             Badge = scope:Computed(NextAffordable), OnClick = function() Nav.Open("Shop") end }),
-                        UI.Button(scope, { Name = "Index", Variant = "Blue", IconKey = "Icon_Book", Text = "Index", Size = UDim2.fromOffset(210, 74), LayoutOrder = 2,
+                        UI.Button(scope, { Name = "Rewards", Variant = "Orange", IconKey = "Icon_Gift", Text = "Rewards", Size = UDim2.fromOffset(210, 68), LayoutOrder = 2,
+                            Badge = scope:Computed(function(use) use(V.Now) return use(V.DataLoaded) and use(V.LastDailyDay) ~= QuestPicker.Today() end),
+                            OnClick = function() Nav.Open("Rewards") end }),
+                        UI.Button(scope, { Name = "Quests", Variant = "Blue", IconKey = "Icon_Target", Text = "Quests", Size = UDim2.fromOffset(210, 68), LayoutOrder = 3,
+                            Badge = scope:Computed(QuestReady), OnClick = function() Nav.Open("Quests") end }),
+                        UI.Button(scope, { Name = "Index", Variant = "Blue", IconKey = "Icon_Book", Text = "Index", Size = UDim2.fromOffset(210, 68), LayoutOrder = 4,
                             OnClick = function() Nav.Open("Index") end }),
-                        UI.Button(scope, { Name = "Passes", Variant = "Gold", IconKey = "Icon_Star", Text = "Passes", Size = UDim2.fromOffset(210, 74), LayoutOrder = 3,
+                        UI.Button(scope, { Name = "Passes", Variant = "Gold", IconKey = "Icon_Star", Text = "Passes", Size = UDim2.fromOffset(210, 68), LayoutOrder = 5,
                             OnClick = function() Nav.Open("Passes") end }),
-                        UI.Button(scope, { Name = "Admin", Variant = "Purple", IconKey = "Icon_Wrench", IconSize = 44, Text = "Admin", Size = UDim2.fromOffset(210, 64), TextSize = 24, LayoutOrder = 4,
-                            Visible = V.IsAdmin, OnClick = function() Nav.Open("Admin") end }),
                     },
                 }),
 
@@ -102,7 +140,7 @@ return function(scope, props)
                     BackgroundTransparency = 1,
                     AnchorPoint = Vector2.new(1, 0.5),
                     Position = UDim2.new(1, -16, 0.45, 0),
-                    Size = UDim2.fromOffset(96, 330),
+                    Size = UDim2.fromOffset(96, 520),
                     [Children] = {
                         scope:New("UIListLayout")({ Padding = UDim.new(0, 12), SortOrder = Enum.SortOrder.LayoutOrder, HorizontalAlignment = Enum.HorizontalAlignment.Right }),
                         UI.Button(scope, { Name = "Offer", Variant = "Purple", IconKey = "Velociraptor", IconSize = 80, Size = UDim2.fromOffset(92, 92), LayoutOrder = 1,
@@ -116,6 +154,14 @@ return function(scope, props)
                                 Text = scope:Computed(function(use) return "x" .. use(V.Rerolls) end),
                                 TextSize = 22, AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -6, 1, -8), Size = UDim2.fromOffset(40, 24), ZIndex = 4,
                             }) }),
+                        UI.Button(scope, { Name = "Rebirth", Variant = "Purple", IconKey = "Icon_Gear", IconSize = 66, Size = UDim2.fromOffset(92, 92), LayoutOrder = 4,
+                            Badge = scope:Computed(function(use)
+                                local tCfg = RetentionConfig.Rebirth
+                                return use(V.BestDistance) >= tCfg.RequiredMeters and use(V.Cash) >= tCfg.BaseCost * tCfg.CostGrowth ^ use(V.Rebirths)
+                            end),
+                            OnClick = function() Nav.Open("Rebirth") end }),
+                        UI.Button(scope, { Name = "Admin", Variant = "Grey", IconKey = "Icon_Wrench", IconSize = 60, Size = UDim2.fromOffset(92, 80), LayoutOrder = 5,
+                            Visible = V.IsAdmin, OnClick = function() Nav.Open("Admin") end }),
                     },
                 }),
 
@@ -196,13 +242,54 @@ return function(scope, props)
                     BackgroundTransparency = 1,
                     AnchorPoint = Vector2.new(0.5, 0),
                     Position = UDim2.new(0.5, 0, 0, 12),
-                    Size = UDim2.fromOffset(760, 130),
+                    Size = UDim2.fromOffset(760, 200),
                     [Children] = {
                         scope:New("UIListLayout")({ Padding = UDim.new(0, 6), HorizontalAlignment = Enum.HorizontalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder }),
-                        UI.Chip(scope, {
+                        -- Row of status chips: best distance, personal luck boost, perfect streak.
+                        scope:New("Frame")({
+                            Name = "Chips",
                             LayoutOrder = 1,
-                            Color = Theme.Variants.Blue[2],
-                            Text = scope:Computed(function(use) return "🏆 Best: " .. Format.Meters(use(V.BestDistance)) end),
+                            BackgroundTransparency = 1,
+                            Size = UDim2.fromOffset(760, 36),
+                            [Children] = {
+                                scope:New("UIListLayout")({ FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8), HorizontalAlignment = Enum.HorizontalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder }),
+                                UI.Chip(scope, { LayoutOrder = 1, Color = Theme.Variants.Blue[2],
+                                    Text = scope:Computed(function(use) return "🏆 Best: " .. Format.Meters(use(V.BestDistance)) end) }),
+                                UI.Chip(scope, { LayoutOrder = 2, Color = Theme.Variants.Green[2],
+                                    Text = scope:Computed(function(use)
+                                        return `🍀 {use(V.LuckBoostMult)}x Luck {Format.Duration(use(V.LuckBoostEndsAt) - use(V.Now))}`
+                                    end),
+                                    Visible = scope:Computed(function(use) return use(V.LuckBoostEndsAt) > use(V.Now) end) }),
+                                UI.Chip(scope, { LayoutOrder = 3, Color = Theme.Variants.Orange[2],
+                                    Text = scope:Computed(function(use)
+                                        local n = math.min(use(V.PerfectStreak), RetentionConfig.PerfectStreak.MaxSteps)
+                                        return `🔥 Perfect x{use(V.PerfectStreak)} (+{math.floor(n * RetentionConfig.PerfectStreak.LuckPerStep * 100)}% luck)`
+                                    end),
+                                    Visible = scope:Computed(function(use) return use(V.PerfectStreak) >= 2 end) }),
+                            },
+                        }),
+                        -- Next-goal bar: always tells the player what to chase next.
+                        scope:New("Frame")({
+                            Name = "NextGoal",
+                            LayoutOrder = 3,
+                            BackgroundColor3 = Theme.Ink,
+                            BackgroundTransparency = 0.25,
+                            Size = UDim2.fromOffset(460, 34),
+                            Visible = scope:Computed(function(use) return use(V.DataLoaded) and use(V.Hint) == "" end),
+                            [Children] = {
+                                UI.Corner(scope, 999),
+                                scope:New("Frame")({
+                                    BackgroundColor3 = Theme.Variants.Green[1],
+                                    Position = UDim2.fromOffset(3, 3),
+                                    Size = scope:Computed(function(use)
+                                        local _, n = NextGoal(use)
+                                        n = math.clamp(n, 0, 1)
+                                        return UDim2.new(n, -6 * n, 1, -6)
+                                    end),
+                                    [Children] = UI.Corner(scope, 999),
+                                }),
+                                UI.Text(scope, { Text = scope:Computed(function(use) return (NextGoal(use)) end), TextSize = 20, StrokeThickness = 2.5 }),
+                            },
                         }),
                         UI.Text(scope, {
                             LayoutOrder = 2,
