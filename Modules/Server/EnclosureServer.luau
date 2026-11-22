@@ -212,6 +212,12 @@ function mEnclosure.PreloadAsync(self)
             if tDino.Id == iDinoId then
                 local sOld = tDino.Mutation
                 local sNew = CatchRoller.RollMutation(1, WeatherServer:GetMutationMultipliers())
+                -- A paid reroll never makes a dino worse: keep the old mutation if the roll is lower (DECISIONS #26).
+                local tOldMut, tNewMut = DinoConfig.GetMutation(sOld), DinoConfig.GetMutation(sNew)
+                local bKept = tOldMut and tNewMut and tNewMut.Cash < tOldMut.Cash
+                if bKept then
+                    sNew = sOld
+                end
                 PlayerDataServer:Set(oPlayer, "Rerolls", (PlayerDataServer:Get(oPlayer, "Rerolls") or 1) - 1)
                 PlayerDataServer:Update(oPlayer, "Dinos", function(t)
                     t[i].Mutation = sNew
@@ -220,7 +226,7 @@ function mEnclosure.PreloadAsync(self)
                 self:MarkIndex(oPlayer, tDino.Species, sNew)
                 PlotServer:Refresh(oPlayer)
                 AnalyticsServer:Custom(oPlayer, "Reroll", 1, AnalyticsServer:Fields(sOld, sNew))
-                tResult = { Ok = true, Mutation = sNew }
+                tResult = { Ok = true, Mutation = sNew, Kept = bKept == true }
                 break
             end
         end

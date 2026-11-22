@@ -98,11 +98,14 @@ local PROP_ROLES = {
 local function ColourProp(oModel: Model, tOverrides: { [string]: Color3 }?)
     for _, o in oModel:GetDescendants() do
         if o:IsA("BasePart") then
-            local tRole = PROP_ROLES[o.Name]
+            -- Blender may suffix duplicate names ("Rock.003"); the role is the base name.
+            local sRole = o.Name:gsub("%.%d+$", "")
+            o.Name = sRole
+            local tRole = PROP_ROLES[sRole]
             if tRole then
-                o.Color = (tOverrides and tOverrides[o.Name]) or tRole[1]
+                o.Color = (tOverrides and tOverrides[sRole]) or tRole[1]
                 o.Material = tRole[2]
-                if o.Name == "Ice" or o.Name == "Water" then
+                if sRole == "Ice" or sRole == "Water" then
                     o.Transparency = 0.25
                 end
             end
@@ -154,9 +157,18 @@ local function BuildRim()
     local nY = CanyonMath.RimY
     local vMin = Vector3.new(WorldLayout.RimMinX, 0, WorldLayout.RimMinZ)
     local vMax = Vector3.new(WorldLayout.RimMaxX, nY, WorldLayout.RimMaxZ)
-    Part({ Name = "TEMP_RimGround", Size = vMax - vMin, Position = (vMin + vMax) / 2, Color = Color3.fromHex("8BD650"), Material = Enum.Material.Grass, Parent = oRim })
-    -- Cliff face down into the canyon
-    Part({ Name = "TEMP_RimCliff", Size = Vector3.new(vMax.X - vMin.X, nY, 4), Position = Vector3.new(0, nY / 2, vMin.Z - 2), Color = Color3.fromHex("A0703F"), Material = Enum.Material.Sandstone, Parent = oRim })
+    -- Rim plateau as terrain grass (soft, textured, cheap) instead of a flat part.
+    Workspace.Terrain:FillBlock(CFrame.new((vMin + vMax) / 2), vMax - vMin, Enum.Material.Grass)
+    -- Cliff face down into the canyon: Blender cliff modules with an invisible collider behind them.
+    local oCliffCollider = Part({ Name = "RimCliffCollider", Size = Vector3.new(vMax.X - vMin.X, nY, 4), Position = Vector3.new(0, nY / 2, vMin.Z - 2), Color = Color3.fromHex("A0703F"), Material = Enum.Material.Sandstone, Parent = oRim })
+    if ReplicatedStorage:FindFirstChild("Assets") and ReplicatedStorage.Assets.World:FindFirstChild("CliffWall") then
+        oCliffCollider.Transparency = 1
+        local tTint = { Rock = Color3.fromHex("B8875A"), RockDark = Color3.fromHex("8A5E3B"), Leaves = Color3.fromHex("6CC24A") }
+        for k = 0, 10 do
+            local vPos = Vector3.new(-200 + k * 40, nY - 74, vMin.Z - 8)
+            PlaceProp("CliffWall", CFrame.lookAt(vPos, vPos + Vector3.new(0, 0, -1)), 1.0, function() end, tTint).Parent = oRim
+        end
+    end
     -- Low safety rail along the edge, with gaps in front of each launch stand
     for i = 1, GameConfig.PlotCount + 1 do
         local nX = -176 + (i - 1) * WorldLayout.PlotSpacing - WorldLayout.PlotSpacing / 2
@@ -170,12 +182,33 @@ local function BuildRim()
 end
 
 local tBiomeLook = {
-    Jungle = { Floor = "4CC14A", Wall = "7A5230", Prop = "JungleTree", Trunk = "8B5A2B", Leaves = "1FA82F", Material = Enum.Material.Grass },
-    Swamp = { Floor = "5C7A2E", Wall = "4F5A2A", Prop = "SwampTree", Trunk = "4E3B24", Leaves = "6B8E23", Material = Enum.Material.Mud },
-    TarPits = { Floor = "4A3B33", Wall = "3A2F2A", Prop = "TarRock", Trunk = "2A211D", Leaves = "5A4A40", Material = Enum.Material.Ground },
-    IceAge = { Floor = "E8F6FF", Wall = "A9DDF5", Prop = "IceBlock", Trunk = "BFE9FF", Leaves = "FFFFFF", Material = Enum.Material.Snow },
-    Volcano = { Floor = "5A2A1E", Wall = "3B1A14", Prop = "LavaRock", Trunk = "2A140F", Leaves = "FF6A1A", Material = Enum.Material.Basalt },
+    Jungle = { Floor = "4CC14A", Wall = "7A5230", Prop = "JungleTree", Trunk = "8B5A2B", Leaves = "1FA82F", Material = Enum.Material.Grass,
+        Terrain = Enum.Material.Grass },
+    Swamp = { Floor = "5C7A2E", Wall = "4F5A2A", Prop = "SwampTree", Trunk = "4E3B24", Leaves = "6B8E23", Material = Enum.Material.Mud,
+        Terrain = Enum.Material.Mud, Feature = Enum.Material.Water, FeatureCount = 7 },
+    TarPits = { Floor = "4A3B33", Wall = "3A2F2A", Prop = "TarRock", Trunk = "2A211D", Leaves = "5A4A40", Material = Enum.Material.Ground,
+        Terrain = Enum.Material.Ground, Feature = Enum.Material.Asphalt, FeatureCount = 9 },
+    IceAge = { Floor = "E8F6FF", Wall = "A9DDF5", Prop = "IceBlock", Trunk = "BFE9FF", Leaves = "FFFFFF", Material = Enum.Material.Snow,
+        Terrain = Enum.Material.Snow, Feature = Enum.Material.Glacier, FeatureCount = 6 },
+    Volcano = { Floor = "5A2A1E", Wall = "3B1A14", Prop = "LavaRock", Trunk = "2A140F", Leaves = "FF6A1A", Material = Enum.Material.Basalt,
+        Terrain = Enum.Material.Basalt, Feature = Enum.Material.CrackedLava, FeatureCount = 10 },
 }
+
+-- Stylised terrain palette (bright and saturated to match the art style).
+local function ApplyTerrainColours()
+    local oTerrain = Workspace.Terrain
+    oTerrain:SetMaterialColor(Enum.Material.Grass, Color3.fromHex("5DC93E"))
+    oTerrain:SetMaterialColor(Enum.Material.Mud, Color3.fromHex("6B7A34"))
+    oTerrain:SetMaterialColor(Enum.Material.Ground, Color3.fromHex("6A5243"))
+    oTerrain:SetMaterialColor(Enum.Material.Asphalt, Color3.fromHex("1E1A1C"))
+    oTerrain:SetMaterialColor(Enum.Material.Snow, Color3.fromHex("F2F8FF"))
+    oTerrain:SetMaterialColor(Enum.Material.Glacier, Color3.fromHex("9EDCF5"))
+    oTerrain:SetMaterialColor(Enum.Material.Basalt, Color3.fromHex("3B2722"))
+    oTerrain:SetMaterialColor(Enum.Material.CrackedLava, Color3.fromHex("FF6A1A"))
+    oTerrain.WaterColor = Color3.fromHex("4E9C8A")
+    oTerrain.WaterTransparency = 0.6
+    oTerrain.WaterWaveSize = 0.1
+end
 
 local function BuildCanyon()
     local oCanyon = Folder("Canyon", oWorld)
@@ -186,7 +219,15 @@ local function BuildCanyon()
         local oBiome = Folder(tBiome.Id, oCanyon)
         local nZ0 = CanyonMath.CanyonStartZ - (i - 1) * nLen
         local nMidZ = nZ0 - nLen / 2
-        Part({ Name = "TEMP_Floor", Size = Vector3.new(nHalf * 2, 4, nLen), Position = Vector3.new(0, CanyonMath.FloorY - 2, nMidZ), Color = Color3.fromHex(tLook.Floor), Material = tLook.Material, Parent = oBiome })
+        -- Floor as terrain, one material per biome, plus a feature layer (swamp pools, tar, lava cracks).
+        local oTerrain = Workspace.Terrain
+        local vFloorSize = Vector3.new(nHalf * 2 + 40, 8, nLen)
+        oTerrain:FillBlock(CFrame.new(0, CanyonMath.FloorY - 4, nMidZ), vFloorSize, tLook.Terrain)
+        for _ = 1, tLook.FeatureCount or 0 do
+            local vPos = Vector3.new(oRandom:NextNumber(-nHalf + 30, nHalf - 30), CanyonMath.FloorY - 0.6, nZ0 - oRandom:NextNumber(30, nLen - 30))
+            local nSize = oRandom:NextNumber(18, 40)
+            oTerrain:FillCylinder(CFrame.new(vPos), 1.4, nSize / 2, tLook.Feature)
+        end
         local nWallHeight = 110 + i * 12
         local bCliffAsset = ReplicatedStorage:FindFirstChild("Assets") and ReplicatedStorage.Assets.World:FindFirstChild("CliffWall") ~= nil
         for _, nSide in { -1, 1 } do
@@ -402,6 +443,8 @@ function mWorldBuilder.PreloadAsync(self)
     end
     oWorld = Instance.new("Folder")
     oWorld.Name = "World"
+    Workspace.Terrain:Clear()
+    ApplyTerrainColours()
     BuildRim()
     BuildCanyon()
     BuildPlots()

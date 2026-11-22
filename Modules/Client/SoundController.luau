@@ -52,6 +52,19 @@ function mSound.PreloadAsync(self)
     end
 end
 
+function mSound.StartAsync(self)
+    -- Looping prehistoric ambience bed (stands in for music until a music track exists).
+    local iId = AssetConfig.Sounds.Ambience
+    if not iId then return end
+    local o = Instance.new("Sound")
+    o.Name = "Ambience"
+    o.SoundId = "rbxassetid://" .. iId
+    o.Looped = true
+    o.Volume = 0.35
+    o.Parent = SoundService
+    o:Play()
+end
+
 -- Plays a named sound; nPitch optionally overrides playback speed (e.g. roar pitch by size).
 function mSound.Play(self, sName: string, nPitch: number?)
     local o = tCache[sName]

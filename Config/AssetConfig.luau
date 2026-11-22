@@ -113,5 +113,6 @@ return {
         Click = 128874029466854,
         Error = 100156454441026,
         Event = 75349777382519,
+        Ambience = 109438410222145, -- looping jungle soundscape (ElevenLabs)
     },
 }

@@ -158,11 +158,13 @@ return function(scope, props)
                         UI.Corner(scope, 18),
                         UI.Text(scope, {
                             Text = scope:Computed(function(use)
+                                local tEmoji = { MeteorStorm = "☄️", IceAge = "❄️" }
                                 local sWeather = use(V.Weather)
                                 if sWeather ~= "Clear" then
-                                    return "🔥 " .. WeatherConfig.Events[sWeather].Name .. "!"
+                                    return (tEmoji[sWeather] or "🔥") .. " " .. WeatherConfig.Events[sWeather].Name .. "!"
                                 end
-                                return "☄️ " .. (WeatherConfig.Events[use(V.NextWeather)] or WeatherConfig.Events.MeteorStorm).Name
+                                local sNext = use(V.NextWeather)
+                                return (tEmoji[sNext] or "☄️") .. " " .. (WeatherConfig.Events[sNext] or WeatherConfig.Events.MeteorStorm).Name
                             end),
                             TextSize = 30, Size = UDim2.new(1, -16, 0.5, 0), Position = UDim2.fromOffset(8, 4),
                         }),

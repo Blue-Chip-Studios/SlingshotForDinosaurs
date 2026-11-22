@@ -488,7 +488,22 @@ local function Reroll(scope)
                                     local tResult = oReroll:InvokeServer(tDino.Id)
                                     bBusy:set(false)
                                     if tResult and tResult.Ok then
-                                        SoundController:Play("Reveal")
+                                        if tResult.Kept then
+                                            V.Toast:set(`No luck this time - kept {tResult.Mutation}!`)
+                                        else
+                                            SoundController:Play("Reveal")
+                                            local iId = os.clock() * 1000 // 1
+                                            local tPush = table.clone(peek(V.Announcements))
+                                            table.insert(tPush, { Id = iId, Text = `Rerolled to {tResult.Mutation}!`, Kind = "Purchase", Mutation = tResult.Mutation })
+                                            V.Announcements:set(tPush)
+                                            task.delay(4, function()
+                                                local tNow = table.clone(peek(V.Announcements))
+                                                for i, t in tNow do
+                                                    if t.Id == iId then table.remove(tNow, i) break end
+                                                end
+                                                V.Announcements:set(tNow)
+                                            end)
+                                        end
                                     end
                                 end,
                             }),
@@ -517,6 +532,11 @@ local function Admin(scope)
         { "🍀 Luck x10 5m", "Gold", { Action = "Luck", Multiplier = 10, Minutes = 5 } },
         { "🦖 Rare spawn (all)", "Purple", { Action = "RareSpawn" } },
     }
+    if RunService:IsStudio() then
+        -- QA helpers (the server also refuses these outside Studio).
+        table.insert(tButtons, { "🧪 QA: +3 rerolls", "Blue", { Action = "QA_Rerolls" } })
+        table.insert(tButtons, { "🦕 QA: fill park", "Orange", { Action = "QA_FillPark" } })
+    end
     local tChildren = {}
     for i, t in tButtons do
         tChildren[i] = UI.Button(scope, { Variant = t[2], Text = t[1], TextSize = 24, Size = UDim2.fromOffset(300, 64), LayoutOrder = i, OnClick = function() Do(t[3]) end })

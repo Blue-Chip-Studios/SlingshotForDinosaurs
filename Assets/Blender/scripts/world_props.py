@@ -95,6 +95,10 @@ class PropBuilder:
             if len(objs) > 1:
                 bpy.ops.object.join()
             o = bpy.context.active_object
+            # Free the plain role name first so the export carries "Rock", not "Rock.003".
+            clash = bpy.data.objects.get(role)
+            if clash and clash != o:
+                clash.name = f"{clash.name}_old"
             o.name = role
             o.data.name = f"{self.name}_{role}"
             if role in smooth_roles:

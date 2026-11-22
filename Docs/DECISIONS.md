@@ -35,3 +35,6 @@ Significant autonomous (BCDK Recommended) decisions, newest last. Each entry: wh
 23. **Procedural dino walk instead of rigged skeletal animation.** Dinos wander their plot with a waddle (bob + roll) and idle pauses, driven by client CFrames. This is cheap on mobile and works for all 15 species without rigs. Skeletal cycles can come later.
 24. **Plot fences stay as simple planks.** Modelled fence segments around 8 plots would add about 130k triangles, too much for the low-end mobile budget.
 25. **Bottom-right HUD widgets move up on touch devices**, so Roblox's jump button never covers the event timer.
+26. **Paid rerolls never downgrade.** If the new mutation is worth less than the current one, the dino keeps its mutation and the player sees "No luck this time". Losing a Golden to a bought potion felt bad in QA, which matters for a 7-15 audience.
+27. **Biome floors and the rim use Roblox Terrain** (one material and colour per biome, plus pools, tar, glacier and lava patches) rather than Blender floor meshes. Terrain textures large ground areas far more cheaply, and the Blender kit covers the vertical surfaces.
+28. **QA admin tools (+3 rerolls, fill park) are Studio-only.** Both the client and the server refuse them in live servers.

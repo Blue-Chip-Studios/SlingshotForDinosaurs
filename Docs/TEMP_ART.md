@@ -17,9 +17,9 @@ Pipeline: Blender scripts (`Assets/Blender/scripts/`) → FBX/PNG in `Assets/Exp
 
 | Item | Where | Plan |
 |---|---|---|
-| Biome floors (flat parts with materials) | `WorldBuilder.BuildCanyon` | Blender floor tiles per biome (walls are done) |
-| Rim ground, cliff face, rails, plot fences | `WorldBuilder.BuildRim/BuildPlots` | Fences kept as parts for performance (a modelled fence would add ~130k triangles); rim cliff next |
-| Music loop | none | Needs the full ElevenLabs connector (this connector has no music) |
+| ~~Biome floors~~ | done | Terrain per biome: grass, mud + water pools, ground + asphalt tar, snow + glacier, basalt + cracked lava |
+| Plot fences, edge rails | `WorldBuilder.BuildPlots` | Kept as parts for performance (rim ground is terrain grass, rim cliff is the Blender kit) |
+| Music track | none | Looping ElevenLabs jungle ambience plays meanwhile; a music track needs the full ElevenLabs connector |
 | Dino animation (procedural wander + waddle) | `PlotController` | Rigged skeletal cycles if wanted later |
 
 ## Added in the second art pass

@@ -20,6 +20,8 @@ local AdminConfig = require(ReplicatedStorage.Config.AdminConfig)
 local AnalyticsServer = require(ServerStorage.ServerModules.AnalyticsServer)
 local WeatherServer = require(ServerStorage.ServerModules.WeatherServer)
 local LaunchServer = require(ServerStorage.ServerModules.LaunchServer)
+local PlayerDataServer = require(ServerStorage.ServerModules.PlayerDataServer)
+local EnclosureServer = require(ServerStorage.ServerModules.EnclosureServer)
 
 local tAdmins: { [Player]: boolean } = {}
 local tLastAction: { [Player]: number } = {}
@@ -71,6 +73,19 @@ function mAdmin.PreloadAsync(self)
             local bOk2, sFiltered = pcall(oResult.GetNonChatStringForBroadcastAsync, oResult)
             if not bOk2 then return end
             oAnnounce:FireAllClients({ Text = sFiltered, Kind = "Admin" })
+        elseif sAction == "QA_Rerolls" or sAction == "QA_FillPark" then
+            -- QA helpers: Studio only, so they can never hand out items in a live server.
+            if not RunService:IsStudio() then return end
+            if sAction == "QA_Rerolls" then
+                PlayerDataServer:Set(oPlayer, "Rerolls", (PlayerDataServer:Get(oPlayer, "Rerolls") or 0) + 3)
+            else
+                local tSpecies = { "Compy", "Velociraptor", "Dilophosaurus", "Pachycephalosaurus", "Baryonyx" }
+                local iSlots = EnclosureServer:GetSlotCount(oPlayer)
+                local iHave = #(PlayerDataServer:Get(oPlayer, "Dinos") or {})
+                for i = 1, math.max(0, iSlots - iHave) do
+                    EnclosureServer:AddDino(oPlayer, EnclosureServer:NewDino(oPlayer, tSpecies[(i % #tSpecies) + 1], "Tiny", "Normal"))
+                end
+            end
         else
             return
         end

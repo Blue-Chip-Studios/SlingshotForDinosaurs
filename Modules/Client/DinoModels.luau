@@ -197,6 +197,7 @@ function DinoModels.Build(tDino: { Species: string, Size: string, Mutation: stri
                 o.CanQuery = false
                 o.CanTouch = false
                 o.Material = Enum.Material.SmoothPlastic
+                o.Name = o.Name:gsub("%.%d+$", "") -- Blender duplicate-name suffixes ("Body.001")
                 o.Color = tRegionColours[o.Name] or o.Color
             end
         end
