@@ -49,7 +49,14 @@ function mSoftShutdown.PreloadAsync(self)
             local tData = oPlayer:GetJoinData().TeleportData
             if typeof(tData) == "table" and tData[LOBBY_FLAG] then
                 task.wait(2) -- let the old server finish saving
-                Teleport({ oPlayer })
+                for iTry = 1, 3 do
+                    if oPlayer.Parent ~= Players then return end
+                    Teleport({ oPlayer })
+                    task.wait(4 * iTry) -- a successful teleport removes them before this ends
+                end
+                if oPlayer.Parent == Players then
+                    oPlayer:Kick("The game just updated! Please rejoin to keep playing.")
+                end
             end
         end
         Players.PlayerAdded:Connect(function(oPlayer)

@@ -420,7 +420,7 @@ local function Offer(scope)
             Title = scope:Computed(function(use) return use(tCurrent).Entry.Name end),
             Description = scope:Computed(function(use)
                 local t = use(tCurrent)
-                return `LIMITED: {t.Entry.Size} {t.Entry.Mutation} {t.Entry.Species}. Earns {tRot.Multiplier * 100}% of your best dino. Leaves in {Format.Duration(t.EndsAt - os.time())}!`
+                return `LIMITED: {t.Entry.Size} {t.Entry.Mutation} {t.Entry.Species}. Earns {tRot.Multiplier * 100}% of your best dino. Leaves in {Format.Duration(t.EndsAt - use(V.Now))}!`
             end),
             Visible = scope:Computed(function(use)
                 return not (use(V.ExclusiveDinos) or {})[use(tCurrent).Entry.Id] and Purchasable(MonetizationConfig.Products.ExclusiveDino)

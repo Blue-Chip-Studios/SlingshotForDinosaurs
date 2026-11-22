@@ -96,7 +96,7 @@ return function(scope, props)
                                     UI.Stroke(scope, 10, Theme.White),
                                 },
                             }),
-                            UI.Text(scope, { Text = "TAP!", TextSize = 96, StrokeThickness = 6, Color = Theme.Power }),
+                            UI.Text(scope, { Text = scope:Computed(function(use) return if use(UI.IsGamepad) then "PRESS A!" else "TAP!" end), TextSize = 96, StrokeThickness = 6, Color = Theme.Power }),
                         },
                     }),
                     UI.Text(scope, {

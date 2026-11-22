@@ -20,6 +20,9 @@ local PlayerDataServer = require(ServerStorage.ServerModules.PlayerDataServer)
 local AnalyticsServer = require(ServerStorage.ServerModules.AnalyticsServer)
 
 local tFriends: { [Player]: { [Player]: boolean } } = {}
+local tLastAction: { [Player]: { [string]: number } } = {}
+local tRechecking: { [Player]: boolean } = {}
+local ACTION_COOLDOWN = 10
 
 local function Recount()
     for oPlayer, tSet in tFriends do
@@ -40,47 +43,68 @@ end
 
 local mSocial = Module()
 
-function mSocial.PlayerAdded(self, oPlayer: Player)
-    tFriends[oPlayer] = {}
-    for _, oOther in Players:GetPlayers() do
-        if oOther ~= oPlayer and tFriends[oOther] then
-            local bOk, bFriends = pcall(oPlayer.IsFriendsWith, oPlayer, oOther.UserId)
-            if bOk and bFriends and tFriends[oPlayer] and tFriends[oOther] then
-                tFriends[oPlayer][oOther] = true
-                tFriends[oOther][oPlayer] = true
-            end
-        end
-    end
-    Recount()
-    task.spawn(CheckGroup, oPlayer)
-end
-
-function mSocial.PlayerRemoving(self, oPlayer: Player)
+local function Cleanup(oPlayer: Player)
     tFriends[oPlayer] = nil
+    tLastAction[oPlayer] = nil
+    tRechecking[oPlayer] = nil
     for _, tSet in tFriends do
         tSet[oPlayer] = nil
     end
     Recount()
 end
 
+function mSocial.PlayerAdded(self, oPlayer: Player)
+    if oPlayer.Parent ~= Players then return end -- left during profile load
+    tFriends[oPlayer] = {}
+    task.spawn(CheckGroup, oPlayer)
+    -- Friend lookups are web calls: never hold up other modules' PlayerAdded.
+    task.spawn(function()
+        for _, oOther in Players:GetPlayers() do
+            if oOther ~= oPlayer and tFriends[oOther] then
+                local bOk, bFriends = pcall(oPlayer.IsFriendsWith, oPlayer, oOther.UserId)
+                if bOk and bFriends and tFriends[oPlayer] and tFriends[oOther] then
+                    tFriends[oPlayer][oOther] = true
+                    tFriends[oOther][oPlayer] = true
+                end
+            end
+        end
+        Recount()
+    end)
+end
+
+function mSocial.PlayerRemoving(self, oPlayer: Player)
+    Cleanup(oPlayer)
+end
+
 function mSocial.PreloadAsync(self)
+    -- PlayerRemoving above only runs for players whose profile loaded; this catches the rest.
+    Players.PlayerRemoving:Connect(Cleanup)
+
     Remote:GetEvent("SocialAction"):OnServerEvent(function(oPlayer: Player, tPayload)
         if typeof(tPayload) ~= "table" or not PlayerDataServer:IsReady(oPlayer) then return end
         local sAction = tPayload.Action
+        if typeof(sAction) ~= "string" then return end
+        -- Rate limit per action: these only drive analytics and a membership recheck.
+        tLastAction[oPlayer] = tLastAction[oPlayer] or {}
+        if os.clock() - (tLastAction[oPlayer][sAction] or -math.huge) < ACTION_COOLDOWN then return end
+        tLastAction[oPlayer][sAction] = os.clock()
+
         if sAction == "InviteSent" then
             AnalyticsServer:Custom(oPlayer, "InviteSent", 1)
         elseif sAction == "GroupPrompted" then
             if PlayerDataServer:Get(oPlayer, "GroupPrompted") ~= true then
                 PlayerDataServer:Set(oPlayer, "GroupPrompted", true)
             end
-            if tPayload.Joined == true and not oPlayer:GetAttribute("GroupMember") then
+            if tPayload.Joined == true and not oPlayer:GetAttribute("GroupMember") and not tRechecking[oPlayer] then
+                tRechecking[oPlayer] = true
                 AnalyticsServer:Custom(oPlayer, "GroupJoined", 1)
-                -- The server's membership cache can lag the join; retry briefly.
+                -- The server's membership cache can lag the join; retry briefly (one loop per player).
                 task.spawn(function()
                     for _ = 1, 6 do
-                        if CheckGroup(oPlayer) then return end
+                        if oPlayer.Parent ~= Players or CheckGroup(oPlayer) then break end
                         task.wait(10)
                     end
+                    tRechecking[oPlayer] = nil
                 end)
             end
         elseif sAction == "FavoritePrompted" then

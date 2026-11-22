@@ -49,6 +49,7 @@ return {
         LuckBoostEndsAt = 0,
         PerfectStreak = 0,
         GiftedPasses = {}, -- [passKey] = true (received as gifts)
+        PendingGifts = {}, -- [passKey] = { UserId, At }: recipient chosen when the gift prompt opened
         ExclusiveDinos = {}, -- [exclusiveId] = true (rotation; replaces ExclusiveDino)
         NotificationsPrompted = false,
         GroupPrompted = false,

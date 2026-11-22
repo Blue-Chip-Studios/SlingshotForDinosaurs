@@ -23,8 +23,14 @@ local UI = {}
 local tRootScope = Fusion.scoped(Fusion)
 UI.Scale = tRootScope:Value(1)
 UI.IsTouch = tRootScope:Value(UserInputService.TouchEnabled)
+local function IsGamepadInput(e: Enum.UserInputType): boolean
+    return e.Name:sub(1, 7) == "Gamepad"
+end
+-- True while the player's last input came from a controller (prompts switch to R2 / A / D-pad).
+UI.IsGamepad = tRootScope:Value(IsGamepadInput(UserInputService:GetLastInputType()) or GuiService:IsTenFootInterface())
 -- Bottom-right widgets move above Roblox's touch jump button (~120px tall at design scale).
-UI.TouchWeatherPosition = UDim2.new(1, -16, 1, -190)
+-- Sits left of the right-hand button column and above the jump button, so short phones (0.5 scale) don't overlap.
+UI.TouchWeatherPosition = UDim2.new(1, -124, 1, -200)
 
 local function UpdateScale()
     local oCamera = Workspace.CurrentCamera
@@ -44,6 +50,11 @@ task.spawn(function()
 end)
 UserInputService.LastInputTypeChanged:Connect(function(eType)
     UI.IsTouch:set(eType == Enum.UserInputType.Touch)
+    if eType == Enum.UserInputType.Touch or eType.Name:sub(1, 5) == "Mouse" or eType == Enum.UserInputType.Keyboard then
+        UI.IsGamepad:set(false)
+    elseif IsGamepadInput(eType) then
+        UI.IsGamepad:set(true)
+    end
 end)
 
 -- Standard ScreenGui with safe-area insets and the shared scale.
@@ -63,6 +74,15 @@ end
 
 -- A full-size frame carrying the UIScale; put screen content inside it.
 function UI.ScaledRoot(scope, props)
+    local tChildren = { scope:New("UIScale")({ Scale = UI.Scale }) }
+    -- TV overscan: consoles can crop ~5% of each edge, so keep the HUD inside a 4% margin.
+    if GuiService:IsTenFootInterface() then
+        table.insert(tChildren, scope:New("UIPadding")({
+            PaddingLeft = UDim.new(0.04, 0), PaddingRight = UDim.new(0.04, 0),
+            PaddingTop = UDim.new(0.04, 0), PaddingBottom = UDim.new(0.04, 0),
+        }))
+    end
+    table.insert(tChildren, props[Children])
     return scope:New("Frame")({
         Name = "Root",
         BackgroundTransparency = 1,
@@ -70,10 +90,7 @@ function UI.ScaledRoot(scope, props)
             local n = use(UI.Scale)
             return UDim2.fromScale(1 / n, 1 / n)
         end),
-        [Children] = {
-            scope:New("UIScale")({ Scale = UI.Scale }),
-            props[Children],
-        },
+        [Children] = tChildren,
     })
 end
 

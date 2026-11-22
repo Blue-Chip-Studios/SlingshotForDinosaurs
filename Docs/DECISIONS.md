@@ -71,3 +71,23 @@ Significant autonomous (BCDK Recommended) decisions, newest last. Each entry: wh
 47. **Analytics alerts** (`Tools/create_alerts.sh`): 7 alerts covering client crash rate, server FPS, phone FPS, and week-over-week drops in DAU, peak CCU, revenue and D1 retention. Roblox refused them for now ("not enrolled in PerformanceMonitoringV2", which needs live traffic) and the key needs `universe.analytics.alert:write`. Run the script after launch.
 48. **Dev save reset:** a Studio-only `QA_ResetSave` admin action (also a button in the admin panel) backs up the profile to `Backup_P_<userId>_<utc time>` in the profile DataStore, resets every key to the template (keeping PurchaseIds), clears global leaderboard entries and kicks the player. Used on the owner account on 2026-11-22; backups are `Backup_P_11712429117_202611221652` (full save) and `_202611221654` (cash).
 49. **Store description** now lists the limited dino, friends/gifting, badges and the group perk (via the Places API).
+
+## 2026-11-22: Pre-launch QA pass
+
+50. **Device testing** with the Studio Device Simulator: Galaxy A06 (smallest common phone, 705x338), iPhone 17 Pro, iPad 6th gen (4:3), Xbox One (1080p TV) and desktop. Fixes: the left menu is top-anchored with 54px rows (it ran into the cash pills at the 0.5 minimum scale), and on touch screens the event timer sits left of the right-hand column and above the jump button.
+51. **Console/controller:** D-pad Left/Right jumps into the left menu or right column (Roblox's own UI-select is hidden on console), D-pad Down leaves. Prompts switch to controller wording ("HOLD R2", "PRESS A!") while a controller is the last input. Consoles get a 4% overscan-safe margin around the HUD.
+52. **Code review fixes:**
+    - The gift recipient is saved in the buyer's profile (`PendingGifts`) and cleared only after delivery, so a crash or leave mid-purchase can no longer hand the pass to the buyer.
+    - The MessageAsync result is checked.
+    - A per-receipt lock prevents double grants.
+    - RefreshPasses merges instead of overwriting: it re-reads gifts after its yields, keeps a pass when the ownership lookup fails, and keeps passes bought this session.
+    - The rotation and daily quests use the server-synced clock on clients.
+    - SocialAction is rate-limited, with one group recheck at a time.
+    - Per-player tables are cleaned up even when a player leaves mid-load.
+    - The friend scan no longer blocks other join logic.
+    - The soft-shutdown holding server retries the teleport and then asks the player to rejoin.
+    - The Quests window rebuilds at UTC midnight.
+    - Gifting to someone who owns the pass now explains why it was refused.
+    - A failed invite prompt no longer leaves a listener behind.
+53. **Stress test:** 4,800 junk remote calls in 0.1 s (wrong types, NaN, 5,000-character strings) caused no errors, granted nothing, and the server held 59 Hz. PromptPurchase is now limited to 1 per second per player (it previously opened a prompt and logged a funnel event per call).
+54. **Performance (Studio, this PC):** client 59–60 fps with a full park (worst frame 19 ms); server 59 Hz (worst 32 ms); about 1,590 workspace instances and 836 parts. A real low-end phone test is still needed.

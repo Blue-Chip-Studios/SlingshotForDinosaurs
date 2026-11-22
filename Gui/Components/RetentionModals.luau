@@ -198,16 +198,22 @@ local function QuestRow(scope, sId: string, sText: string, iGoal: number, fnProg
 end
 
 function M.Quests(scope)
-    local tRows = {}
-    for i, tQuest in QuestPicker.Daily(oLocalPlayer.UserId) do
-        local sId = tQuest.Id
-        tRows[i] = QuestRow(scope, sId, tQuest.Text, tQuest.Goal,
-            function(use) return (use(V.QuestProgress) or {})[sId] or 0 end,
-            function(use) return (use(V.QuestClaimed) or {})[sId] == true end,
-            tQuest.Reward, i)
-    end
+    -- Rebuild the daily rows when the (server-synced) UTC day rolls over.
+    local iDay = scope:Computed(function(use) return math.floor(use(V.Now) / 86400) end)
+    local tDaily = scope:Computed(function(use, innerScope)
+        local tList = {}
+        for i, tQuest in QuestPicker.Daily(oLocalPlayer.UserId, use(iDay)) do
+            local sId = tQuest.Id
+            tList[i] = QuestRow(innerScope, sId, tQuest.Text, tQuest.Goal,
+                function(use2) return (use2(V.QuestProgress) or {})[sId] or 0 end,
+                function(use2) return (use2(V.QuestClaimed) or {})[sId] == true end,
+                tQuest.Reward, i)
+        end
+        return tList
+    end)
     local tW = RetentionConfig.WeeklyQuest
-    tRows[#tRows + 1] = QuestRow(scope, tW.Id, "⭐ WEEKLY: " .. tW.Text, tW.Goal,
+    local tRows = { tDaily }
+    tRows[2] = QuestRow(scope, tW.Id, "⭐ WEEKLY: " .. tW.Text, tW.Goal,
         function(use) return use(V.WeeklyProgress) or 0 end,
         function(use) return use(V.WeeklyClaimed) == true end,
         tW.Reward, 10)

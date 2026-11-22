@@ -18,6 +18,7 @@ local AnalyticsConfig = require(ReplicatedStorage.Config.AnalyticsConfig)
 local tOnboardingDone: { [Player]: { [number]: boolean } } = {}
 local tUIBudget: { [Player]: { nCount: number, nWindowStart: number } } = {}
 local tIncomeBatch: { [Player]: number } = {}
+local EndSession -- defined with the session helpers below
 
 local function SafeCall(fn, ...)
     local bOk, sErr = pcall(fn, ...)
@@ -29,6 +30,13 @@ end
 local mAnalytics = Module()
 
 function mAnalytics.PreloadAsync(self)
+    -- Module PlayerRemoving only fires for players whose profile loaded; end every session here.
+    Players.PlayerRemoving:Connect(function(oPlayer)
+        EndSession(self, oPlayer)
+        tOnboardingDone[oPlayer] = nil
+        tUIBudget[oPlayer] = nil
+        tIncomeBatch[oPlayer] = nil
+    end)
     local oUIEvent = Remote:GetEvent("AnalyticsUI")
     oUIEvent:OnServerEvent(function(oPlayer: Player, tPayload)
         if typeof(tPayload) ~= "table" then return end
@@ -89,6 +97,7 @@ local function LengthBucket(nMinutes: number): string
 end
 
 function mAnalytics.PlayerAdded(self, oPlayer: Player)
+    if oPlayer.Parent ~= Players then return end -- left during profile load
     local sSource, sCampaign = JoinSource(oPlayer)
     tSession[oPlayer] = { nStart = os.clock(), sSource = sSource, sCampaign = sCampaign }
     oPlayer:SetAttribute("JoinSource", sSource)
@@ -99,7 +108,7 @@ function mAnalytics.GetSource(self, oPlayer: Player): string
     return tSession[oPlayer] and tSession[oPlayer].sSource or "Roblox"
 end
 
-local function EndSession(self, oPlayer: Player)
+function EndSession(self, oPlayer: Player)
     local t = tSession[oPlayer]
     if not t then return end
     tSession[oPlayer] = nil

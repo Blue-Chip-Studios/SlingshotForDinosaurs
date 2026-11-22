@@ -13,7 +13,8 @@ local RetentionConfig = require(ReplicatedStorage.Config.RetentionConfig)
 local QuestPicker = {}
 
 function QuestPicker.Today(): number
-    return math.floor(os.time() / 86400)
+    -- Server-synced clock on both sides (a phone's own clock can be wrong).
+    return math.floor(workspace:GetServerTimeNow() / 86400)
 end
 
 function QuestPicker.Week(): number

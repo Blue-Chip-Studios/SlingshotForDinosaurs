@@ -59,9 +59,14 @@ end
 
 -- ===== Gifting =====
 -- A gift pass is stored in the recipient's GiftedPasses (merged into Passes).
--- tGiftTarget[buyer] is set when the gift prompt opens; the receipt reads it.
-local tGiftTarget: { [Player]: { UserId: number, Pass: string, Expires: number } } = {}
+-- The recipient is saved in the BUYER's profile (PendingGifts[pass]) when the
+-- prompt opens, so a receipt retried after a leave/crash still finds them. It is
+-- cleared only once delivery succeeded.
+local PENDING_GIFT_MAX_AGE = 7 * 24 * 3600
 local oGiftStore = ProfileStore.New(ProfileConfig.StoreName, ProfileConfig.ProfileTemplate)
+local tProcessing: { [string]: boolean } = {} -- PurchaseIds being granted right now
+local tBoughtThisSession: { [Player]: { [string]: boolean } } = {}
+local tLastPrompt: { [Player]: number } = {}
 local RefreshPasses -- forward declaration
 
 local function OwnsPass(oPlayer: Player, sPass: string): boolean
@@ -88,25 +93,40 @@ local function ApplyGift(oTarget: Player, sPass: string, sFrom: string)
 end
 
 -- Buyer side: deliver now if the recipient is here, otherwise by ProfileStore message.
+local function ClearPendingGift(oBuyer: Player, sPass: string)
+    PlayerDataServer:Update(oBuyer, "PendingGifts", function(t)
+        t = t or {}
+        t[sPass] = nil
+        return t
+    end)
+end
+
 local function DeliverGift(oBuyer: Player, sPass: string): boolean
-    local tTarget = tGiftTarget[oBuyer]
-    tGiftTarget[oBuyer] = nil
-    if not tTarget or tTarget.Pass ~= sPass or os.clock() > tTarget.Expires then
-        -- No valid recipient recorded (e.g. server restarted mid-purchase): the buyer gets it.
+    local tTarget = (PlayerDataServer:Get(oBuyer, "PendingGifts") or {})[sPass]
+    local bValid = typeof(tTarget) == "table" and typeof(tTarget.UserId) == "number"
+        and os.time() - (tTarget.At or 0) < PENDING_GIFT_MAX_AGE
+    if not bValid then
+        -- No recipient recorded at all: the buyer gets it rather than losing the purchase.
         ApplyGift(oBuyer, sPass, oBuyer.DisplayName)
+        ClearPendingGift(oBuyer, sPass)
         return true
     end
     local oTarget = Players:GetPlayerByUserId(tTarget.UserId)
     if oTarget and PlayerDataServer:IsReady(oTarget) then
         ApplyGift(oTarget, sPass, oBuyer.DisplayName)
+        ClearPendingGift(oBuyer, sPass)
         return true
     end
-    local bOk = pcall(oGiftStore.MessageAsync, oGiftStore, ProfileConfig.Prefix .. tTarget.UserId, { Type = "Gift", Pass = sPass, From = oBuyer.DisplayName })
-    if bOk then
-        -- Recipient left: tell them (opted-in 13+ users only; no-op until configured).
-        task.spawn(NotificationServer.Send, NotificationServer, tTarget.UserId, "GiftReceived", { giver = oBuyer.DisplayName, pass = MonetizationConfig.Passes[sPass].Name })
+    -- Recipient offline: queue it on their profile. MessageAsync returns false (not an error)
+    -- while the server is closing, so check both.
+    local bOk, bSent = pcall(oGiftStore.MessageAsync, oGiftStore, ProfileConfig.Prefix .. tTarget.UserId, { Type = "Gift", Pass = sPass, From = oBuyer.DisplayName })
+    if not (bOk and bSent ~= false) then
+        return false -- receipt retried later; the pending recipient is kept
     end
-    return bOk -- false: receipt retried later rather than losing the gift
+    ClearPendingGift(oBuyer, sPass)
+    -- Tell them (opted-in 13+ users only; no-op until configured).
+    task.spawn(NotificationServer.Send, NotificationServer, tTarget.UserId, "GiftReceived", { giver = oBuyer.DisplayName, pass = MonetizationConfig.Passes[sPass].Name })
+    return true
 end
 
 -- Applies a product's effect. Returns true if granted (false = cannot grant now).
@@ -152,25 +172,32 @@ local function GrantProduct(oPlayer: Player, sKey: string): boolean
 end
 
 function RefreshPasses(oPlayer: Player)
-    local tOwned = {}
-    -- Gifted passes count as owned.
-    for sKey, b in PlayerDataServer:Get(oPlayer, "GiftedPasses") or {} do
-        if b then tOwned[sKey] = true end
-    end
+    -- Look ownership up first (yields), then merge in one write using data read AFTER the
+    -- yields, so a gift or purchase that lands meanwhile is never overwritten.
+    local tLookup: { [string]: boolean? } = {} -- true/false = answered, nil = lookup failed
     for sKey, tPass in MonetizationConfig.Passes do
         if tPass.Id ~= 0 then
             local bOk, bOwns = pcall(MarketplaceService.UserOwnsGamePassAsync, MarketplaceService, oPlayer.UserId, tPass.Id)
-            if bOk and bOwns then tOwned[sKey] = true end
+            if bOk then tLookup[sKey] = bOwns == true end
         end
     end
-    -- Keep passes simulated in Studio (Id = 0) for testing.
-    local tCurrent = PlayerDataServer:Get(oPlayer, "Passes") or {}
-    if RunService:IsStudio() then
+    if not PlayerDataServer:IsReady(oPlayer) then return end
+    local tGifted = PlayerDataServer:Get(oPlayer, "GiftedPasses") or {}
+    local tBought = tBoughtThisSession[oPlayer] or {}
+    PlayerDataServer:Update(oPlayer, "Passes", function(tCurrent)
+        tCurrent = tCurrent or {}
+        local tOwned = {}
         for sKey, tPass in MonetizationConfig.Passes do
-            if tPass.Id == 0 and tCurrent[sKey] then tOwned[sKey] = true end
+            local bAnswer = tLookup[sKey]
+            if tGifted[sKey] or tBought[sKey] or bAnswer == true then
+                tOwned[sKey] = true
+            elseif bAnswer == nil and tCurrent[sKey] then
+                -- Lookup failed (web hiccup) or Studio-simulated pass: keep what they had.
+                tOwned[sKey] = true
+            end
         end
-    end
-    PlayerDataServer:Set(oPlayer, "Passes", tOwned)
+        return tOwned
+    end)
     PlotServer:Refresh(oPlayer)
 end
 
@@ -198,7 +225,13 @@ local function ProcessReceipt(tReceipt)
         warn("[Monetization] unknown product", tReceipt.ProductId)
         return Enum.ProductPurchaseDecision.NotProcessedYet
     end
+    -- Grants can yield (gift delivery); never run the same receipt twice concurrently.
+    if tProcessing[sPurchaseId] then
+        return Enum.ProductPurchaseDecision.NotProcessedYet
+    end
+    tProcessing[sPurchaseId] = true
     local bOk, bGranted = pcall(GrantProduct, oPlayer, sKey)
+    tProcessing[sPurchaseId] = nil
     if not (bOk and bGranted) then
         warn("[Monetization] grant failed", sKey, bGranted)
         AnalyticsServer:Funnel(oPlayer, "Purchase", sKey, 3, "Failed")
@@ -224,6 +257,9 @@ function mMonetization.PreloadAsync(self)
     -- Prompt({ Kind = "Product" | "Pass", Key }) from the client.
     Remote:GetEvent("PromptPurchase"):OnServerEvent(function(oPlayer: Player, tPayload)
         if typeof(tPayload) ~= "table" or typeof(tPayload.Key) ~= "string" then return end
+        -- One prompt per second: stops prompt spam and fake "Prompted" funnel events.
+        if os.clock() - (tLastPrompt[oPlayer] or -math.huge) < 1 then return end
+        tLastPrompt[oPlayer] = os.clock()
         local sKey = tPayload.Key
         if tPayload.Kind == "Pass" then
             local tPass = MonetizationConfig.Passes[sKey]
@@ -244,8 +280,15 @@ function mMonetization.PreloadAsync(self)
             if tProduct.Kind == "Gift" then
                 -- Validate the recipient: in this server, not the buyer, and not already owning the pass.
                 local oTarget = typeof(tPayload.Target) == "number" and Players:GetPlayerByUserId(tPayload.Target)
-                if not oTarget or oTarget == oPlayer or not PlayerDataServer:IsReady(oTarget) or OwnsPass(oTarget, tProduct.Pass) then return end
-                tGiftTarget[oPlayer] = { UserId = oTarget.UserId, Pass = tProduct.Pass, Expires = os.clock() + 300 }
+                if not oTarget or oTarget == oPlayer or not PlayerDataServer:IsReady(oTarget) or OwnsPass(oTarget, tProduct.Pass) then
+                    oPurchaseResult:FireClient(oPlayer, { Key = sKey, Ok = false, Reason = "They already have this pass!" })
+                    return
+                end
+                PlayerDataServer:Update(oPlayer, "PendingGifts", function(t)
+                    t = t or {}
+                    t[tProduct.Pass] = { UserId = oTarget.UserId, At = os.time() }
+                    return t
+                end)
             end
             if tProduct.OneTime and PlayerDataServer:Get(oPlayer, "StarterPackBought") then return end
             if tProduct.Kind == "Slingshot" or tProduct.Kind == "Bait" then
@@ -270,6 +313,9 @@ function mMonetization.PreloadAsync(self)
         local sKey = tPassById[iPassId]
         if not sKey then return end
         if bPurchased then
+            -- Remember for this session: UserOwnsGamePassAsync can be cached as false for a while.
+            tBoughtThisSession[oPlayer] = tBoughtThisSession[oPlayer] or {}
+            tBoughtThisSession[oPlayer][sKey] = true
             GrantPass(oPlayer, sKey)
             AnalyticsServer:Funnel(oPlayer, "Purchase", sKey, 3, "Succeeded")
             oPurchaseResult:FireClient(oPlayer, { Key = sKey, Ok = true })
@@ -296,7 +342,8 @@ function mMonetization.StartAsync(self)
         end
     end)
     Players.PlayerRemoving:Connect(function(oPlayer)
-        tGiftTarget[oPlayer] = nil
+        tBoughtThisSession[oPlayer] = nil
+        tLastPrompt[oPlayer] = nil
     end)
 end
 

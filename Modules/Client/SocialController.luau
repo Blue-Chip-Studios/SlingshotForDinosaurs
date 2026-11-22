@@ -34,7 +34,9 @@ function mSocial.Invite(self)
     end)
     local oOptions = Instance.new("ExperienceInviteOptions")
     oOptions.PromptMessage = "Come catch dinos with me! Friends get bonus luck!"
-    pcall(SocialService.PromptGameInvite, SocialService, oLocalPlayer, oOptions)
+    if not pcall(SocialService.PromptGameInvite, SocialService, oLocalPlayer, oOptions) then
+        oConn:Disconnect() -- prompt never opened; don't leave a listener behind
+    end
 end
 
 function mSocial.PromptGroup(self)

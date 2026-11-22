@@ -15,7 +15,7 @@ local tCfg = MonetizationConfig.ExclusiveRotation
 
 -- Returns the current entry and the unix time its window ends.
 function ExclusiveRotation.Current(nNow: number?): ({ [string]: any }, number)
-    local nTime = nNow or os.time()
+    local nTime = nNow or workspace:GetServerTimeNow() -- server-synced on clients too
     local nPeriod = tCfg.PeriodDays * 86400
     local iWindow = math.max(0, math.floor((nTime - tCfg.AnchorUnix) / nPeriod))
     local tEntry = tCfg.List[(iWindow % #tCfg.List) + 1]

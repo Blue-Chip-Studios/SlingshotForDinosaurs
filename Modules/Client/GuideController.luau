@@ -14,6 +14,8 @@ local Players = game:GetService("Players")
 local ProximityPromptService = game:GetService("ProximityPromptService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local GuiService = game:GetService("GuiService")
 local Workspace = game:GetService("Workspace")
 
 local Module = require(ReplicatedStorage.Shared.Module)
@@ -58,7 +60,8 @@ local function CurrentGoal(): (string, Vector3?)
     local iStep = DataClient:Get("FTUEStep") or 0
     local iPlot = oPlayer:GetAttribute("PlotIndex")
     if iStep < STEPS.FirstLaunch then
-        return "HOLD to pull, LET GO to launch!", iPlot and WorldLayout.Plot(iPlot).LaunchStand
+        local bPad = GuiService:IsTenFootInterface() or UserInputService:GetLastInputType().Name:sub(1, 7) == "Gamepad"
+        return if bPad then "HOLD R2 to pull, RELEASE to launch!" else "HOLD to pull, LET GO to launch!", iPlot and WorldLayout.Plot(iPlot).LaunchStand
     elseif iStep < STEPS.FirstTrain then
         if iStep >= STEPS.FirstPlacement then
             return "Stand on a TRAINING PAD to get stronger!", WorldLayout.Pad(1)
@@ -86,7 +89,13 @@ function mGuide.PreloadAsync(self)
         end
     end)
     Remote:GetEvent("PurchaseResult"):OnClientEvent(function(t)
-        if not t.Ok then return end
+        if not t.Ok then
+            if typeof(t.Reason) == "string" then
+                Announce(t.Reason, "Event")
+                SoundController:Play("Error")
+            end
+            return
+        end
         local tItem = MonetizationConfig.Products[t.Key] or MonetizationConfig.Passes[t.Key]
         local sSim = if t.Simulated then " (Studio test)" else ""
         Announce(`Thanks! {tItem and tItem.Name or t.Key} unlocked{sSim}`, "Purchase")
