@@ -100,3 +100,14 @@ Significant autonomous (BCDK Recommended) decisions, newest last. Each entry: wh
 58. **Icon refresh.** The whole Blender icon set rendered pastel: palette values were fed to materials as linear (not sRGB), and strong sky light plus emission clipped colours toward white. `icons.py` now gamma-converts the palette and uses toon lighting (dim ambient, softer sun, emission 0.75) during icon renders only. All 16 HUD icons were re-rendered.
     - New: one slingshot icon per tier (twig, bamboo, bone, tar-rubber, mammoth tusk, obsidian, meteorite) and a park icon for Park Slots, replacing a single grey slingshot and an emoji.
     - The same icons are set on every pass and developer product through Open Cloud: 31 items, including per-tier slingshot products, the luck potions and the gift products.
+
+## 2026-11-22: Dinosaur rebuild (pilot)
+
+59. **Dino v2 generator** (`Assets/Blender/scripts/dino_v2.py`). The v1 dinos were pastel (sRGB/linear bug), faceted (coarse metaballs plus heavy decimation), stood on brick feet, and shared one theropod silhouette (T-Rex and Compy looked alike).
+    - **Shapes:** fine metaballs (resolution 0.1), decimated per region to about 3.4–4.2k triangles per dino, then smoothed on the soft regions.
+    - **Silhouettes:** long tapered tails, toed feet, toy heads with big eyes.
+    - **Species features:** teeth, brows, stripes and spots, and a scalloped frill with horns and a beak.
+    - **Separate leg meshes:** LegL/LegR, or LegFL/LegFR/LegBL/LegBR.
+    - **Portraits:** toon outline and the corrected colours, matching the icons.
+    - **Pilots:** Compy, T-Rex and Triceratops. The other 12 stay on v1 until the look is approved.
+60. **Walking legs.** `DinoModels.Pose` swings each leg about its hip; bipeds alternate legs, quadrupeds move diagonal pairs together. The park wander drives it, so the old whole-body waddle is reduced to a small bob. `PlaceAt` now caches each model's rest feet offset so swinging legs can't make it bob into the ground. v1 models have no legs, so `Pose` does nothing for them.

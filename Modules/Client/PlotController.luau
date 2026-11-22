@@ -187,6 +187,7 @@ function mPlot.StartAsync(self)
                         tw.vTarget = OnGround(tLayout.Center + Vector3.new(oRandom:NextNumber(-vHalf.X, vHalf.X), 0, oRandom:NextNumber(-vHalf.Z, vHalf.Z)))
                     end
                     local nBob, nRoll = math.abs(math.sin(nT * 2 + t.nPhase)) * 0.12, 0
+                    local nStride, nSwing = 0, 0
                     if tw.vTarget then
                         local vTo = tw.vTarget - tw.vPos
                         local nDist = Vector3.new(vTo.X, 0, vTo.Z).Magnitude
@@ -199,12 +200,15 @@ function mPlot.StartAsync(self)
                             tw.vPos += vDir * math.min(nDist, nSpeed * nDt)
                             -- Turn smoothly toward the walk direction.
                             t.vLook = t.vLook:Lerp(vDir, math.min(1, nDt * 5))
-                            local nStep = nT * 9 + t.nPhase
-                            nBob = math.abs(math.sin(nStep)) * 0.35
-                            nRoll = math.sin(nStep) * 0.07
+                            -- Legs stride (v2 models); a small bob per step and a little sway on top.
+                            nStride = nT * 9 + t.nPhase
+                            nSwing = 0.5
+                            nBob = math.abs(math.sin(nStride)) * 0.18
+                            nRoll = math.sin(nStride) * 0.035
                         end
                     end
                     DinoModels.PlaceAt(t.oModel, tw.vPos + Vector3.new(0, nBob, 0), t.vLook)
+                    DinoModels.Pose(t.oModel, nStride, nSwing)
                     if nRoll ~= 0 then
                         t.oModel:PivotTo(t.oModel:GetPivot() * CFrame.Angles(0, 0, nRoll))
                     end

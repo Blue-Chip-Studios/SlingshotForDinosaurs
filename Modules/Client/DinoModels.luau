@@ -198,7 +198,8 @@ function DinoModels.Build(tDino: { Species: string, Size: string, Mutation: stri
                 o.CanTouch = false
                 o.Material = Enum.Material.SmoothPlastic
                 o.Name = o.Name:gsub("%.%d+$", "") -- Blender duplicate-name suffixes ("Body.001")
-                o.Color = tRegionColours[o.Name] or o.Color
+                -- v2 models have separate legs (LegL/LegR, LegFL/LegFR/LegBL/LegBR) coloured like the body.
+                o.Color = tRegionColours[o.Name] or (if o.Name:match("^Leg") then tRegionColours.Body else o.Color)
             end
         end
         local _, vSize = oModel:GetBoundingBox()
@@ -215,10 +216,45 @@ function DinoModels.Build(tDino: { Species: string, Size: string, Mutation: stri
     return oModel
 end
 
+-- Rest-pose data per model, captured the first time it's placed: the pivot's height above
+-- the feet (so swinging legs can't change it and bob the dino) and each leg's offset and hip.
+type LegRest = { oPart: BasePart, cfRel: CFrame, vHip: Vector3, nPhase: number }
+local tRest: { [Model]: { nAboveFeet: number, tLegs: { LegRest } } } = setmetatable({}, { __mode = "k" }) :: any
+
+-- Diagonal pairs move together on quadrupeds; left/right alternate on bipeds.
+local LEG_PHASE = { LegL = 0, LegR = math.pi, LegFL = 0, LegBR = 0, LegFR = math.pi, LegBL = math.pi }
+
+local function Rest(oModel: Model)
+    local t = tRest[oModel]
+    if t then return t end
+    local cfBox, vSize = oModel:GetBoundingBox()
+    local cfPivot = oModel:GetPivot()
+    t = { nAboveFeet = cfPivot.Position.Y - (cfBox.Position.Y - vSize.Y / 2), tLegs = {} }
+    for _, o in oModel:GetChildren() do
+        if o:IsA("BasePart") and LEG_PHASE[o.Name] then
+            -- Hip: near the top of the leg mesh, where it joins the body.
+            local vHipWorld = o.Position + Vector3.new(0, o.Size.Y * 0.42, 0)
+            table.insert(t.tLegs, { oPart = o, cfRel = cfPivot:ToObjectSpace(o.CFrame), vHip = cfPivot:PointToObjectSpace(vHipWorld), nPhase = LEG_PHASE[o.Name] })
+        end
+    end
+    tRest[oModel] = t
+    return t
+end
+
+-- Swings the legs around their hips. nPhase advances with walking; nAmount is the swing in radians (0 = standing).
+function DinoModels.Pose(oModel: Model, nPhase: number, nAmount: number)
+    local t = Rest(oModel)
+    if #t.tLegs == 0 then return end
+    local cfPivot = oModel:GetPivot()
+    for _, tLeg in t.tLegs do
+        local nAngle = math.sin(nPhase + tLeg.nPhase) * nAmount
+        tLeg.oPart.CFrame = cfPivot * CFrame.new(tLeg.vHip) * CFrame.Angles(nAngle, 0, 0) * CFrame.new(-tLeg.vHip) * tLeg.cfRel
+    end
+end
+
 -- Stands the model on the ground at vFeet, facing vLookDir (flat).
 function DinoModels.PlaceAt(oModel: Model, vFeet: Vector3, vLookDir: Vector3?)
-    local cfBox, vSize = oModel:GetBoundingBox()
-    local nPivotAboveFeet = oModel:GetPivot().Position.Y - (cfBox.Position.Y - vSize.Y / 2)
+    local nPivotAboveFeet = Rest(oModel).nAboveFeet
     local vLook = vLookDir and Vector3.new(vLookDir.X, 0, vLookDir.Z) or Vector3.new(0, 0, -1)
     if vLook.Magnitude < 1e-3 then vLook = Vector3.new(0, 0, -1) end
     local vPivot = vFeet + Vector3.new(0, nPivotAboveFeet, 0)

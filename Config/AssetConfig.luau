@@ -12,7 +12,7 @@
 return {
     -- Dinosaur models: MeshParts named Body / Belly / Accent / EyeWhite / Pupil, facing -Z.
     Dinos = {
-        Compy = 71351312922196,
+        Compy = 92842992229098, -- v2 (dino_v2.py): smooth body, separate legs
         Velociraptor = 118092507836783,
         Parasaurolophus = 124074268962687,
         Dilophosaurus = 75917254456602,
@@ -20,13 +20,13 @@ return {
         Spinosaurus = 97925777024059,
         Pachycephalosaurus = 99220922747784,
         Ankylosaurus = 74087371517627,
-        Triceratops = 80048859889830,
+        Triceratops = 121257269740875, -- v2
         Cryolophosaurus = 97659964731129,
         Therizinosaurus = 109355777925933,
         Brachiosaurus = 139698062396202,
         Carnotaurus = 83846600915891,
         Giganotosaurus = 115556602917589,
-        TRex = 96481650609872,
+        TRex = 109273798018289, -- v2
     },
 
     -- World props (Model assets), keyed by the names WorldBuilder.PlaceProp asks for.
@@ -59,7 +59,7 @@ return {
     -- Images (rbxassetid) for UI icons / portraits.
     Images = {
         -- Dino portraits (reveal card, Index)
-        Compy = 134169444682833,
+        Compy = 117633387552864,
         Velociraptor = 126605374000454,
         Parasaurolophus = 108181033958707,
         Dilophosaurus = 118092053094630,
@@ -67,13 +67,13 @@ return {
         Spinosaurus = 140016482712117,
         Pachycephalosaurus = 127521791130391,
         Ankylosaurus = 95493409847912,
-        Triceratops = 93795548833941,
+        Triceratops = 114265819575656,
         Cryolophosaurus = 117724001183925,
         Therizinosaurus = 101136339215022,
         Brachiosaurus = 99376331130817,
         Carnotaurus = 130283684404995,
         Giganotosaurus = 110040162228560,
-        TRex = 103587251575983,
+        TRex = 115798599236582,
         -- Shop items
         SlingshotItem = 99032474657018,
         Bait_Berries = 96598653687184,
