@@ -72,7 +72,7 @@ local function Card(scope, props)
             UI.Corner(scope, Theme.Radius.Card),
             scope:New("UIStroke")({ Thickness = props.Selected and scope:Computed(function(use) return if use(props.Selected) then 5 else 3 end) or 3,
                 Color = props.Selected and scope:Computed(function(use) return if use(props.Selected) then Theme.Variants.Green[1] else Theme.Ink end) or Theme.Ink }),
-            scope:New("UIGradient")({ Rotation = 90, Color = ColorSequence.new(Theme.Panel, Theme.PanelDeep) }),
+            scope:New("UIGradient")({ Rotation = 90, Color = ColorSequence.new(Color3.new(1, 1, 1), Theme.PanelDeep) }),
             props[Children],
         },
     })
@@ -200,7 +200,7 @@ local function Shop(scope)
     end
     return UI.Modal(scope, {
         Name = "Shop",
-        Title = "🛒 Shop",
+        Title = "Shop",
         Variant = "Green",
         Size = UDim2.fromOffset(1000, 600),
         OnClose = Nav.Close,
@@ -280,7 +280,7 @@ local function Index(scope)
         Title = scope:Computed(function(use)
             local n = 0
             for _ in use(V.Index) do n += 1 end
-            return `📖 Dino Index  {n}/{15 * #DinoConfig.Mutations}`
+            return `Dino Index  {n}/{15 * #DinoConfig.Mutations}`
         end),
         Variant = "Blue",
         Size = UDim2.fromOffset(1000, 600),
@@ -351,7 +351,7 @@ local function Passes(scope)
     end
     return UI.Modal(scope, {
         Name = "Passes",
-        Title = "⭐ Passes",
+        Title = "Passes",
         Variant = "Gold",
         Size = UDim2.fromOffset(1100, 560),
         OnClose = Nav.Close,
@@ -437,7 +437,7 @@ local function Offer(scope)
     }
     return UI.Modal(scope, {
         Name = "Offer",
-        Title = "🎁 Offers",
+        Title = "Offers",
         Variant = "Purple",
         Size = UDim2.fromOffset(1000, 520),
         OnClose = Nav.Close,
@@ -475,7 +475,7 @@ local function Reroll(scope)
     end)
     return UI.Modal(scope, {
         Name = "Reroll",
-        Title = scope:Computed(function(use) return `🧪 Mutation Reroll  (x{use(V.Rerolls)})` end),
+        Title = scope:Computed(function(use) return `Mutation Reroll  (x{use(V.Rerolls)})` end),
         Variant = "Blue",
         Size = UDim2.fromOffset(1000, 600),
         OnClose = Nav.Close,
@@ -556,19 +556,19 @@ local function Admin(scope)
         SoundController:Play("Click")
     end
     local tButtons = {
-        { "☄️ Meteor Storm 5m", "Red", { Action = "MeteorStorm", Minutes = 5 } },
-        { "❄️ Ice Age 5m", "Blue", { Action = "IceAge", Minutes = 5 } },
-        { "☀️ Clear sky", "Grey", { Action = "Clear" } },
-        { "🍀 Luck x2 15m", "Green", { Action = "Luck", Multiplier = 2, Minutes = 15 } },
-        { "🍀 Luck x5 15m", "Green", { Action = "Luck", Multiplier = 5, Minutes = 15 } },
-        { "🍀 Luck x10 5m", "Gold", { Action = "Luck", Multiplier = 10, Minutes = 5 } },
-        { "🦖 Rare spawn (all)", "Purple", { Action = "RareSpawn" } },
+        { "Meteor Storm 5m", "Red", { Action = "MeteorStorm", Minutes = 5 } },
+        { "Ice Age 5m", "Blue", { Action = "IceAge", Minutes = 5 } },
+        { "Clear sky", "Grey", { Action = "Clear" } },
+        { "Luck x2 15m", "Green", { Action = "Luck", Multiplier = 2, Minutes = 15 } },
+        { "Luck x5 15m", "Green", { Action = "Luck", Multiplier = 5, Minutes = 15 } },
+        { "Luck x10 5m", "Gold", { Action = "Luck", Multiplier = 10, Minutes = 5 } },
+        { "Rare spawn (all)", "Purple", { Action = "RareSpawn" } },
     }
     if RunService:IsStudio() then
         -- QA helpers (the server also refuses these outside Studio).
-        table.insert(tButtons, { "🧪 QA: +3 rerolls", "Blue", { Action = "QA_Rerolls" } })
-        table.insert(tButtons, { "🦕 QA: fill park", "Orange", { Action = "QA_FillPark" } })
-        table.insert(tButtons, { "♻️ QA: reset my save", "Red", { Action = "QA_ResetSave" } })
+        table.insert(tButtons, { "QA: +3 rerolls", "Blue", { Action = "QA_Rerolls" } })
+        table.insert(tButtons, { "QA: fill park", "Orange", { Action = "QA_FillPark" } })
+        table.insert(tButtons, { "QA: reset my save", "Red", { Action = "QA_ResetSave" } })
     end
     local tChildren = {}
     for i, t in tButtons do
@@ -576,7 +576,7 @@ local function Admin(scope)
     end
     return UI.Modal(scope, {
         Name = "Admin",
-        Title = "🛠 Admin Abuse",
+        Title = "Admin Abuse",
         Variant = "Purple",
         Size = UDim2.fromOffset(1000, 520),
         OnClose = Nav.Close,
@@ -603,7 +603,7 @@ local function Admin(scope)
                 [Out("Text")] = sText,
                 [Children] = { UI.Corner(scope, 12), UI.Stroke(scope, 3), scope:New("UIPadding")({ PaddingLeft = UDim.new(0, 12) }) },
             }),
-            UI.Button(scope, { Variant = "Orange", Text = "📢 Announce", TextSize = 24, Position = UDim2.new(1, -310, 0, 270), Size = UDim2.fromOffset(310, 64),
+            UI.Button(scope, { Variant = "Orange", Text = "Announce", TextSize = 24, Position = UDim2.new(1, -310, 0, 270), Size = UDim2.fromOffset(310, 64),
                 OnClick = function()
                     local s = peek(sText)
                     if s ~= "" then Do({ Action = "Announce", Text = s }) end

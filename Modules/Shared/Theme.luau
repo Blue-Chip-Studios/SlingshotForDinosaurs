@@ -13,22 +13,26 @@ local function hex(s: string): Color3
     return Color3.fromHex(s)
 end
 
-Theme.Ink = hex("1E1B2E")
+Theme.Ink = hex("141218")
 Theme.White = hex("FFFFFF")
-Theme.Panel = hex("F4F1EA")
-Theme.PanelDeep = hex("E4DDCF")
-Theme.Cash = hex("5CFF5C")
+-- Window body / cards: cool light greys (ref 04), framed by Ink.
+Theme.Panel = hex("ECEDF2")
+Theme.PanelDeep = hex("CFD1DC")
+Theme.Cash = hex("6BFF3D")
 Theme.Power = hex("FFE14D")
 
--- Button colour variants: { Light, Dark } for the vertical gradient.
+-- Button colour variants: { Face, Base }. Flat, saturated faces (refs 01/06) with a
+-- darker same-hue base underneath instead of a black lip.
 Theme.Variants = {
-    Green = { hex("3DDC4E"), hex("1FA82F") },
-    Blue = { hex("3FB8FF"), hex("1C86E0") },
-    Gold = { hex("FFD23F"), hex("F5A200") },
-    Orange = { hex("FFA62B"), hex("F07800") },
-    Red = { hex("FF4B4B"), hex("D11A1A") },
-    Purple = { hex("B266FF"), hex("7C2BE0") },
-    Grey = { hex("8A8797"), hex("5E5B6B") },
+    Green = { hex("52E52F"), hex("2A9E14") },
+    Blue = { hex("2FC2FF"), hex("1577C9") },
+    Gold = { hex("FFD91F"), hex("D69A00") },
+    Orange = { hex("FF9F1C"), hex("C96500") },
+    Red = { hex("FF3B3B"), hex("B31212") },
+    Purple = { hex("A95CFF"), hex("6A22C9") },
+    Grey = { hex("9A9AAA"), hex("5C5C6E") },
+    Teal = { hex("1FE0C8"), hex("0D8F80") },
+    Pink = { hex("FF5FB8"), hex("BF2479") },
 }
 
 Theme.Mutation = {
@@ -57,8 +61,9 @@ Theme.Size = {
 Theme.Display = Font.fromEnum(Enum.Font.FredokaOne)
 Theme.Body = Font.new("rbxasset://fonts/families/BuilderSans.json", Enum.FontWeight.Bold)
 
-Theme.Radius = { Button = 14, Card = 16, Modal = 20 }
-Theme.Stroke = { Button = 3, Card = 3, Modal = 4, Text = 3 }
-Theme.Lip = 5
+-- Squarer, chunkier shapes (refs 01/04/06) rather than soft capsules.
+Theme.Radius = { Button = 6, Card = 8, Modal = 10 }
+Theme.Stroke = { Button = 3.5, Card = 3, Modal = 5, Text = 3 }
+Theme.Lip = 6
 
 return Theme

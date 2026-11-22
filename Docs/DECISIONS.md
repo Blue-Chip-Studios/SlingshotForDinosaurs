@@ -91,3 +91,9 @@ Significant autonomous (BCDK Recommended) decisions, newest last. Each entry: wh
     - A failed invite prompt no longer leaves a listener behind.
 53. **Stress test:** 4,800 junk remote calls in 0.1 s (wrong types, NaN, 5,000-character strings) caused no errors, granted nothing, and the server held 59 Hz. PromptPurchase is now limited to 1 per second per player (it previously opened a prompt and logged a funnel event per call).
 54. **Performance (Studio, this PC):** client 59–60 fps with a full park (worst frame 19 ms); server 59 Hz (worst 32 ms); about 1,590 workspace instances and 836 parts. A real low-end phone test is still needed.
+
+## 2026-11-22: Playtest feedback fixes
+
+55. **Dinos sank into the park.** The rim terrain was filled to RimY, but Roblox's 4-stud terrain voxels put the grass surface about 2 studs higher, so dinos (and the launch pads) placed at RimY sat inside the ground and small dinos vanished. The rim is now filled to RimY − 2, so the surface lands at RimY, and park dinos are also snapped onto the terrain by raycast at their home spot and wander targets.
+56. **Clicking the world started the slingshot.** Holding the left mouse button anywhere began charging, which blocked camera control. Charging now starts only from the HOLD button, Space or R2. A click or tap anywhere still bounces mid-flight. Letting go anywhere fires (so sliding off the button can't leave a charge stuck), and the launcher ignores input while the Welcome Back popup is up (a tap on Collect used to fall through to HOLD).
+57. **UI restyle** to match the references (see the note at the top of Docs/UI/DesignSystem.md): squarer flat buttons on a same-hue base, breakout menu icons, distinct colours per button, bare outlined currency and timer, dark-framed windows, no emoji.

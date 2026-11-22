@@ -72,6 +72,7 @@ local tValues = {
     Charging = false,
     Charge = 0,
     Flying = false,
+    PopupOpen = false, -- Welcome Back popup showing (blocks the HOLD button underneath)
     BounceWindowOpen = false,
     BounceFeedback = "", -- "Perfect" | "Good" | "OK" | "Miss" | ""
     LiveMeters = 0,

@@ -39,7 +39,7 @@ local function Build(sText: string): ScreenGui
     oLabel.FontFace = Theme.Display
     oLabel.TextScaled = true
     oLabel.TextColor3 = Color3.new(1, 1, 1)
-    oLabel.Text = "🦖 " .. sText
+    oLabel.Text = sText
     local oStroke = Instance.new("UIStroke")
     oStroke.Thickness = 3
     oStroke.Color = Theme.Ink

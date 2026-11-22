@@ -206,13 +206,18 @@ end
 local function WelcomeBack(scope)
     local bDismissed = scope:Value(false)
     local oCollect = Remote:GetEvent("CollectOffline")
+    local bShown = scope:Computed(function(use)
+        return use(V.PendingOffline) > 0 and not use(bDismissed) and not use(V.Flying)
+    end)
+    -- Tell the HUD/launcher a popup is up, so taps on it never reach the HOLD button below.
+    scope:Observer(bShown):onBind(function()
+        V.PopupOpen:set(peek(bShown))
+    end)
     return scope:New("Frame")({
         Name = "WelcomeBack",
         BackgroundTransparency = 1,
         Size = UDim2.fromScale(1, 1),
-        Visible = scope:Computed(function(use)
-            return use(V.PendingOffline) > 0 and not use(bDismissed) and not use(V.Flying)
-        end),
+        Visible = bShown,
         [Children] = {
             UI.Backdrop(scope, { OnClick = function() end }),
             UI.Modal(scope, {

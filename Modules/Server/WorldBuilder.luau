@@ -156,7 +156,9 @@ local function BuildRim()
     local oRim = Folder("Rim", oWorld)
     local nY = CanyonMath.RimY
     local vMin = Vector3.new(WorldLayout.RimMinX, 0, WorldLayout.RimMinZ)
-    local vMax = Vector3.new(WorldLayout.RimMaxX, nY, WorldLayout.RimMaxZ)
+    -- Terrain voxels are 4 studs and the grass surface renders ~2 studs above the fill top,
+    -- so fill to RimY - 2 to put the walkable surface at RimY (where props and dinos are placed).
+    local vMax = Vector3.new(WorldLayout.RimMaxX, nY - 2, WorldLayout.RimMaxZ)
     -- Rim plateau as terrain grass (soft, textured, cheap) instead of a flat part.
     Workspace.Terrain:FillBlock(CFrame.new((vMin + vMax) / 2), vMax - vMin, Enum.Material.Grass)
     -- Cliff face down into the canyon: Blender cliff modules with an invisible collider behind them.

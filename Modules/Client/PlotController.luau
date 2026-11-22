@@ -27,6 +27,16 @@ type Rendered = { oModel: Model, sKey: string, vHome: Vector3, nPhase: number, v
 local tPlots: { [number]: { [number]: Rendered } } = {} -- [plotIndex][dinoId]
 local ANIMATE_DISTANCE = 220
 
+-- Snap a point onto the real ground (the rim's grass Terrain sits above CanyonMath.RimY,
+-- so placing dinos at the layout height buried small ones).
+local oGroundParams = RaycastParams.new()
+oGroundParams.FilterType = Enum.RaycastFilterType.Include
+oGroundParams.FilterDescendantsInstances = { Workspace.Terrain }
+local function OnGround(v: Vector3): Vector3
+    local oHit = Workspace:Raycast(Vector3.new(v.X, v.Y + 40, v.Z), Vector3.new(0, -120, 0), oGroundParams)
+    return if oHit then Vector3.new(v.X, oHit.Position.Y, v.Z) else v
+end
+
 local function Key(t): string
     return `{t.Species}:{t.Size}:{t.Mutation}`
 end
@@ -91,7 +101,7 @@ local function Render(iPlot: number, tData)
     for i, tDino in tList do
         tSeen[tDino.Id] = true
         local tExisting = tRendered[tDino.Id]
-        local vHome = WorldLayout.DinoSpot(iPlot, i, math.max(#tList, 6))
+        local vHome = OnGround(WorldLayout.DinoSpot(iPlot, i, math.max(#tList, 6)))
         if tExisting and tExisting.sKey == Key(tDino) then
             tExisting.vHome = vHome
         else
@@ -174,7 +184,7 @@ function mPlot.StartAsync(self)
                     tw.nNextMove = tw.nNextMove or (nT + oRandom:NextNumber(0.5, 4))
                     if not tw.vTarget and nT >= tw.nNextMove then
                         local vHalf = tLayout.Size / 2 - Vector3.new(5, 0, 6)
-                        tw.vTarget = tLayout.Center + Vector3.new(oRandom:NextNumber(-vHalf.X, vHalf.X), 0, oRandom:NextNumber(-vHalf.Z, vHalf.Z))
+                        tw.vTarget = OnGround(tLayout.Center + Vector3.new(oRandom:NextNumber(-vHalf.X, vHalf.X), 0, oRandom:NextNumber(-vHalf.Z, vHalf.Z)))
                     end
                     local nBob, nRoll = math.abs(math.sin(nT * 2 + t.nPhase)) * 0.12, 0
                     if tw.vTarget then

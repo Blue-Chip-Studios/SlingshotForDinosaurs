@@ -193,18 +193,18 @@ function UI.Button(scope, props)
         end,
         [Children] = {
             scope:New("UIScale")({ Scale = nScale }),
-            -- Lip
+            -- Base: a darker same-hue block under the face (chunky 3D edge), outlined in Ink.
             scope:New("Frame")({
                 Name = "Lip",
-                BackgroundColor3 = Theme.Ink,
+                BackgroundColor3 = scope:Computed(function(use) return fnVariant(use)[2] end),
                 Size = UDim2.new(1, 0, 1, -nLip),
                 Position = UDim2.fromOffset(0, nLip),
-                [Children] = { UI.Corner(scope, Theme.Radius.Button) },
+                [Children] = { UI.Corner(scope, Theme.Radius.Button), UI.Stroke(scope, Theme.Stroke.Button) },
             }),
             -- Face
             scope:New("Frame")({
                 Name = "Face",
-                BackgroundColor3 = Color3.new(1, 1, 1),
+                BackgroundColor3 = scope:Computed(function(use) return fnVariant(use)[1] end),
                 Size = UDim2.new(1, 0, 1, -nLip),
                 Position = scope:Computed(function(use)
                     return UDim2.fromOffset(0, use(oFaceOffset))
@@ -212,21 +212,14 @@ function UI.Button(scope, props)
                 [Children] = {
                     UI.Corner(scope, Theme.Radius.Button),
                     UI.Stroke(scope, Theme.Stroke.Button),
-                    scope:New("UIGradient")({
-                        Rotation = 90,
-                        Color = scope:Computed(function(use)
-                            local t = fnVariant(use)
-                            return ColorSequence.new(t[1], t[2])
-                        end),
-                    }),
-                    -- Top shine
+                    -- Crisp top highlight band (not a soft rounded gloss).
                     scope:New("Frame")({
                         Name = "Shine",
                         BackgroundColor3 = Color3.new(1, 1, 1),
-                        BackgroundTransparency = 0.75,
-                        Size = UDim2.new(1, -12, 0.28, 0),
-                        Position = UDim2.fromOffset(6, 4),
-                        [Children] = { UI.Corner(scope, 8) },
+                        BackgroundTransparency = 0.8,
+                        BorderSizePixel = 0,
+                        Size = UDim2.new(1, 0, 0.42, 0),
+                        [Children] = { UI.Corner(scope, Theme.Radius.Button) },
                     }),
                     scope:New("Frame")({
                         Name = "Content",
@@ -240,7 +233,9 @@ function UI.Button(scope, props)
                                 Padding = UDim.new(0, 8),
                                 SortOrder = Enum.SortOrder.LayoutOrder,
                             }),
-                            if props.IconKey then scope:New("ImageLabel")({
+                            -- IconLeft: the icon breaks out of the left edge instead (below), so leave room.
+                            if props.IconLeft then scope:New("UIPadding")({ PaddingLeft = UDim.new(0, (props.IconSize or 64) * 0.62) }) else nil,
+                            if props.IconKey and not props.IconLeft then scope:New("ImageLabel")({
                                 Name = "IconImage",
                                 BackgroundTransparency = 1,
                                 Image = (function()
@@ -262,21 +257,37 @@ function UI.Button(scope, props)
                             if props.Text then UI.Text(scope, {
                                 Name = "Label",
                                 Text = props.Text,
-                                TextSize = props.TextSize or 28,
+                                TextSize = props.TextSize or 30,
                                 Size = UDim2.new(0, 0, 1, 0),
                                 AutomaticSize = Enum.AutomaticSize.X,
-                                StrokeThickness = 2.5,
+                                StrokeThickness = 3,
                                 LayoutOrder = 2,
                             }) else nil,
                         },
                     }),
                 },
             }),
+            -- Oversized icon overlapping the left edge (HUD side menu, refs 01/06).
+            if props.IconKey and props.IconLeft then scope:New("ImageLabel")({
+                Name = "IconImage",
+                BackgroundTransparency = 1,
+                Image = (function()
+                    local iId = require(ReplicatedStorage.Config.AssetConfig).Images[props.IconKey]
+                    return if iId then "rbxassetid://" .. iId else ""
+                end)(),
+                ScaleType = Enum.ScaleType.Fit,
+                AnchorPoint = Vector2.new(0, 0.5),
+                Position = scope:Computed(function(use)
+                    return UDim2.new(0, -((props.IconSize or 64) * 0.22), 0.5, use(oFaceOffset) - nLip / 2)
+                end),
+                Size = UDim2.fromOffset(props.IconSize or 64, props.IconSize or 64),
+                ZIndex = 2,
+            }) else nil,
             -- Notification badge
             if props.Badge then scope:New("Frame")({
                 Name = "Badge",
                 AnchorPoint = Vector2.new(0.5, 0.5),
-                Position = UDim2.new(1, -4, 0, 4),
+                Position = UDim2.new(1, -2, 0, 2),
                 Size = UDim2.fromOffset(30, 30),
                 BackgroundColor3 = Theme.Variants.Red[1],
                 Visible = props.Badge,
@@ -284,7 +295,7 @@ function UI.Button(scope, props)
                 [Children] = {
                     UI.Corner(scope, 15),
                     UI.Stroke(scope, 3),
-                    UI.Text(scope, { Text = "!", TextSize = 24, ZIndex = 3 }),
+                    UI.Text(scope, { Text = "!", TextSize = 24, ZIndex = 3, StrokeThickness = 2 }),
                 },
             }) else nil,
             props[Children],
@@ -300,7 +311,8 @@ function UI.Modal(scope, props)
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.fromScale(0.5, 0.5),
         Size = props.Size or UDim2.fromOffset(900, 560),
-        BackgroundColor3 = Theme.Panel,
+        -- Dark frame around a light inset body (ref 04).
+        BackgroundColor3 = Theme.Ink,
         [Children] = {
             UI.Corner(scope, Theme.Radius.Modal),
             UI.Stroke(scope, Theme.Stroke.Modal),
@@ -308,37 +320,59 @@ function UI.Modal(scope, props)
             scope:New("Frame")({
                 Name = "Header",
                 Size = UDim2.new(1, 0, 0, 72),
-                BackgroundColor3 = Color3.new(1, 1, 1),
+                BackgroundColor3 = tVariant[1],
                 [Children] = {
                     UI.Corner(scope, Theme.Radius.Modal),
-                    UI.Stroke(scope, Theme.Stroke.Modal),
-                    scope:New("UIGradient")({ Rotation = 90, Color = ColorSequence.new(tVariant[1], tVariant[2]) }),
+                    -- Darker base strip along the header's bottom edge.
+                    scope:New("Frame")({
+                        Name = "Base",
+                        BackgroundColor3 = tVariant[2],
+                        BorderSizePixel = 0,
+                        AnchorPoint = Vector2.new(0, 1),
+                        Position = UDim2.fromScale(0, 1),
+                        Size = UDim2.new(1, 0, 0, 10),
+                    }),
+                    scope:New("Frame")({
+                        Name = "Shine",
+                        BackgroundColor3 = Color3.new(1, 1, 1),
+                        BackgroundTransparency = 0.82,
+                        BorderSizePixel = 0,
+                        Size = UDim2.new(1, 0, 0.45, 0),
+                        [Children] = { UI.Corner(scope, Theme.Radius.Modal) },
+                    }),
                     UI.Text(scope, {
                         Text = props.Title,
-                        TextSize = 44,
+                        TextSize = 46,
                         XAlign = Enum.TextXAlignment.Left,
-                        Size = UDim2.new(1, -120, 1, 0),
-                        Position = UDim2.fromOffset(24, 0),
+                        Size = UDim2.new(1, -120, 1, -6),
+                        Position = UDim2.fromOffset(22, 0),
                         StrokeThickness = 4,
                     }),
                     if props.OnClose then UI.Button(scope, {
                         Name = "Close",
                         Variant = "Red",
                         Text = "X",
-                        TextSize = 34,
-                        Size = UDim2.fromOffset(68, 68),
+                        TextSize = 36,
+                        Size = UDim2.fromOffset(62, 62),
                         AnchorPoint = Vector2.new(1, 0.5),
-                        Position = UDim2.new(1, -10, 0.5, 0),
+                        Position = UDim2.new(1, -8, 0.5, -2),
                         OnClick = props.OnClose,
                     }) else nil,
                 },
             }),
             scope:New("Frame")({
                 Name = "Body",
-                BackgroundTransparency = 1,
-                Position = UDim2.fromOffset(16, 84),
-                Size = UDim2.new(1, -32, 1, -100),
-                [Children] = props[Children],
+                BackgroundColor3 = Theme.Panel,
+                Position = UDim2.fromOffset(8, 80),
+                Size = UDim2.new(1, -16, 1, -88),
+                [Children] = {
+                    UI.Corner(scope, Theme.Radius.Card),
+                    scope:New("UIPadding")({
+                        PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10),
+                        PaddingTop = UDim.new(0, 8), PaddingBottom = UDim.new(0, 8),
+                    }),
+                    props[Children],
+                },
             }),
         },
     })
@@ -356,7 +390,7 @@ function UI.Chip(scope, props)
         Position = props.Position,
         AnchorPoint = props.AnchorPoint,
         [Children] = {
-            UI.Corner(scope, 999),
+            UI.Corner(scope, Theme.Radius.Button),
             UI.Stroke(scope, 3),
             scope:New("UIPadding")({ PaddingLeft = UDim.new(0, 14), PaddingRight = UDim.new(0, 14) }),
             UI.Text(scope, {

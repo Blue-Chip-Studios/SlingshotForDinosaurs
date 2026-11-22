@@ -2,6 +2,16 @@
 
 Derived from `Docs/UI/References/` (01-06) and the Stylized art direction. These are the exact tokens implemented in `Modules/Shared/Theme.luau` and the `Gui/Components/` library. If a screen needs something not listed here, add it here first.
 
+> **2026-11-22 restyle.** The first pass drifted into soft capsules, glossy rounded lips, small icons, dark translucent pills and emoji in labels, which read as generic. The direction is now tightened to match refs 01/04/06:
+> - **Shapes:** squarer (button radius 6, card 8, modal 10).
+> - **Buttons:** flat saturated faces on a darker same-hue base, a crisp top highlight band, a 3.5px Ink outline and bigger labels (30).
+> - **Side menu:** oversized icons that break out of the button's left edge (`IconLeft`).
+> - **Cash, power and event timer:** bare outlined numbers with big icons, no dark capsules.
+> - **Windows:** an Ink frame around a light-grey inset body, with white-to-grey cards.
+> - **No emoji** anywhere in UI text.
+>
+> Each HUD button has its own hue: Shop green, Rewards orange, Quests teal, Index blue, Passes gold, Invite pink. Tables below are updated to these values.
+
 ## Direction
 
 Bright, chunky, toy-like and instantly readable at phone size: thick dark outlines, white display text with a dark stroke, colour-coded buttons, playful badges and stickers (refs 01, 03, 04, 06). Ref 02 (the sleek, flat style) is **not** the direction; we only borrow its quest-strip layout idea for future quests. Ref 05's "worth X / struck-through price" pressure styling is deliberately **not** used (audience 7-15, see DECISIONS #10).
@@ -10,10 +20,10 @@ Bright, chunky, toy-like and instantly readable at phone size: thick dark outlin
 
 | Token | Hex | Use |
 |---|---|---|
-| `Ink` | `#1E1B2E` | All outlines, text strokes, shadows |
+| `Ink` | `#141218` | All outlines, text strokes, shadows |
 | `White` | `#FFFFFF` | Display text, icons on colour |
-| `Panel` | `#F4F1EA` | Card / modal body |
-| `PanelDeep` | `#E4DDCF` | Card inner well, disabled |
+| `Panel` | `#ECEDF2` | Modal body (inside the Ink frame) |
+| `PanelDeep` | `#CFD1DC` | Card inner well, disabled |
 | `Green` | `#3DDC4E` → `#1FA82F` | Shop, Buy (Cash), Collect, positive |
 | `Blue` | `#3FB8FF` → `#1C86E0` | Index, info, secondary |
 | `Gold` | `#FFD23F` → `#F5A200` | Passes, VIP, rewards |
@@ -39,9 +49,9 @@ All text uses `TextScaled = false` with explicit sizes driven by `UIScale`, so s
 
 ## Shape language
 
-- **Corner radius:** buttons 14 px, cards 16 px, modals 20 px, chips and badges are fully round.
+- **Corner radius:** buttons 6 px, cards 8 px, modals 10 px; badges are round.
 - **Outline:** `UIStroke` Ink, 3 px (buttons and cards), 4 px (modals); `ApplyStrokeMode = Border`.
-- **Lip / drop:** every button sits on a 5 px Ink "lip" (a duplicate frame offset down) for a chunky 3D feel. Pressing moves the face down 3 px.
+- **Base / drop:** every button sits on a 6 px darker same-hue base (outlined in Ink) (a duplicate frame offset down) for a chunky 3D feel. Pressing moves the face down 3 px.
 - **Stickers:** "NEW!" (orange, rotated −8°, ref 03); notification "!" (red circle with white "!", ref 01/06).
 
 ## Components (`Gui/Components/`)

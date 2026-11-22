@@ -73,7 +73,7 @@ end
 local function CanLaunch(): boolean
     local oRoot = Root()
     return oRoot ~= nil and not tFlight and not bBusy and peek(Store.Values.Modal) == ""
-        and peek(Store.Values.Reveal) == false and peek(Store.Values.Full) == false
+        and peek(Store.Values.Reveal) == false and peek(Store.Values.Full) == false and not peek(Store.Values.PopupOpen)
         and WorldLayout.IsOnRim(oRoot.Position) and peek(Store.Values.DataLoaded) == true
 end
 
@@ -471,15 +471,18 @@ function mLaunch.StartAsync(self)
         return Enum.ContextActionResult.Pass
     end, false, Enum.KeyCode.ButtonA)
 
-    -- Mouse: hold LMB on the world (not on UI) to charge.
+    -- Charging only starts from the HOLD button, Space or R2, so clicking or dragging the
+    -- world stays free for the camera. Mid-flight (follow-cam), a click/tap anywhere bounces.
     UserInputService.InputBegan:Connect(function(oInput, bProcessed)
-        if bProcessed then return end
-        if oInput.UserInputType == Enum.UserInputType.MouseButton1 then
-            if tFlight then self:Tap() else self:BeginCharge() end
+        if bProcessed or not tFlight then return end
+        if oInput.UserInputType == Enum.UserInputType.MouseButton1 or oInput.UserInputType == Enum.UserInputType.Touch then
+            self:Tap()
         end
     end)
+    -- Letting go anywhere fires: the HOLD button's own "up" event is missed if the finger
+    -- or mouse slides off it while charging.
     UserInputService.InputEnded:Connect(function(oInput)
-        if oInput.UserInputType == Enum.UserInputType.MouseButton1 then
+        if nChargeStart and (oInput.UserInputType == Enum.UserInputType.MouseButton1 or oInput.UserInputType == Enum.UserInputType.Touch) then
             self:Release()
         end
     end)

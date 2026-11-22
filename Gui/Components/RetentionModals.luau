@@ -77,7 +77,7 @@ function M.Rewards(scope)
             LayoutOrder = i,
             Size = UDim2.fromOffset(118, 150),
             BackgroundColor3 = scope:Computed(function(use)
-                return if use(iNextSlot) == i then Theme.Variants.Gold[1] else Theme.Panel
+                return if use(iNextSlot) == i then Theme.Variants.Gold[1] else Color3.new(1, 1, 1)
             end),
             [Children] = {
                 UI.Corner(scope, Theme.Radius.Card),
@@ -90,7 +90,7 @@ function M.Rewards(scope)
     end
     return UI.Modal(scope, {
         Name = "Rewards",
-        Title = scope:Computed(function(use) return `🎁 Daily Rewards  (streak {use(V.DailyStreak)})` end),
+        Title = scope:Computed(function(use) return `Daily Rewards  (streak {use(V.DailyStreak)})` end),
         Variant = "Gold",
         Size = UDim2.fromOffset(980, 520),
         OnClose = Nav.Close,
@@ -213,13 +213,13 @@ function M.Quests(scope)
     end)
     local tW = RetentionConfig.WeeklyQuest
     local tRows = { tDaily }
-    tRows[2] = QuestRow(scope, tW.Id, "⭐ WEEKLY: " .. tW.Text, tW.Goal,
+    tRows[2] = QuestRow(scope, tW.Id, "WEEKLY: " .. tW.Text, tW.Goal,
         function(use) return use(V.WeeklyProgress) or 0 end,
         function(use) return use(V.WeeklyClaimed) == true end,
         tW.Reward, 10)
     return UI.Modal(scope, {
         Name = "Quests",
-        Title = "📜 Quests",
+        Title = "Quests",
         Variant = "Blue",
         Size = UDim2.fromOffset(900, 560),
         OnClose = Nav.Close,
@@ -245,7 +245,7 @@ function M.Rebirth(scope)
     local bReady = scope:Computed(function(use) return use(V.BestDistance) >= tCfg.RequiredMeters and use(V.Cash) >= use(nCost) end)
     return UI.Modal(scope, {
         Name = "Rebirth",
-        Title = scope:Computed(function(use) return `♻️ Rebirth  (x{use(V.Rebirths)})` end),
+        Title = scope:Computed(function(use) return `Rebirth  (x{use(V.Rebirths)})` end),
         Variant = "Purple",
         Size = UDim2.fromOffset(760, 480),
         OnClose = Nav.Close,
@@ -306,7 +306,7 @@ function M.Gift(scope)
         Name = "Gift",
         Title = scope:Computed(function(use)
             local tPass = MonetizationConfig.Passes[use(V.GiftPass)]
-            return "🎁 Gift " .. (tPass and tPass.Name or "a pass")
+            return "Gift " .. (tPass and tPass.Name or "a pass")
         end),
         Variant = "Orange",
         Size = UDim2.fromOffset(760, 520),
