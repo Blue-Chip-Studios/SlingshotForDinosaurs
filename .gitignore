@@ -17,3 +17,8 @@
 
 # Generated
 sourcemap.json
+
+# Blender backup/autosave files
+*.blend1
+*.blend@
+
