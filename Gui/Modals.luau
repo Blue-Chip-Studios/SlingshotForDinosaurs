@@ -107,17 +107,18 @@ local function ShopItemCard(scope, sKind: string, iTier: number, tItem)
     end)
     local sName = if sKind == "Slots" then `{tItem.Slots} Slots` else tItem.Name
     local sStat = if sKind == "Slingshot" then `{tItem.Multiplier}x Distance` elseif sKind == "Bait" then `{tItem.Luck}x Luck` else "Park capacity"
-    local sIcon = if sKind == "Slingshot" then "🏹" elseif sKind == "Bait" then "🍖" else "🦕"
+    -- Blender icons: one per slingshot tier, bait renders, and a park icon for slots.
+    local sIconKey = if sKind == "Slingshot" then "Sling_" .. tItem.Id elseif sKind == "Bait" then "Bait_" .. tItem.Id else "Icon_Park"
     return Card(scope, {
         Name = `Item{iTier}`,
         LayoutOrder = iTier,
         Selected = bEquipped,
         [Children] = {
-            UI.Text(scope, { Text = sName, TextSize = 30, TextScaled = true, Position = UDim2.fromOffset(10, 10), Size = UDim2.new(1, -20, 0, 40) }),
-            UI.Text(scope, { Text = sStat, TextSize = 22, Color = Theme.Ink, NoStroke = true, Font = Theme.Body, Position = UDim2.fromOffset(10, 50), Size = UDim2.new(1, -20, 0, 26) }),
-            if sKind == "Slots" then UI.Text(scope, { Text = sIcon, TextSize = 64, NoStroke = true, Position = UDim2.fromOffset(0, 76), Size = UDim2.new(1, 0, 0, 72) })
-            else UI.Icon(scope, { Key = if sKind == "Bait" then "Bait_" .. tItem.Id else "SlingshotItem", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 70), Size = UDim2.fromOffset(90, 84) }),
-            UI.Chip(scope, { Text = `Tier {iTier}`, Color = Theme.Variants.Grey[1], AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 152), Height = 30, TextSize = 20 }),
+            UI.Text(scope, { Text = sName, TextSize = 30, TextScaled = true, Position = UDim2.fromOffset(10, 8), Size = UDim2.new(1, -20, 0, 36) }),
+            UI.Text(scope, { Text = sStat, TextSize = 22, Color = Theme.Ink, NoStroke = true, Font = Theme.Body, Position = UDim2.fromOffset(10, 46), Size = UDim2.new(1, -20, 0, 24) }),
+            -- Renders carry transparent padding, so draw larger than the gap; the tier chip sits on top.
+            UI.Icon(scope, { Key = sIconKey, AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 64), Size = UDim2.fromOffset(142, 142) }),
+            UI.Chip(scope, { Text = `Tier {iTier}`, Color = Theme.Variants.Grey[2], AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 168), Height = 30, TextSize = 20 }),
             -- Cash button (state: Equipped / Owned / affordable / unaffordable)
             UI.Button(scope, {
                 Name = "Cash",

@@ -21,6 +21,7 @@ pass 2094102161 Icon_DoubleCash
 pass 2096418101 Icon_DoublePower
 pass 2092638260 Icon_Gear
 pass 2093292202 Icon_Crown
+pass 2093460329 Icon_Star
 
 product 3734667473 Icon_Meteor
 product 3734667479 Icon_Potion
@@ -30,7 +31,21 @@ product 3734667504 Icon_Cash
 product 3734667512 Icon_Cash
 product 3734667525 Icon_Vault
 product 3734667534 Icon_Gift
-for id in 3734667545 3734667556 3734667565 3734667575 3734667581 3734667589; do product $id SlingshotItem; done
+# One icon per slingshot tier (Bamboo .. Meteorite).
+product 3734667545 Icon_Sling_Bamboo
+product 3734667556 Icon_Sling_Bone
+product 3734667565 Icon_Sling_TarRubber
+product 3734667575 Icon_Sling_MammothTusk
+product 3734667581 Icon_Sling_Obsidian
+product 3734667589 Icon_Sling_Meteorite
+# Luck potions and pass gifts.
+product 3734723453 Icon_Potion
+product 3734723473 Icon_Potion
+product 3734731964 Icon_DoubleCash
+product 3734731982 Icon_DoublePower
+product 3734732000 Icon_Star
+product 3734732013 Icon_Gear
+product 3734732025 Icon_Crown
 product 3734667597 Bait_Fish
 product 3734667604 Bait_Steak
 product 3734667613 Bait_GoldenEgg
