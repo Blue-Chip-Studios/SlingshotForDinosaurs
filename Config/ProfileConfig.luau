@@ -48,5 +48,8 @@ return {
         LuckBoostMult = 1,
         LuckBoostEndsAt = 0,
         PerfectStreak = 0,
+        GiftedPasses = {}, -- [passKey] = true (received as gifts)
+        ExclusiveDinos = {}, -- [exclusiveId] = true (rotation; replaces ExclusiveDino)
+        NotificationsPrompted = false,
     },
 }

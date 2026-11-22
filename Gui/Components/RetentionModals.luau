@@ -282,4 +282,67 @@ function M.Rebirth(scope)
     })
 end
 
+-- Gift picker: choose who in this server receives the pass selected in Store.GiftPass.
+function M.Gift(scope)
+    local MonetizationConfig = require(ReplicatedStorage.Config.MonetizationConfig)
+    local tOthers = scope:Value({})
+    local function RefreshPlayers()
+        local t = {}
+        for _, o in Players:GetPlayers() do
+            if o ~= oLocalPlayer then table.insert(t, o) end
+        end
+        tOthers:set(t)
+    end
+    RefreshPlayers()
+    table.insert(scope, Players.PlayerAdded:Connect(RefreshPlayers))
+    table.insert(scope, Players.PlayerRemoving:Connect(function() task.defer(RefreshPlayers) end))
+    return UI.Modal(scope, {
+        Name = "Gift",
+        Title = scope:Computed(function(use)
+            local tPass = MonetizationConfig.Passes[use(V.GiftPass)]
+            return "🎁 Gift " .. (tPass and tPass.Name or "a pass")
+        end),
+        Variant = "Orange",
+        Size = UDim2.fromOffset(760, 520),
+        OnClose = Nav.Close,
+        [Children] = {
+            UI.Text(scope, {
+                Text = scope:Computed(function(use)
+                    return if #use(tOthers) == 0 then "Nobody else is in this server yet. Invite a friend!" else "Pick who gets it. It's delivered even if they leave."
+                end),
+                TextSize = 22, Color = Theme.Ink, NoStroke = true, Font = Theme.Body, Size = UDim2.new(1, 0, 0, 30),
+            }),
+            scope:New("ScrollingFrame")({
+                BackgroundTransparency = 1,
+                BorderSizePixel = 0,
+                Position = UDim2.fromOffset(0, 40),
+                Size = UDim2.new(1, 0, 1, -40),
+                CanvasSize = UDim2.new(),
+                AutomaticCanvasSize = Enum.AutomaticSize.Y,
+                ScrollBarThickness = 8,
+                [Children] = {
+                    scope:New("UIListLayout")({ Padding = UDim.new(0, 10), HorizontalAlignment = Enum.HorizontalAlignment.Center, SortOrder = Enum.SortOrder.Name }),
+                    scope:ForValues(tOthers, function(use, innerScope, oPlayer)
+                        return UI.Button(innerScope, {
+                            Name = oPlayer.Name,
+                            Variant = "Blue",
+                            IconKey = "Icon_Gift",
+                            IconSize = 40,
+                            Text = oPlayer.DisplayName,
+                            TextSize = 28,
+                            Size = UDim2.fromOffset(560, 72),
+                            OnClick = function()
+                                local sPass = peek(V.GiftPass)
+                                if sPass ~= "" then
+                                    Nav.PromptGift(sPass, oPlayer.UserId)
+                                end
+                            end,
+                        })
+                    end),
+                },
+            }),
+        },
+    })
+end
+
 return M

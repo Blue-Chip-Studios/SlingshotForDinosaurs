@@ -22,6 +22,7 @@ local REPLICA_TOKEN = "PlayerData"
 
 local tReady: { [Player]: boolean } = {}
 local tReadyCallbacks: { (Player) -> () } = {}
+local tMessageCallbacks: { (Player, any) -> () } = {}
 
 local function DeepClone(v: any): any
     if typeof(v) ~= "table" then
@@ -45,6 +46,12 @@ local function Migrate(tData: { [string]: any })
     if typeof(tData.Dinos) ~= "table" then tData.Dinos = {} end
     if typeof(tData.Power) ~= "number" or tData.Power ~= tData.Power then tData.Power = ProfileConfig.ProfileTemplate.Power end
     if typeof(tData.Cash) ~= "number" or tData.Cash ~= tData.Cash then tData.Cash = 0 end
+    -- The single ExclusiveDino flag became a rotation set: keep what players already own.
+    if typeof(tData.ExclusiveDinos) ~= "table" then tData.ExclusiveDinos = {} end
+    if tData.ExclusiveDino == true then
+        tData.ExclusiveDinos.CelestialRaptor = true
+        tData.ExclusiveDino = false
+    end
 end
 
 local mPlayerData = Module()
@@ -62,6 +69,22 @@ function mPlayerData.InitProfileAsync(self, oPlayer: Player, tProfile)
     for _, fn in tReadyCallbacks do
         task.spawn(fn, oPlayer)
     end
+    -- Cross-server profile messages (e.g. gifts bought for this player while offline).
+    tProfile:MessageHandler(function(tMessage, fnProcessed)
+        for _, fn in tMessageCallbacks do
+            local bOk, sErr = pcall(fn, oPlayer, tMessage)
+            if not bOk then
+                warn("[PlayerData] message handler failed:", sErr)
+                return -- leave it unprocessed so it is retried
+            end
+        end
+        fnProcessed()
+    end)
+end
+
+-- fn(player, message) runs for every ProfileStore message delivered to a loaded profile.
+function mPlayerData.OnMessage(self, fn: (Player, any) -> ())
+    table.insert(tMessageCallbacks, fn)
 end
 
 function mPlayerData.ProfileReleased(self, oPlayer: Player)

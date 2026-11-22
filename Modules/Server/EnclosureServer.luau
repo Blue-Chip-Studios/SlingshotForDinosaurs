@@ -20,6 +20,7 @@ local GameConfig = require(ReplicatedStorage.Config.GameConfig)
 local ShopConfig = require(ReplicatedStorage.Config.ShopConfig)
 local MonetizationConfig = require(ReplicatedStorage.Config.MonetizationConfig)
 local RetentionConfig = require(ReplicatedStorage.Config.RetentionConfig)
+local ExclusiveRotation = require(ReplicatedStorage.Shared.ExclusiveRotation)
 
 local PlayerDataServer = require(ServerStorage.ServerModules.PlayerDataServer)
 local AnalyticsServer = require(ServerStorage.ServerModules.AnalyticsServer)
@@ -58,8 +59,14 @@ function mEnclosure.GetIncome(self, oPlayer: Player): number
         nTotal += n
         nBest = math.max(nBest, n)
     end
-    if PlayerDataServer:Get(oPlayer, "ExclusiveDino") then
-        nTotal += nBest * GameConfig.ExclusiveDinoMultiplier
+    -- Exclusives: the best owned earns Multiplier x the best regular dino; each extra adds +100% (DECISIONS #34).
+    local iExclusives = 0
+    for _ in PlayerDataServer:Get(oPlayer, "ExclusiveDinos") or {} do
+        iExclusives += 1
+    end
+    if iExclusives > 0 then
+        local tRot = MonetizationConfig.ExclusiveRotation
+        nTotal += nBest * (tRot.Multiplier + (iExclusives - 1) * tRot.ExtraEachMultiplier)
     end
     if HasPass(oPlayer, "DoubleCash") then nTotal *= 2 end
     if HasPass(oPlayer, "VIP") then nTotal *= 1.25 end
@@ -251,13 +258,18 @@ function mEnclosure.MarkIndex(self, oPlayer: Player, sSpecies: string, sMutation
     return true
 end
 
--- Grants the exclusive dino (MonetizationServer). One per player.
-function mEnclosure.GrantExclusive(self, oPlayer: Player): boolean
-    if PlayerDataServer:Get(oPlayer, "ExclusiveDino") then
+-- Grants an exclusive dino from the rotation (MonetizationServer). Each one is owned once.
+function mEnclosure.GrantExclusive(self, oPlayer: Player, sId: string): boolean
+    local tEx = ExclusiveRotation.Get(sId)
+    local tOwned = PlayerDataServer:Get(oPlayer, "ExclusiveDinos") or {}
+    if not tEx or tOwned[sId] then
         return false
     end
-    PlayerDataServer:Set(oPlayer, "ExclusiveDino", true)
-    local tEx = MonetizationConfig.ExclusiveDino
+    PlayerDataServer:Update(oPlayer, "ExclusiveDinos", function(t)
+        t = t or {}
+        t[sId] = true
+        return t
+    end)
     self:MarkIndex(oPlayer, tEx.Species, tEx.Mutation)
     PlotServer:Refresh(oPlayer)
     return true

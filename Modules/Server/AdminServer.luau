@@ -22,6 +22,8 @@ local WeatherServer = require(ServerStorage.ServerModules.WeatherServer)
 local LaunchServer = require(ServerStorage.ServerModules.LaunchServer)
 local PlayerDataServer = require(ServerStorage.ServerModules.PlayerDataServer)
 local EnclosureServer = require(ServerStorage.ServerModules.EnclosureServer)
+local MonetizationServer = require(ServerStorage.ServerModules.MonetizationServer)
+local ExclusiveRotation = require(ReplicatedStorage.Shared.ExclusiveRotation)
 
 local tAdmins: { [Player]: boolean } = {}
 local tLastAction: { [Player]: number } = {}
@@ -73,10 +75,14 @@ function mAdmin.PreloadAsync(self)
             local bOk2, sFiltered = pcall(oResult.GetNonChatStringForBroadcastAsync, oResult)
             if not bOk2 then return end
             oAnnounce:FireAllClients({ Text = sFiltered, Kind = "Admin" })
-        elseif sAction == "QA_Rerolls" or sAction == "QA_FillPark" then
+        elseif sAction == "QA_Rerolls" or sAction == "QA_FillPark" or sAction == "QA_Exclusive" or sAction == "QA_Gift" then
             -- QA helpers: Studio only, so they can never hand out items in a live server.
             if not RunService:IsStudio() then return end
-            if sAction == "QA_Rerolls" then
+            if sAction == "QA_Exclusive" then
+                EnclosureServer:GrantExclusive(oPlayer, if typeof(tPayload.Id) == "string" then tPayload.Id else ExclusiveRotation.Current().Id)
+            elseif sAction == "QA_Gift" then
+                MonetizationServer:QAGift(oPlayer, tostring(tPayload.Pass))
+            elseif sAction == "QA_Rerolls" then
                 PlayerDataServer:Set(oPlayer, "Rerolls", (PlayerDataServer:Get(oPlayer, "Rerolls") or 0) + 3)
             else
                 local tSpecies = { "Compy", "Velociraptor", "Dilophosaurus", "Pachycephalosaurus", "Baryonyx" }

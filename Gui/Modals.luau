@@ -25,6 +25,7 @@ local ShopConfig = require(ReplicatedStorage.Config.ShopConfig)
 local MonetizationConfig = require(ReplicatedStorage.Config.MonetizationConfig)
 local WeatherConfig = require(ReplicatedStorage.Config.WeatherConfig)
 local GameConfig = require(ReplicatedStorage.Config.GameConfig)
+local ExclusiveRotation = require(ReplicatedStorage.Shared.ExclusiveRotation)
 local UI = require(script.Parent.Components.UI)
 local Nav = require(script.Parent.Components.Nav)
 local SoundController = require(ReplicatedStorage.ClientModules.SoundController)
@@ -66,6 +67,7 @@ local function Card(scope, props)
         BackgroundColor3 = Color3.new(1, 1, 1),
         Size = props.Size or UDim2.fromOffset(250, 330),
         LayoutOrder = props.LayoutOrder,
+        Visible = if props.Visible == nil then true else props.Visible,
         [Children] = {
             UI.Corner(scope, Theme.Radius.Card),
             scope:New("UIStroke")({ Thickness = props.Selected and scope:Computed(function(use) return if use(props.Selected) then 5 else 3 end) or 3,
@@ -323,10 +325,25 @@ local function Passes(scope)
                     Text = scope:Computed(function(use) return if use(bOwned) then "OWNED" else `R$ {tPass.Price}` end),
                     TextSize = 28,
                     Visible = Purchasable(tPass),
-                    Position = UDim2.new(0, 10, 1, -70),
-                    Size = UDim2.new(1, -20, 0, 60),
+                    Position = UDim2.new(0, 10, 1, -128),
+                    Size = UDim2.new(1, -20, 0, 56),
                     OnClick = function()
                         if not peek(bOwned) then Nav.PromptPass(sKey) end
+                    end,
+                }),
+                -- Gift this pass to someone else in the server.
+                UI.Button(scope, {
+                    Variant = "Orange",
+                    IconKey = "Icon_Gift",
+                    IconSize = 34,
+                    Text = "GIFT",
+                    TextSize = 24,
+                    Visible = Purchasable(MonetizationConfig.Products["Gift_" .. sKey]),
+                    Position = UDim2.new(0, 10, 1, -66),
+                    Size = UDim2.new(1, -20, 0, 54),
+                    OnClick = function()
+                        V.GiftPass:set(sKey)
+                        Nav.Open("Gift")
                     end,
                 }),
             },
@@ -368,9 +385,11 @@ local function OfferCard(scope, props)
     return Card(scope, {
         LayoutOrder = props.LayoutOrder,
         Size = props.Size or UDim2.fromOffset(250, 330),
+        -- Owned / unavailable offers hide entirely rather than showing a card with no button.
+        Visible = props.Visible,
         [Children] = {
             UI.Icon(scope, { Key = props.Icon, AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 4), Size = UDim2.fromOffset(84, 84) }),
-            UI.Text(scope, { Text = tProduct.Name, TextSize = 28, TextScaled = true, Position = UDim2.fromOffset(10, 86), Size = UDim2.new(1, -20, 0, 36) }),
+            UI.Text(scope, { Text = props.Title or tProduct.Name, TextSize = 28, TextScaled = true, Position = UDim2.fromOffset(10, 86), Size = UDim2.new(1, -20, 0, 36) }),
             UI.Text(scope, { Text = props.Description, TextSize = 19, Color = Theme.Ink, NoStroke = true, Font = Theme.Body, TextWrapped = true,
                 Position = UDim2.fromOffset(10, 124), Size = UDim2.new(1, -20, 0, 120), YAlign = Enum.TextYAlignment.Top }),
             UI.Button(scope, {
@@ -387,15 +406,24 @@ local function OfferCard(scope, props)
 end
 
 local function Offer(scope)
-    local bExclusiveOpen = (function()
-        local t = MonetizationConfig.ExclusiveDinoWindow
-        local nNow = os.time()
-        return (t.StartsAt == 0 or nNow >= t.StartsAt) and (t.EndsAt == 0 or nNow < t.EndsAt)
-    end)()
+    -- Limited exclusive: whichever dino the rotation has on sale right now.
+    local tRot = MonetizationConfig.ExclusiveRotation
+    local tCurrent = scope:Computed(function(use)
+        use(V.Now)
+        local tEntry, nEndsAt = ExclusiveRotation.Current()
+        return { Entry = tEntry, EndsAt = nEndsAt }
+    end)
     local tCards = {
-        OfferCard(scope, { Key = "ExclusiveDino", Icon = "Velociraptor", LayoutOrder = 1,
-            Description = `Limited! A Huge Cosmic raptor that earns {GameConfig.ExclusiveDinoMultiplier * 100}% of your best dino's income. One per player.`,
-            Visible = scope:Computed(function(use) return bExclusiveOpen and not use(V.ExclusiveDino) and Purchasable(MonetizationConfig.Products.ExclusiveDino) end) }),
+        OfferCard(scope, { Key = "ExclusiveDino", LayoutOrder = 1,
+            Icon = scope:Computed(function(use) return use(tCurrent).Entry.Species end),
+            Title = scope:Computed(function(use) return use(tCurrent).Entry.Name end),
+            Description = scope:Computed(function(use)
+                local t = use(tCurrent)
+                return `LIMITED: {t.Entry.Size} {t.Entry.Mutation} {t.Entry.Species}. Earns {tRot.Multiplier * 100}% of your best dino. Leaves in {Format.Duration(t.EndsAt - os.time())}!`
+            end),
+            Visible = scope:Computed(function(use)
+                return not (use(V.ExclusiveDinos) or {})[use(tCurrent).Entry.Id] and Purchasable(MonetizationConfig.Products.ExclusiveDino)
+            end) }),
         OfferCard(scope, { Key = "StarterPack", Icon = "Icon_Gift", LayoutOrder = 2,
             Description = "Bone Slingshot + Raw Steak bait + 1 Mutation Reroll. One time only.",
             Visible = scope:Computed(function(use) return not use(V.StarterPackBought) and Purchasable(MonetizationConfig.Products.StarterPack) end) }),
@@ -585,7 +613,7 @@ end
 return function(scope, props)
     local RetentionModals = require(script.Parent.Components.RetentionModals)
     local tBuilders = { Shop = Shop, Index = Index, Passes = Passes, Offer = Offer, Reroll = Reroll, Admin = Admin,
-        Rewards = RetentionModals.Rewards, Quests = RetentionModals.Quests, Rebirth = RetentionModals.Rebirth }
+        Rewards = RetentionModals.Rewards, Quests = RetentionModals.Quests, Rebirth = RetentionModals.Rebirth, Gift = RetentionModals.Gift }
     local tModals = {}
     for sName, fnBuild in tBuilders do
         local oModal = fnBuild(scope)

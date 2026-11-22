@@ -33,6 +33,16 @@ local function PublicDinos(tDinos: { any }): { any }
     return tOut
 end
 
+-- Sorted list of owned exclusive dino ids (public, for rendering).
+local function OwnedExclusives(oPlayer: Player): { string }
+    local tOut = {}
+    for sId in PlayerDataServer:Get(oPlayer, "ExclusiveDinos") or {} do
+        table.insert(tOut, sId)
+    end
+    table.sort(tOut)
+    return tOut
+end
+
 local function SpawnOnPlot(oPlayer: Player, oCharacter: Model)
     local iPlot = tPlayerPlot[oPlayer]
     if not iPlot then return end
@@ -85,7 +95,7 @@ function mPlot.StartAsync(self)
                 PlotIndex = iPlot,
                 OwnerName = oPlayer.DisplayName,
                 Dinos = PublicDinos(PlayerDataServer:Get(oPlayer, "Dinos") or {}),
-                Exclusive = PlayerDataServer:Get(oPlayer, "ExclusiveDino") == true,
+                Exclusives = OwnedExclusives(oPlayer),
                 VIP = (PlayerDataServer:Get(oPlayer, "Passes") or {}).VIP == true,
             },
         })
@@ -121,7 +131,7 @@ function mPlot.Refresh(self, oPlayer: Player)
     local oReplica = tReplicas[oPlayer]
     if not oReplica then return end
     oReplica:Set({ "Dinos" }, PublicDinos(PlayerDataServer:Get(oPlayer, "Dinos") or {}))
-    oReplica:Set({ "Exclusive" }, PlayerDataServer:Get(oPlayer, "ExclusiveDino") == true)
+    oReplica:Set({ "Exclusives" }, OwnedExclusives(oPlayer))
     oReplica:Set({ "VIP" }, (PlayerDataServer:Get(oPlayer, "Passes") or {}).VIP == true)
 end
 

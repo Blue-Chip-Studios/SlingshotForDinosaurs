@@ -23,6 +23,7 @@ local Players = game:GetService("Players")
 local QuestPicker = require(ReplicatedStorage.Shared.QuestPicker)
 local RetentionConfig = require(ReplicatedStorage.Config.RetentionConfig)
 local DinoConfig = require(ReplicatedStorage.Config.DinoConfig)
+local ExclusiveRotation = require(ReplicatedStorage.Shared.ExclusiveRotation)
 
 local Children = Fusion.Children
 local V = Store.Values
@@ -144,7 +145,7 @@ return function(scope, props)
                     [Children] = {
                         scope:New("UIListLayout")({ Padding = UDim.new(0, 12), SortOrder = Enum.SortOrder.LayoutOrder, HorizontalAlignment = Enum.HorizontalAlignment.Right }),
                         UI.Button(scope, { Name = "Offer", Variant = "Purple", IconKey = "Velociraptor", IconSize = 80, Size = UDim2.fromOffset(92, 92), LayoutOrder = 1,
-                            Badge = scope:Computed(function(use) return not use(V.ExclusiveDino) end),
+                            Badge = scope:Computed(function(use) use(V.Now) return not (use(V.ExclusiveDinos) or {})[(ExclusiveRotation.Current()).Id] end),
                             OnClick = function() Nav.Open("Offer") end }),
                         UI.Button(scope, { Name = "Storm", Variant = "Red", IconKey = "Icon_Meteor", IconSize = 76, Size = UDim2.fromOffset(92, 92), LayoutOrder = 2,
                             OnClick = function() Nav.PromptProduct("MeteorStorm") end }),

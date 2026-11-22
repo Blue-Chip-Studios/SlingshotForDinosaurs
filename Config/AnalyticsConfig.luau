@@ -21,6 +21,8 @@ return {
     -- Custom events (LogCustomEvent)
     Custom = {
         Launch = true,
+        NotificationOptIn = true,
+        GiftSent = true,
         Bounce = true,
         Catch = true,
         EnclosureFullChoice = true,

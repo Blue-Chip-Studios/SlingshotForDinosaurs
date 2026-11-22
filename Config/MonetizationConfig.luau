@@ -42,9 +42,32 @@ return {
         Bait_GoldenEgg = { Id = 3734667613, Price = 149, Name = "Golden Egg Bait", Kind = "Bait", Item = "GoldenEgg" },
         Bait_AmberMosquito = { Id = 3734667622, Price = 299, Name = "Amber Mosquito Bait", Kind = "Bait", Item = "AmberMosquito" },
         Bait_MeteorMeat = { Id = 3734667631, Price = 599, Name = "Meteor Meat Bait", Kind = "Bait", Item = "MeteorMeat" },
+
+        -- Gifts: buy a pass for another player in the server (delivered even if they leave).
+        Gift_DoubleCash = { Id = 3734731964, Price = 99, Name = "Gift: 2x Cash", Kind = "Gift", Pass = "DoubleCash" },
+        Gift_DoublePower = { Id = 3734731982, Price = 149, Name = "Gift: 2x Slingshot Power", Kind = "Gift", Pass = "DoublePower" },
+        Gift_DoubleLuck = { Id = 3734732000, Price = 249, Name = "Gift: 2x Luck", Kind = "Gift", Pass = "DoubleLuck" },
+        Gift_AutoLaunch = { Id = 3734732013, Price = 199, Name = "Gift: Auto-Launch", Kind = "Gift", Pass = "AutoLaunch" },
+        Gift_VIP = { Id = 3734732025, Price = 299, Name = "Gift: VIP Enclosure", Kind = "Gift", Pass = "VIP" },
     },
 
-    -- Exclusive dino shown in the offer slot while this window is open (unix seconds; 0 = always).
-    ExclusiveDinoWindow = { StartsAt = 0, EndsAt = 0 },
-    ExclusiveDino = { Species = "Velociraptor", Name = "Celestial Raptor", Mutation = "Cosmic", Size = "Huge" },
+    --[[
+        Limited exclusive dino rotation. The "ExclusiveDino" product always sells
+        the current entry; entries rotate every PeriodDays from AnchorUnix (UTC).
+        Each exclusive is owned once. Income: the best owned exclusive earns
+        Multiplier x your best regular dino; each extra exclusive adds +100%.
+    ]]
+    ExclusiveRotation = {
+        AnchorUnix = 1795392000, -- 2026-11-23 00:00 UTC
+        PeriodDays = 14,
+        Multiplier = 10,
+        ExtraEachMultiplier = 1,
+        List = {
+            { Id = "CelestialRaptor", Name = "Celestial Raptor", Species = "Velociraptor", Mutation = "Cosmic", Size = "Huge" },
+            { Id = "MagmaRex", Name = "Magma King Rex", Species = "TRex", Mutation = "Magma", Size = "Huge" },
+            { Id = "FrostBrachio", Name = "Frostbite Brachio", Species = "Brachiosaurus", Mutation = "Frost", Size = "Big" },
+            { Id = "ToxicSpino", Name = "Toxic Spino", Species = "Spinosaurus", Mutation = "Toxic", Size = "Huge" },
+            { Id = "GoldenTrike", Name = "Golden Trike", Species = "Triceratops", Mutation = "Golden", Size = "Colossal" },
+        },
+    },
 }

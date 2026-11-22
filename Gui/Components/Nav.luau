@@ -57,6 +57,12 @@ function Nav.BuyWithCash(sKind: string, iTier: number): (boolean, string?)
     return false, tResult and tResult.Reason
 end
 
+-- Opens the purchase prompt for gifting sPass to another player in this server.
+function Nav.PromptGift(sPass: string, iTargetUserId: number)
+    Nav.Track("ProductViewed", "Gift_" .. sPass)
+    Remote:GetEvent("PromptPurchase"):FireServer({ Kind = "Product", Key = "Gift_" .. sPass, Target = iTargetUserId })
+end
+
 function Nav.SetSetting(sKey: string, bValue: boolean)
     Remote:GetEvent("SetSetting"):FireServer({ Key = sKey, Value = bValue })
 end

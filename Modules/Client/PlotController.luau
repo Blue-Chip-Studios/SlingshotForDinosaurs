@@ -16,6 +16,7 @@ local ReplicaClient = require(ReplicatedStorage.External.Replica.ReplicaClient)
 local DinoConfig = require(ReplicatedStorage.Config.DinoConfig)
 local MonetizationConfig = require(ReplicatedStorage.Config.MonetizationConfig)
 local GameConfig = require(ReplicatedStorage.Config.GameConfig)
+local ExclusiveRotation = require(ReplicatedStorage.Shared.ExclusiveRotation)
 local WorldLayout = require(ReplicatedStorage.Shared.WorldLayout)
 local Format = require(ReplicatedStorage.Shared.Format)
 local Theme = require(ReplicatedStorage.Shared.Theme)
@@ -74,12 +75,15 @@ local function Render(iPlot: number, tData)
     tPlots[iPlot] = tPlots[iPlot] or {}
     local tRendered = tPlots[iPlot]
     local tList = table.clone(tData.Dinos or {})
-    if tData.Exclusive then
-        local tEx = MonetizationConfig.ExclusiveDino
-        table.insert(tList, { Id = -1, Species = tEx.Species, Size = tEx.Size, Mutation = tEx.Mutation, Exclusive = true })
+    -- Owned rotation exclusives get negative ids so they never clash with regular dinos.
+    for i, sId in tData.Exclusives or {} do
+        local tEx = ExclusiveRotation.Get(sId)
+        if tEx then
+            table.insert(tList, { Id = -i, Species = tEx.Species, Size = tEx.Size, Mutation = tEx.Mutation, Exclusive = true, ExName = tEx.Name, Best = i == 1 })
+        end
     end
     local tSeen = {}
-    -- Best other income, for the exclusive dino's label (10x best other).
+    -- Best other income, for the exclusive dinos' labels.
     local nBest = 0
     for _, t in tData.Dinos or {} do
         nBest = math.max(nBest, DinoConfig.GetIncome(t))
@@ -96,12 +100,13 @@ local function Render(iPlot: number, tData)
             oModel.Name = "Dino_" .. tDino.Id
             local vLook = Vector3.new(math.random() - 0.5, 0, -1)
             DinoModels.PlaceAt(oModel, vHome, vLook)
-            local nIncome = if tDino.Exclusive then nBest * GameConfig.ExclusiveDinoMultiplier else DinoConfig.GetIncome(tDino)
+            local tRot = MonetizationConfig.ExclusiveRotation
+            local nIncome = if tDino.Exclusive then nBest * (if tDino.Best then tRot.Multiplier else tRot.ExtraEachMultiplier) else DinoConfig.GetIncome(tDino)
             AddLabel(oModel, tDino, nIncome)
             if tDino.Exclusive then
                 local oLabel = oModel:FindFirstChild("Label", true)
                 if oLabel then
-                    (oLabel :: any):FindFirstChildWhichIsA("TextLabel").Text = MonetizationConfig.ExclusiveDino.Name
+                    (oLabel :: any):FindFirstChildWhichIsA("TextLabel").Text = tDino.ExName
                 end
             end
             oModel.Parent = oFolder

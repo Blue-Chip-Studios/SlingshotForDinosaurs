@@ -51,6 +51,9 @@ local tValues = {
     LuckBoostMult = 1,
     LuckBoostEndsAt = 0,
     PerfectStreak = 0,
+    ExclusiveDinos = {},
+    GiftedPasses = {},
+    GiftPass = "", -- pass key chosen in the Gift picker
     DataLoaded = false,
 
     -- Player attributes

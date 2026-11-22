@@ -34,6 +34,10 @@ local ShopServer = require(ServerStorage.ServerModules.ShopServer)
 local WeatherServer = require(ServerStorage.ServerModules.WeatherServer)
 local PlotServer = require(ServerStorage.ServerModules.PlotServer)
 local RetentionServer = require(ServerStorage.ServerModules.RetentionServer)
+local NotificationServer = require(ServerStorage.ServerModules.NotificationServer)
+local ProfileStore = require(ReplicatedStorage.External.ProfileStore)
+local ProfileConfig = require(ReplicatedStorage.Config.ProfileConfig)
+local ExclusiveRotation = require(ReplicatedStorage.Shared.ExclusiveRotation)
 
 local tProductById: { [number]: string } = {}
 local tPassById: { [number]: string } = {}
@@ -44,13 +48,65 @@ for sKey, t in MonetizationConfig.Passes do
     if t.Id ~= 0 then tPassById[t.Id] = sKey end
 end
 
-local oPurchaseResult
+local oPurchaseResult, oAnnounce
 
 local function TierIndex(tList, sId: string): number?
     for i, t in tList do
         if t.Id == sId then return i end
     end
     return nil
+end
+
+-- ===== Gifting =====
+-- A gift pass is stored in the recipient's GiftedPasses (merged into Passes).
+-- tGiftTarget[buyer] is set when the gift prompt opens; the receipt reads it.
+local tGiftTarget: { [Player]: { UserId: number, Pass: string, Expires: number } } = {}
+local oGiftStore = ProfileStore.New(ProfileConfig.StoreName, ProfileConfig.ProfileTemplate)
+local RefreshPasses -- forward declaration
+
+local function OwnsPass(oPlayer: Player, sPass: string): boolean
+    local t = PlayerDataServer:Get(oPlayer, "Passes")
+    return typeof(t) == "table" and t[sPass] == true
+end
+
+-- Gives sPass to a loaded player (recipient side of a gift).
+local function ApplyGift(oTarget: Player, sPass: string, sFrom: string)
+    local tPass = MonetizationConfig.Passes[sPass]
+    if not tPass then return end
+    if OwnsPass(oTarget, sPass) then
+        -- Bought before the recipient got it some other way: never waste the gift.
+        PlayerDataServer:Set(oTarget, "Rerolls", (PlayerDataServer:Get(oTarget, "Rerolls") or 0) + 3)
+    else
+        PlayerDataServer:Update(oTarget, "GiftedPasses", function(t)
+            t = t or {}
+            t[sPass] = true
+            return t
+        end)
+        RefreshPasses(oTarget)
+    end
+    oAnnounce:FireAllClients({ Text = `{sFrom} gifted {oTarget.DisplayName} the {tPass.Name} pass!`, Kind = "Event" })
+end
+
+-- Buyer side: deliver now if the recipient is here, otherwise by ProfileStore message.
+local function DeliverGift(oBuyer: Player, sPass: string): boolean
+    local tTarget = tGiftTarget[oBuyer]
+    tGiftTarget[oBuyer] = nil
+    if not tTarget or tTarget.Pass ~= sPass or os.clock() > tTarget.Expires then
+        -- No valid recipient recorded (e.g. server restarted mid-purchase): the buyer gets it.
+        ApplyGift(oBuyer, sPass, oBuyer.DisplayName)
+        return true
+    end
+    local oTarget = Players:GetPlayerByUserId(tTarget.UserId)
+    if oTarget and PlayerDataServer:IsReady(oTarget) then
+        ApplyGift(oTarget, sPass, oBuyer.DisplayName)
+        return true
+    end
+    local bOk = pcall(oGiftStore.MessageAsync, oGiftStore, ProfileConfig.Prefix .. tTarget.UserId, { Type = "Gift", Pass = sPass, From = oBuyer.DisplayName })
+    if bOk then
+        -- Recipient left: tell them (opted-in 13+ users only; no-op until configured).
+        task.spawn(NotificationServer.Send, NotificationServer, tTarget.UserId, "GiftReceived", { giver = oBuyer.DisplayName, pass = MonetizationConfig.Passes[sPass].Name })
+    end
+    return bOk -- false: receipt retried later rather than losing the gift
 end
 
 -- Applies a product's effect. Returns true if granted (false = cannot grant now).
@@ -62,8 +118,11 @@ local function GrantProduct(oPlayer: Player, sKey: string): boolean
         WeatherServer:TriggerEvent("MeteorStorm", WeatherConfig.PurchasedStormSeconds, oPlayer.DisplayName)
     elseif sKind == "Reroll" then
         PlayerDataServer:Set(oPlayer, "Rerolls", (PlayerDataServer:Get(oPlayer, "Rerolls") or 0) + tProduct.Amount)
+    elseif sKind == "Gift" then
+        AnalyticsServer:Custom(oPlayer, "GiftSent", 1, AnalyticsServer:Fields(tProduct.Pass))
+        return DeliverGift(oPlayer, tProduct.Pass)
     elseif sKind == "ExclusiveDino" then
-        if not EnclosureServer:GrantExclusive(oPlayer) then
+        if not EnclosureServer:GrantExclusive(oPlayer, (ExclusiveRotation.Current()).Id) then
             -- Already owned (shouldn't be promptable): compensate with rerolls rather than lose the purchase.
             PlayerDataServer:Set(oPlayer, "Rerolls", (PlayerDataServer:Get(oPlayer, "Rerolls") or 0) + 5)
         end
@@ -92,12 +151,16 @@ local function GrantProduct(oPlayer: Player, sKey: string): boolean
     return true
 end
 
-local function RefreshPasses(oPlayer: Player)
+function RefreshPasses(oPlayer: Player)
     local tOwned = {}
+    -- Gifted passes count as owned.
+    for sKey, b in PlayerDataServer:Get(oPlayer, "GiftedPasses") or {} do
+        if b then tOwned[sKey] = true end
+    end
     for sKey, tPass in MonetizationConfig.Passes do
         if tPass.Id ~= 0 then
             local bOk, bOwns = pcall(MarketplaceService.UserOwnsGamePassAsync, MarketplaceService, oPlayer.UserId, tPass.Id)
-            tOwned[sKey] = bOk and bOwns or nil
+            if bOk and bOwns then tOwned[sKey] = true end
         end
     end
     -- Keep passes simulated in Studio (Id = 0) for testing.
@@ -155,6 +218,7 @@ local mMonetization = Module()
 
 function mMonetization.PreloadAsync(self)
     oPurchaseResult = Remote:GetEvent("PurchaseResult")
+    oAnnounce = Remote:GetEvent("Announcement")
     MarketplaceService.ProcessReceipt = ProcessReceipt
 
     -- Prompt({ Kind = "Product" | "Pass", Key }) from the client.
@@ -176,7 +240,13 @@ function mMonetization.PreloadAsync(self)
         else
             local tProduct = MonetizationConfig.Products[sKey]
             if not tProduct then return end
-            if tProduct.Kind == "ExclusiveDino" and PlayerDataServer:Get(oPlayer, "ExclusiveDino") then return end
+            if tProduct.Kind == "ExclusiveDino" and (PlayerDataServer:Get(oPlayer, "ExclusiveDinos") or {})[(ExclusiveRotation.Current()).Id] then return end
+            if tProduct.Kind == "Gift" then
+                -- Validate the recipient: in this server, not the buyer, and not already owning the pass.
+                local oTarget = typeof(tPayload.Target) == "number" and Players:GetPlayerByUserId(tPayload.Target)
+                if not oTarget or oTarget == oPlayer or not PlayerDataServer:IsReady(oTarget) or OwnsPass(oTarget, tProduct.Pass) then return end
+                tGiftTarget[oPlayer] = { UserId = oTarget.UserId, Pass = tProduct.Pass, Expires = os.clock() + 300 }
+            end
             if tProduct.OneTime and PlayerDataServer:Get(oPlayer, "StarterPackBought") then return end
             if tProduct.Kind == "Slingshot" or tProduct.Kind == "Bait" then
                 -- Robux skips only for the next RobuxSkipAhead tiers (GDD 10).
@@ -220,11 +290,26 @@ end
 
 function mMonetization.StartAsync(self)
     PlayerDataServer:OnReady(RefreshPasses)
+    PlayerDataServer:OnMessage(function(oPlayer, tMessage)
+        if typeof(tMessage) == "table" and tMessage.Type == "Gift" and typeof(tMessage.Pass) == "string" then
+            ApplyGift(oPlayer, tMessage.Pass, tostring(tMessage.From or "A friend"))
+        end
+    end)
+    Players.PlayerRemoving:Connect(function(oPlayer)
+        tGiftTarget[oPlayer] = nil
+    end)
 end
 
 function mMonetization.HasPass(self, oPlayer: Player, sKey: string): boolean
     local tPasses = PlayerDataServer:Get(oPlayer, "Passes")
     return typeof(tPasses) == "table" and tPasses[sKey] == true
+end
+
+-- Studio QA only (AdminServer gates it): runs the gift grant path without a purchase.
+function mMonetization.QAGift(self, oPlayer: Player, sPass: string)
+    if RunService:IsStudio() and MonetizationConfig.Passes[sPass] then
+        ApplyGift(oPlayer, sPass, "QA")
+    end
 end
 
 return mMonetization
