@@ -33,16 +33,21 @@ return {
     -- Training
     TrainTickSeconds = 1.0, -- passive gain interval while standing on a pad
     TrainTapMaxPerSecond = 5, -- extra tap trains per second (server rate limit)
+    TrainTapFraction = 0.2, -- each tap gives this share of a pad tick (tapping speeds training up, never dominates it)
 
     -- Enclosure
     SellSecondsOfIncome = 60, -- selling a catch pays this many seconds of its income
     IncomeTickSeconds = 1,
 
     -- Offline earnings
-    OfflineRate = 0.5,
-    OfflineCapSeconds = 8 * 3600,
-    OfflineCapSecondsVIP = 12 * 3600,
+    OfflineRate = 0.25, -- offline earns a quarter rate: a welcome-back boost, not a skip
+    OfflineCapSeconds = 4 * 3600,
+    OfflineCapSecondsVIP = 8 * 3600,
     OfflineMinSecondsToShow = 60,
+
+    -- Landing deeper into an area (towards the next gate) raises catch luck by up to this much,
+    -- so extra distance always helps, even past the last gate.
+    DepthLuckBonus = 0.6,
 
     -- Exclusive dino: earns this multiple of the best other dino's income
     ExclusiveDinoMultiplier = 10,

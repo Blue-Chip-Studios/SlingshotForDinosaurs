@@ -284,6 +284,27 @@ def Sling_Meteorite(b):
 
 
 @icon
+def Sling_Crystal(b):
+    ICON_COLOURS.update({"CrystalA": (0.75, 0.45, 1.0), "CrystalB": (0.45, 0.9, 1.0)})
+    slingshot(b, "CrystalA", "CrystalA", "CrystalB", tip="CrystalB", tip_size=0.3, thick=0.25)
+    for side in (-1, 1):
+        b.cyl("CrystalB", (side * 0.95, 0, 1.75), 0.2, 0.7, verts=6, r2=0.0)
+    b.cyl("CrystalB", (0, 0, -2.25), 0.22, 0.6, verts=6, r2=0.0, rot=(180, 0, 0))
+
+
+@icon
+def Sling_Celestial(b):
+    ICON_COLOURS.update({"Star": (1.0, 0.85, 0.3), "Night": (0.2, 0.15, 0.5)})
+    slingshot(b, "Night", "Night", "Star", tip="Star", tip_size=0.3, thick=0.27)
+    for (x, z) in ((-0.55, 0.65), (0.5, 0.45), (0.0, -0.8), (0.05, -1.55)):
+        b.ico("Star", (x, -0.26, z), (0.09, 0.05, 0.09), sub=1)
+    for side in (-1, 1):
+        for a in range(5):
+            ang = math.radians(a * 72)
+            b.cyl("Star", (side * 0.95 + 0.32 * math.cos(ang), 0, 1.35 + 0.32 * math.sin(ang)), 0.07, 0.3, verts=4, r2=0.0, rot=(0, -a * 72 + 90, 0))
+
+
+@icon
 def Park(b):
     # Park slots: grassy patch, picket fence and a spotted dino egg.
     b.cyl("Grass", (0, 0, -0.9), 1.5, 0.35, verts=24, bevel=0.08)
@@ -313,8 +334,11 @@ def render_icon(name, out_dir):
     scene = bpy.context.scene
     cam = bpy.data.objects["Camera"]
     # Tall, narrow shop items (slingshots) get framed tighter so they fill the card.
-    zoom = 0.82 if name.startswith("Sling_") else (0.7 if name == "Park" else 1.0)
-    cam.location = centre + Vector((-0.35, -1.0, 0.45)).normalized() * size * 1.15 * zoom
+    zoom = 1.0
+    # Fit the bounding sphere to the lens field of view (with a small margin).
+    fov = 2 * math.atan(cam.data.sensor_width / (2 * cam.data.lens))
+    dist = (size / 2) / math.tan(fov / 2) * 1.08 * zoom
+    cam.location = centre + Vector((-0.35, -1.0, 0.45)).normalized() * dist
     cam.rotation_euler = (centre - cam.location).to_track_quat("-Z", "Y").to_euler()
     scene.render.film_transparent = True
     scene.render.resolution_x = 512

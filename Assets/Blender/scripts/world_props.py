@@ -283,7 +283,205 @@ def crystal(b):
         b.cyl("Ice", (math.cos(a) * 0.7, math.sin(a) * 0.7, h / 2), 0.45, h, rot=(random.uniform(-20, 20), random.uniform(-20, 20), 0), verts=6, r2=0.05)
 
 
+# ===== New-area props (Desert Badlands, Coral Coast, Redwood Forest, Crystal Caves, Sky Islands, Volcano) =====
+
+def cactus(b):
+    b.cyl("Leaves", (0, 0, 2.2), 0.55, 4.4, verts=10, r2=0.45, bevel=0.1)
+    b.ico("Leaves", (0, 0, 4.4), (0.45, 0.45, 0.35), sub=2)
+    for side, h in ((-1, 2.0), (1, 2.8)):
+        b.cyl("Leaves", (side * 0.75, 0, h), 0.32, 0.9, rot=(0, 90, 0), verts=8)
+        b.cyl("Leaves", (side * 1.15, 0, h + 0.7), 0.32, 1.4, verts=8, r2=0.26)
+        b.ico("Leaves", (side * 1.15, 0, h + 1.4), (0.27, 0.27, 0.22), sub=2)
+    b.ico("Band", (0, -0.1, 4.75), (0.18, 0.18, 0.12), sub=1)  # flower
+
+
+def mesa(b):
+    # A craggy butte: a wide talus skirt, alternating sandstone strata with ragged edges, a flat cap,
+    # and fallen boulders. Uses the jittered lathe so no two layers line up.
+    random.seed(21)
+    _lathe(b, "RockDark", [(8.2, -0.5), (7.2, 1.2), (6.0, 2.2), (4.6, 3.0)], 14, 0.12, 31)
+    layers = [(6.0, 2.0), (5.7, 4.4), (5.9, 4.8), (5.4, 7.0), (5.6, 7.4), (5.1, 9.4), (5.3, 9.7)]
+    for i in range(0, len(layers) - 1):
+        (r0, z0), (r1, z1) = layers[i], layers[i + 1]
+        # each layer starts tucked inside the one below so the jittered rims never leave see-through gaps
+        _lathe(b, "Rock" if i % 2 == 0 else "RockDark", [(r0 * 0.8, z0 - 1.0), (r0, z0), (r1, z1)], 14, 0.12, 40 + i)
+    _lathe(b, "Rock", [(4.3, 9.0), (5.3, 9.7), (5.0, 10.2)], 14, 0.1, 50, close_top=True)
+    for k in range(6):
+        a = random.uniform(0, math.tau)
+        rr = random.uniform(7, 9.5)
+        b.ico("Rock" if k % 2 else "RockDark", (math.cos(a) * rr, math.sin(a) * rr, 0.5), (random.uniform(0.7, 1.4),) * 3, sub=1, jitter=0.25)
+
+
+def palm_tree(b):
+    random.seed(22)
+    pts = [(0, 0, 0), (0.3, 0, 2), (0.9, 0, 4), (1.7, 0, 5.8), (2.4, 0, 7.2)]
+    for i in range(len(pts) - 1):
+        a, c = Vector(pts[i]), Vector(pts[i + 1])
+        mid = (a + c) / 2
+        d = c - a
+        tilt = math.degrees(math.atan2(d.x, d.z))
+        b.cyl("Trunk", tuple(mid), 0.42 - i * 0.06, d.length + 0.25, rot=(0, tilt, 0), verts=8)
+    top = Vector(pts[-1])
+    for k in range(7):
+        ang = k * (360 / 7)
+        dirv = Vector((math.cos(math.radians(ang)), math.sin(math.radians(ang)), 0))
+        b.ico("Leaves", tuple(top + dirv * 1.6 + Vector((0, 0, -0.4))), (1.9, 0.45, 0.12), sub=2, rot=(0, 18, ang))
+    for k in range(3):
+        b.ico("Trunk", tuple(top + Vector((0.35 * math.cos(k * 2.1), 0.35 * math.sin(k * 2.1), -0.4))), (0.28, 0.28, 0.32), sub=1)
+
+
+def coral(b):
+    random.seed(23)
+    b.ico("Rock", (0, 0, 0.5), (1.6, 1.4, 0.7), sub=2, jitter=0.15)
+    for i in range(7):
+        a = random.uniform(0, math.tau)
+        h = random.uniform(1.4, 3.2)
+        role = ("Band", "Gold", "Glow")[i % 3]
+        x, y = math.cos(a) * random.uniform(0.2, 1.1), math.sin(a) * random.uniform(0.2, 1.1)
+        b.cyl(role, (x, y, h / 2 + 0.6), 0.22, h, rot=(random.uniform(-25, 25), random.uniform(-25, 25), 0), verts=8, r2=0.12)
+        b.ico(role, (x, y, h + 0.7), (0.3, 0.3, 0.3), sub=2)
+
+
+def redwood(b):
+    b.cyl("Trunk", (0, 0, 9), 1.5, 18, verts=10, r2=1.0, bevel=0.1)
+    for i, (r, z) in enumerate(((4.2, 12), (3.6, 15), (3.0, 18), (2.2, 20.6), (1.3, 22.6))):
+        b.cyl("Leaves" if i % 2 == 0 else "Leaves2", (0, 0, z), r, 3.2, verts=10, r2=r * 0.35)
+    for a in range(4):  # root flares
+        ang = math.radians(a * 90 + 20)
+        b.cyl("Trunk", (math.cos(ang) * 1.3, math.sin(ang) * 1.3, 0.8), 0.55, 2.2, rot=(math.cos(ang) * 30, -math.sin(ang) * 30, 0), verts=6, r2=0.2)
+
+
+def crystal_cluster(b):
+    random.seed(24)
+    b.ico("RockDark", (0, 0, 0.6), (2.2, 1.9, 0.9), sub=1, jitter=0.2)
+    for i in range(9):
+        a = random.uniform(0, math.tau)
+        h = random.uniform(3, 8)
+        r = random.uniform(0.35, 0.8)
+        d = random.uniform(0, 1.4)
+        b.cyl("Glow", (math.cos(a) * d, math.sin(a) * d, h / 2 + 0.6), r, h, rot=(random.uniform(-25, 25), random.uniform(-25, 25), 0), verts=6, r2=0.05)
+
+
+def sky_island(b):
+    # A floating chunk of land: lumpy grass cap with an overhanging lip, a soil band, a craggy rock
+    # underside tapering to a point with hanging spikes, little trees, a pond and a waterfall off the edge.
+    random.seed(25)
+    _lathe(b, "Leaves", [(9.9, 0.0), (10.1, 0.9), (9.4, 1.7), (6, 2.1)], 22, 0.08, 11, close_top=True)
+    _lathe(b, "Trunk", [(9.6, 0.3), (9.3, -1.3)], 22, 0.08, 11)
+    _lathe(b, "Rock", [(9.3, -1.3), (8.6, -3.0), (7.0, -5.4), (4.8, -7.8), (2.6, -10.2), (1.0, -12.4), (0.05, -13.6)], 22, 0.2, 12)
+    for k in range(5):                                                   # hanging spikes
+        a = random.uniform(0, math.tau)
+        rr = random.uniform(3, 6.5)
+        h = random.uniform(2.5, 4.5)
+        b.cyl("RockDark", (math.cos(a) * rr, math.sin(a) * rr, -4.5 - rr * -0.0 - h / 2 - (6.5 - rr)), random.uniform(1, 1.6), h, verts=6, r2=0.1, rot=(180, 0, 0))
+    for (x, y, s) in ((-4, 2.5, 1.0), (3.5, 4, 0.8)):                   # little trees
+        b.cyl("Trunk", (x, y, 3.2), 0.35 * s, 3.2 * s, verts=7)
+        b.ico("Leaves2", (x, y, 4.6 * s + 0.6), (1.7 * s, 1.7 * s, 1.5 * s), sub=2, jitter=0.15)
+        b.ico("Leaves2", (x + 0.7 * s, y, 5.6 * s + 0.6), (1.1 * s, 1.1 * s, 1.0 * s), sub=2, jitter=0.1)
+    for k in range(3):                                                   # bushes and rocks
+        a = random.uniform(0, math.tau)
+        b.ico("Leaves2", (math.cos(a) * 6.5, math.sin(a) * 6.5, 2.2), (1.2, 1.2, 0.9), sub=2)
+        b.ico("Rock", (math.cos(a + 1) * 5, math.sin(a + 1) * 5, 2.1), (0.8, 0.7, 0.6), sub=1, jitter=0.15)
+    b.cyl("Water", (4.5, -3.5, 2.0), 2.4, 0.4, verts=16)                # pond
+    b.box("Water", (7.4, -5.9, -3.5), (1.1, 0.25, 5.6), rot=(0, 0, 38), bevel=0.05)   # waterfall off the edge
+
+
+def cloud(b):
+    random.seed(26)
+    for i in range(7):
+        b.ico("Snow", (random.uniform(-4, 4), random.uniform(-1.5, 1.5), random.uniform(0, 1.6)), (random.uniform(1.6, 2.8),) * 3, sub=2)
+
+
+def _mesh(b, role, verts, faces):
+    me = bpy.data.meshes.new(f"{b.name}_{role}_tmp")
+    me.from_pydata(verts, [], faces)
+    me.update()
+    o = bpy.data.objects.new(f"{role}_tmp", me)
+    bpy.context.scene.collection.objects.link(o)
+    return b._add(o, role)
+
+
+def _lathe(b, role, profile, segs, jitter, seed, close_top=False):
+    """Revolve a (radius, z) profile; each vertex jittered radially for a hand-made, low-poly look."""
+    rnd = random.Random(seed)
+    offs = [rnd.uniform(-1, 1) for _ in range(segs)]
+    verts, faces = [], []
+    for i, (r, z) in enumerate(profile):
+        for s in range(segs):
+            a = s / segs * math.tau
+            k = 1 + jitter * (offs[s] * 0.6 + rnd.uniform(-0.4, 0.4))
+            verts.append((math.cos(a) * r * k, math.sin(a) * r * k, z + rnd.uniform(-0.6, 0.6) * (i > 0)))
+    for i in range(len(profile) - 1):
+        for s in range(segs):
+            a0, a1 = i * segs + s, i * segs + (s + 1) % segs
+            faces.append((a0, a1, a1 + segs, a0 + segs))
+    if close_top:
+        c = len(verts)
+        verts.append((0, 0, profile[-1][1]))
+        base = (len(profile) - 1) * segs
+        for s in range(segs):
+            faces.append((base + s, base + (s + 1) % segs, c))
+    return _mesh(b, role, verts, faces)
+
+
+def volcano_big(b):
+    # A towering stratovolcano: concave slopes (lathe), lighter ash cap, a jagged rim around a sunken
+    # crater lake of lava, and continuous lava rivers meandering down the slope.
+    random.seed(27)
+    # concave profile: wide skirt, steepening towards the rim
+    lower = [(74, -2), (66, 6), (55, 16), (44, 28), (35, 40)]
+    upper = [(35, 40), (27, 52), (21, 62), (18, 69), (17, 72)]
+    crater = [(17, 72), (14, 70), (11.5, 66.5)]
+    _lathe(b, "RockDark", lower, 32, 0.07, 1)
+    _lathe(b, "Rock", upper, 32, 0.06, 2)
+    _lathe(b, "RockDark", crater, 32, 0.05, 3, close_top=True)
+    b.cyl("Lava", (0, 0, 67.2), 12.5, 1.2, verts=24)                     # crater lava lake
+    for k in range(9):                                                   # jagged rim teeth
+        a = math.radians(k * 40 + random.uniform(-10, 10))
+        b.cyl("RockDark", (math.cos(a) * 16.5, math.sin(a) * 16.5, 73), random.uniform(2.5, 4), random.uniform(4, 8), verts=5, r2=0.6,
+              rot=(random.uniform(-12, 12), random.uniform(-12, 12), 0))
+    # lava rivers: ribbons hugging the slope from the rim notch to the skirt, meandering and widening
+    prof = lower + upper[1:]
+    def slope_r(z):
+        for (r0, z0), (r1, z1) in zip(prof, prof[1:]):
+            if z0 <= z <= z1:
+                return r0 + (r1 - r0) * (z - z0) / (z1 - z0)
+        return prof[-1][0]
+    for k, a0 in enumerate((20, 140, 250)):
+        verts, faces = [], []
+        steps = 18
+        for j in range(steps + 1):
+            t = j / steps
+            z = 71 - t * 70
+            r = slope_r(z) + 0.7
+            a = math.radians(a0 + math.sin(t * 7 + k) * 9)
+            w = 1.6 + t * 3.4
+            d = Vector((math.cos(a), math.sin(a), 0))
+            side = Vector((-d.y, d.x, 0))
+            c = d * r + Vector((0, 0, z))
+            verts += [tuple(c - side * w), tuple(c + side * w)]
+            if j:
+                i0 = (j - 1) * 2
+                faces.append((i0, i0 + 2, i0 + 3, i0 + 1))
+        _mesh(b, "Lava", verts, faces)
+        # a pool of lava where the river meets the ground
+        b.ico("Lava", (math.cos(math.radians(a0)) * 78, math.sin(math.radians(a0)) * 78, 0.2), (7, 7, 0.8), sub=2)
+    for k in range(10):                                                  # boulders on the skirt
+        a = random.uniform(0, math.tau)
+        rr = random.uniform(58, 78)
+        b.ico("RockDark", (math.cos(a) * rr, math.sin(a) * rr, 1.5), (random.uniform(3, 6),) * 3, sub=1, jitter=0.6)
+
+
 PROPS = {
+    "Cactus": cactus,
+    "Mesa": mesa,
+    "PalmTree": palm_tree,
+    "Coral": coral,
+    "Redwood": redwood,
+    "CrystalCluster": crystal_cluster,
+    "SkyIsland": sky_island,
+    "Cloud": cloud,
+    "VolcanoBig": volcano_big,
     "CliffWall": cliff_wall,
     "FenceSegment": fence_segment,
     "Signpost": signpost,

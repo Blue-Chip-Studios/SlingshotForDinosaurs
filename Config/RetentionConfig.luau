@@ -43,11 +43,15 @@ return {
 
     -- Rebirth: reset Cash, Power, Slingshot and Bait (dinos, Index and slots are kept)
     -- for a permanent multiplier on Power gain and launch distance.
+    -- Rebirth: the long-term loop. Needs the Volcano and a big cash cost; resets Power, cash, slingshot,
+    -- bait and the park (your single best dino is kept). Each rebirth gives permanent income and training
+    -- bonuses, so the next run is faster (simulator: Volcano 102 min -> 79 min after 1 -> 54 min after 3).
     Rebirth = {
-        RequiredMeters = 8000, -- must have reached the Ice Age
-        BaseCost = 1000000,
-        CostGrowth = 3, -- cost = BaseCost * CostGrowth^rebirths
-        BonusPerRebirth = 0.25, -- +25% power gain and distance per rebirth
+        RequiredMeters = 1100000, -- must have reached the Volcano
+        BaseCost = 20000000000,
+        CostGrowth = 4, -- cost = BaseCost * CostGrowth^rebirths
+        IncomePerRebirth = 0.5, -- +50% income per rebirth
+        PowerPerRebirth = 0.3, -- +30% training gain per rebirth
     },
 
     -- Consecutive Perfect bounces across launches add luck (reset on any non-Perfect bounce).

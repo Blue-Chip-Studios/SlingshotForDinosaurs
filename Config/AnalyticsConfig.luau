@@ -22,6 +22,7 @@ return {
     Custom = {
         Launch = true,
         NotificationOptIn = true,
+        MythicCatch = true,
         SessionStart = true,
         SessionEnd = true,
         BadgeEarned = true,

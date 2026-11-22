@@ -36,6 +36,8 @@ return {
         Slingshot_MammothTusk = { Id = 3734667575, Price = 199, Name = "Mammoth Tusk Slingshot", Kind = "Slingshot", Item = "MammothTusk" },
         Slingshot_Obsidian = { Id = 3734667581, Price = 399, Name = "Obsidian Slingshot", Kind = "Slingshot", Item = "Obsidian" },
         Slingshot_Meteorite = { Id = 3734667589, Price = 799, Name = "Meteorite Slingshot", Kind = "Slingshot", Item = "Meteorite" },
+        Slingshot_Crystal = { Id = 3734917012, Price = 1499, Name = "Crystal Slingshot", Kind = "Slingshot", Item = "Crystal" },
+        Slingshot_Celestial = { Id = 3734917014, Price = 2499, Name = "Celestial Slingshot", Kind = "Slingshot", Item = "Celestial" },
 
         Bait_Fish = { Id = 3734667597, Price = 29, Name = "Fish Bait", Kind = "Bait", Item = "Fish" },
         Bait_Steak = { Id = 3734667604, Price = 79, Name = "Raw Steak Bait", Kind = "Bait", Item = "Steak" },

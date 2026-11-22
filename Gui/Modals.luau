@@ -281,7 +281,9 @@ local function Index(scope)
         Title = scope:Computed(function(use)
             local n = 0
             for _ in use(V.Index) do n += 1 end
-            return `Dino Index  {n}/{15 * #DinoConfig.Mutations}`
+            local iSpecies = 0
+            for _ in DinoConfig.Species do iSpecies += 1 end
+            return `Dino Index  {n}/{iSpecies * #DinoConfig.Mutations}`
         end),
         Variant = "Blue",
         Size = UDim2.fromOffset(1000, 600),

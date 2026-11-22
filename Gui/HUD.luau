@@ -57,23 +57,28 @@ local function QuestReady(use): boolean
 end
 
 -- The single most useful next goal: the next slingshot (cash progress) or the next biome (distance).
+-- Distance = Power x slingshot, so the next area needs a known Power with the current slingshot.
 local function NextGoal(use): (string, number)
-    local nCash = use(V.Cash)
+    local nCash, nPower, nBest = use(V.Cash), use(V.Power), use(V.BestDistance)
+    local iSling, nMult = 1, 3
     for i, t in ShopConfig.Slingshots do
-        if t.Id == use(V.Slingshot) then
-            local tNext = ShopConfig.Slingshots[i + 1]
-            if tNext and nCash < tNext.Price then
-                return `Next: {tNext.Name} ({Format.Cash(tNext.Price)})`, nCash / tNext.Price
-            end
-        end
+        if t.Id == use(V.Slingshot) then iSling, nMult = i, t.Multiplier end
     end
-    local nBest = use(V.BestDistance)
     for _, tBiome in DinoConfig.Biomes do
         if nBest < tBiome.MinMeters then
-            return `Next: reach {tBiome.Name} ({Format.Meters(tBiome.MinMeters)})`, nBest / tBiome.MinMeters
+            local nNeed = math.ceil(tBiome.MinMeters / nMult)
+            if nPower < nNeed then
+                -- A better slingshot that the player can already afford is the faster route.
+                local tNext = ShopConfig.Slingshots[iSling + 1]
+                if tNext and nCash >= tNext.Price then
+                    return `Buy the {tNext.Name} in the Shop!`, 1
+                end
+                return `Train to {Format.Number(nNeed)} Power to reach {tBiome.Name}`, nPower / nNeed
+            end
+            return `Launch at full power to reach {tBiome.Name}!`, nBest / tBiome.MinMeters
         end
     end
-    return "You reached the Volcano! Try a Rebirth", 1
+    return "Every area reached! Rebirth for permanent bonuses", 1
 end
 
 -- Currency readout (refs 01/06): big icon + large outlined number, no backing capsule.

@@ -32,14 +32,15 @@ local function PadFor(oPlayer: Player): number?
     return WorldLayout.PadAt(oRoot.Position - Vector3.new(0, 3, 0))
 end
 
-local function Train(oPlayer: Player, iPad: number): boolean
+local function Train(oPlayer: Player, iPad: number, nShare: number?): boolean
     local tPad = ShopConfig.Pads[iPad]
     local nPower = PlayerDataServer:Get(oPlayer, "Power") or 0
     if nPower < tPad.RequiredPower then
         return false
     end
     local tPasses = PlayerDataServer:Get(oPlayer, "Passes") or {}
-    local nGain = tPad.PowerPerTick * (if tPasses.DoublePower then 2 else 1) * RetentionServer:GetRebirthBonus(oPlayer)
+    -- nShare: 1 for the passive tick, GameConfig.TrainTapFraction for a tap.
+    local nGain = tPad.PowerPerTick * (nShare or 1) * (if tPasses.DoublePower then 2 else 1) * RetentionServer:GetPowerBonus(oPlayer)
     PlayerDataServer:Set(oPlayer, "Power", nPower + nGain)
     FTUEServer:Reach(oPlayer, "FirstTrain")
     RetentionServer:Track(oPlayer, "Train", 1)
@@ -69,7 +70,7 @@ function mTraining.PreloadAsync(self)
         end
         if tWindow.nCount >= GameConfig.TrainTapMaxPerSecond then return end
         local iPad = PadFor(oPlayer)
-        if iPad and Train(oPlayer, iPad) then
+        if iPad and Train(oPlayer, iPad, GameConfig.TrainTapFraction) then
             tWindow.nCount += 1
         end
     end)

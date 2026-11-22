@@ -77,6 +77,18 @@ local function IsRare(tDino): boolean
         or (tDino.Mutation ~= "Normal" and tDino.Mutation ~= "Golden")
 end
 
+-- Celebration tier: "Mythic" (Cosmic, or Colossal and Legendary / top mutation) gets the full show
+-- and blesses the server; "Epic" (any rare) gets a big client celebration; otherwise none.
+local MYTHIC_LUCK, MYTHIC_SECONDS = 2, 120
+local function CatchTier(tDino): string?
+    local bLegendary = DinoConfig.Species[tDino.Species].Rarity == "Legendary"
+    local bTopMutation = tDino.Mutation == "Cosmic" or tDino.Mutation == "Toxic" or tDino.Mutation == "Magma"
+    if tDino.Mutation == "Cosmic" or (tDino.Size == "Colossal" and (bLegendary or bTopMutation)) then
+        return "Mythic"
+    end
+    return if IsRare(tDino) then "Epic" else nil
+end
+
 local mLaunch = Module()
 
 local function Finalise(oPlayer: Player, tFlight: Flight)
@@ -88,7 +100,10 @@ local function Finalise(oPlayer: Player, tFlight: Flight)
     local nMeters = LandingFor(tFlight)
     local tBiome = DinoConfig.GetBiome(nMeters)
     local tBait = FindShopItem(ShopConfig.Bait, PlayerDataServer:Get(oPlayer, "Bait"))
+    -- Depth: how far past this area's gate the bait landed (0 at the gate, ~1 at the next gate).
+    local nDepth = (CanyonMath.MetersToStuds(nMeters) % CanyonMath.BiomeLength) / CanyonMath.BiomeLength
     local nLuck = tBait.Luck * (1 + GameConfig.Bounce.LuckPerBounce * tFlight.Bounces) * WeatherServer:GetServerLuck() * RetentionServer:GetLuckMultiplier(oPlayer)
+        * (1 + GameConfig.DepthLuckBonus * nDepth)
 
     local sSpecies, sSize, sMutation
     local bFirstCatch = (PlayerDataServer:Get(oPlayer, "TotalLaunches") or 0) == 0
@@ -148,6 +163,7 @@ local function Finalise(oPlayer: Player, tFlight: Flight)
     AnalyticsServer:Custom(oPlayer, "Catch", DinoConfig.GetIncome(tDino), AnalyticsServer:Fields(DinoConfig.Species[sSpecies].Rarity, sSize, sMutation))
     AnalyticsServer:Custom(oPlayer, "Launch", nMeters, AnalyticsServer:Fields(tBiome.Id, tostring(tFlight.Bounces)))
 
+    local sTier = CatchTier(tDino)
     oCatchResult:FireClient(oPlayer, {
         FlightId = tFlight.Id,
         Dino = tDino,
@@ -158,13 +174,24 @@ local function Finalise(oPlayer: Player, tFlight: Flight)
         NewBest = bNewBest,
         NewBiome = bNewBiome,
         Placement = tPlacement,
+        Tier = sTier,
     })
 
-    if IsRare(tDino) then
+    if sTier then
         local tSize = DinoConfig.GetSize(sSize)
         local tMut = DinoConfig.GetMutation(sMutation)
         local sPrefix = (if tSize.Default then "" else tSize.Name .. " ") .. (if tMut.Default then "" else tMut.Name .. " ")
-        oAnnounce:FireAllClients({ Text = `{oPlayer.DisplayName} caught a {sPrefix}{DinoConfig.Species[sSpecies].Name}!`, Kind = "Catch", Mutation = sMutation })
+        local sName = sPrefix .. DinoConfig.Species[sSpecies].Name
+        if sTier == "Mythic" then
+            -- The whole server shares the moment: big banner and a luck blessing for everyone.
+            if WeatherServer:GetServerLuck() < MYTHIC_LUCK then
+                WeatherServer:SetServerLuck(MYTHIC_LUCK, MYTHIC_SECONDS)
+            end
+            oAnnounce:FireAllClients({ Text = `MYTHIC! {oPlayer.DisplayName} caught a {sName}! Everyone gets 2x luck for 2 minutes!`, Kind = "Mythic", Mutation = sMutation, UserId = oPlayer.UserId })
+            AnalyticsServer:Custom(oPlayer, "MythicCatch", DinoConfig.GetIncome(tDino), AnalyticsServer:Fields(sSpecies, sSize, sMutation))
+        else
+            oAnnounce:FireAllClients({ Text = `{oPlayer.DisplayName} caught a {sName}!`, Kind = "Catch", Mutation = sMutation })
+        end
     end
 end
 
@@ -196,7 +223,7 @@ local function Plan(oPlayer: Player, tPayload): { [string]: any }
     local tSling = FindShopItem(ShopConfig.Slingshots, PlayerDataServer:Get(oPlayer, "Slingshot"))
     local nPower = PlayerDataServer:Get(oPlayer, "Power") or GameConfig.StartingPower
     local nChargeMult = GameConfig.MinCharge + (1 - GameConfig.MinCharge) * nCharge
-    local nBase = math.max(1, nPower * tSling.Multiplier * nChargeMult * RetentionServer:GetRebirthBonus(oPlayer))
+    local nBase = math.max(1, nPower * tSling.Multiplier * nChargeMult)
 
     iNextFlightId += 1
     local vOrigin = oRoot.Position + Vector3.new(0, 3, -3)

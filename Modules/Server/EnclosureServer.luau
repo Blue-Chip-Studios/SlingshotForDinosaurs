@@ -73,6 +73,8 @@ function mEnclosure.GetIncome(self, oPlayer: Player): number
     if HasPass(oPlayer, "VIP") then nTotal *= 1.25 end
     if oPlayer:GetAttribute("Premium") then nTotal *= 1 + RetentionConfig.PremiumIncomeBonus end
     if oPlayer:GetAttribute("GroupMember") then nTotal *= 1 + SocialConfig.GroupIncomeBonus end
+    -- Rebirths: permanent income bonus (the reward for resetting the run).
+    nTotal *= 1 + (PlayerDataServer:Get(oPlayer, "Rebirths") or 0) * RetentionConfig.Rebirth.IncomePerRebirth
     return nTotal
 end
 
@@ -328,6 +330,18 @@ function mEnclosure.PlayerRemoving(self, oPlayer: Player)
         ResolveFull(oPlayer, "Sell")
     end
     tRerollBusy[oPlayer] = nil
+end
+
+-- Rebirth: clears the park except the single best-earning dino. Returns that dino (or nil).
+function mEnclosure.ResetForRebirth(self, oPlayer: Player): Dino?
+    local tBest, nBest = nil, -1
+    for _, t in PlayerDataServer:Get(oPlayer, "Dinos") or {} do
+        local n = DinoConfig.GetIncome(t)
+        if n > nBest then tBest, nBest = t, n end
+    end
+    PlayerDataServer:Set(oPlayer, "Dinos", if tBest then { tBest } else {})
+    PlotServer:Refresh(oPlayer)
+    return tBest
 end
 
 return mEnclosure

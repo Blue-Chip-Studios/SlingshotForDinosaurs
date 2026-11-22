@@ -263,20 +263,24 @@ local function Announcements(scope)
         [Children] = {
             scope:New("UIListLayout")({ Padding = UDim.new(0, 6), HorizontalAlignment = Enum.HorizontalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder }),
             scope:ForValues(V.Announcements, function(use, innerScope, t)
-                local cColor = if t.Mutation and Theme.Mutation[t.Mutation] and t.Mutation ~= "Normal" then Theme.Mutation[t.Mutation]
+                local bMythic = t.Kind == "Mythic"
+                local cColor = if bMythic then Theme.White
+                    elseif t.Mutation and Theme.Mutation[t.Mutation] and t.Mutation ~= "Normal" then Theme.Mutation[t.Mutation]
                     elseif t.Kind == "Event" then Theme.Variants.Orange[1]
                     elseif t.Kind == "Toast" then Theme.Variants.Red[1]
                     else Theme.White
                 return innerScope:New("Frame")({
-                    BackgroundColor3 = Theme.Ink,
-                    BackgroundTransparency = 0.25,
-                    Size = UDim2.fromOffset(0, 50),
+                    -- Mythic catches get a solid gold, outlined banner; everything else a dark toast.
+                    BackgroundColor3 = if bMythic then Theme.Variants.Gold[2] else Theme.Ink,
+                    BackgroundTransparency = if bMythic then 0 else 0.25,
+                    Size = UDim2.fromOffset(0, if bMythic then 62 else 50),
                     AutomaticSize = Enum.AutomaticSize.X,
                     LayoutOrder = t.Id,
                     [Children] = {
-                        UI.Corner(innerScope, 999),
+                        UI.Corner(innerScope, if bMythic then Theme.Radius.Button else 999),
+                        if bMythic then UI.Stroke(innerScope, 4) else nil,
                         innerScope:New("UIPadding")({ PaddingLeft = UDim.new(0, 20), PaddingRight = UDim.new(0, 20) }),
-                        UI.Text(innerScope, { Text = t.Text, TextSize = 30, Color = cColor, Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X }),
+                        UI.Text(innerScope, { Text = t.Text, TextSize = if bMythic then 32 else 30, Color = cColor, Size = UDim2.new(0, 0, 1, 0), AutomaticSize = Enum.AutomaticSize.X }),
                     },
                 })
             end),

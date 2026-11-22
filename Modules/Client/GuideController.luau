@@ -82,7 +82,7 @@ local mGuide = Module()
 function mGuide.PreloadAsync(self)
     Remote:GetEvent("Announcement"):OnClientEvent(function(t)
         Announce(t.Text, t.Kind, t.Mutation)
-        if t.Kind == "Event" then
+        if t.Kind == "Event" or t.Kind == "Mythic" then
             SoundController:Play("Event")
         elseif t.Kind == "Catch" then
             SoundController:Play("Perfect")

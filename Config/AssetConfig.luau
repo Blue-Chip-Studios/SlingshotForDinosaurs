@@ -27,6 +27,21 @@ return {
         Carnotaurus = 135527739801781, -- v2
         Giganotosaurus = 73604210424398, -- v2
         TRex = 109273798018289, -- v2
+        Protoceratops = 103452986132565, -- v2
+        Gallimimus = 108308012612570, -- v2
+        Stegosaurus = 112169800287147, -- v2
+        Iguanodon = 125616515106313, -- v2
+        Corythosaurus = 131846553188349, -- v2
+        Ouranosaurus = 103346113048771, -- v2
+        Allosaurus = 80395410943948, -- v2
+        Styracosaurus = 79021982595781, -- v2
+        Diplodocus = 89053821605031, -- v2
+        Microraptor = 113084508877821, -- v2
+        Kentrosaurus = 105056901181021, -- v2
+        Amargasaurus = 138821328429098, -- v2
+        Pteranodon = 78177604866271, -- v2
+        Archaeopteryx = 133870457292316, -- v2
+        Quetzalcoatlus = 74497940443790, -- v2
     },
 
     -- World props (Model assets), keyed by the names WorldBuilder.PlaceProp asks for.
@@ -39,6 +54,15 @@ return {
         LavaRock = 130677280936772,
         Volcano = 135708295927818,
         GeyserVent = 92857209851695,
+        Cactus = 113313071890140,
+        Mesa = 106414003297015,
+        PalmTree = 85171795645659,
+        Coral = 90014554608859,
+        Redwood = 116600328271715,
+        CrystalCluster = 89825398164630,
+        SkyIsland = 90782611166780,
+        Cloud = 76483736936847,
+        VolcanoBig = 103299850582351,
         LaunchSlingshot = 99721449867774,
         SlingshotItem = 118343737652140,
         Bait_Berries = 139213804648851,
@@ -74,6 +98,21 @@ return {
         Carnotaurus = 123558833694995,
         Giganotosaurus = 97272805454215,
         TRex = 115798599236582,
+        Protoceratops = 112768364412263,
+        Gallimimus = 111771167453534,
+        Stegosaurus = 100997959794511,
+        Iguanodon = 126864234050534,
+        Corythosaurus = 120688726266770,
+        Ouranosaurus = 78449346517676,
+        Allosaurus = 122624025179677,
+        Styracosaurus = 133213078257962,
+        Diplodocus = 122296851277609,
+        Microraptor = 111759511964826,
+        Kentrosaurus = 135077094675129,
+        Amargasaurus = 80925837149363,
+        Pteranodon = 95845532217533,
+        Archaeopteryx = 77844417774930,
+        Quetzalcoatlus = 129312014886651,
         -- Shop items
         SlingshotItem = 99032474657018,
         Bait_Berries = 96598653687184,
@@ -107,6 +146,8 @@ return {
         Sling_MammothTusk = 104883648884293,
         Sling_Obsidian = 129839138715805,
         Sling_Meteorite = 114117888526333,
+        Sling_Crystal = 108676606921566,
+        Sling_Celestial = 109375242842889,
         Icon_Park = 107898141125354,
     },
 
@@ -123,5 +164,7 @@ return {
         Error = 100156454441026,
         Event = 75349777382519,
         Ambience = 109438410222145, -- looping jungle soundscape (ElevenLabs)
+        Fanfare = 116569728192023, -- celebration (Epic/Mythic catches)
+        Roar = 117194036391090, -- Mythic catch roar
     },
 }

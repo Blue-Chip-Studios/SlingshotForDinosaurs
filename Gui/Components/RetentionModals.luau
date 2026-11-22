@@ -253,17 +253,18 @@ function M.Rebirth(scope)
             UI.Text(scope, {
                 Text = scope:Computed(function(use)
                     local n = use(V.Rebirths)
-                    return `Bonus now: +{n * tCfg.BonusPerRebirth * 100}% Power & distance\nAfter rebirth: +{(n + 1) * tCfg.BonusPerRebirth * 100}%`
+                    local function Pct(x: number) return math.floor(x * 100 + 0.5) end
+                    return `Now: +{Pct(n * tCfg.IncomePerRebirth)}% cash, +{Pct(n * tCfg.PowerPerRebirth)}% training\nAfter: +{Pct((n + 1) * tCfg.IncomePerRebirth)}% cash, +{Pct((n + 1) * tCfg.PowerPerRebirth)}% training`
                 end),
                 TextSize = 30, Color = Theme.Ink, NoStroke = true, Size = UDim2.new(1, 0, 0, 80),
             }),
             UI.Text(scope, {
-                Text = "Resets cash, Power, slingshot and bait.\nYou KEEP all dinos, the Index, park slots and passes.",
+                Text = "Starts a new run: resets cash, Power, slingshot, bait and your park.\nYou KEEP your best dino, the Index, park slots, limited dinos and passes.",
                 TextSize = 22, Color = Theme.Ink, NoStroke = true, Font = Theme.Body, Position = UDim2.fromOffset(0, 90), Size = UDim2.new(1, 0, 0, 60),
             }),
             UI.Text(scope, {
                 Text = scope:Computed(function(use)
-                    return `Needs: reach {Format.Meters(tCfg.RequiredMeters)} (best {Format.Meters(use(V.BestDistance))}) and {Format.Cash(use(nCost))}`
+                    return `Needs: reach the Volcano ({Format.Meters(tCfg.RequiredMeters)}) and {Format.Cash(use(nCost))}`
                 end),
                 TextSize = 22, Color = Theme.Variants.Red[2], NoStroke = true, Position = UDim2.fromOffset(0, 160), Size = UDim2.new(1, 0, 0, 30),
             }),

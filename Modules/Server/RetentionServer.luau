@@ -87,8 +87,9 @@ function mRetention.GetLuckMultiplier(self, oPlayer: Player): number
     return n * (1 + iStreak * tStreak.LuckPerStep)
 end
 
-function mRetention.GetRebirthBonus(self, oPlayer: Player): number
-    return 1 + (PlayerDataServer:Get(oPlayer, "Rebirths") or 0) * RetentionConfig.Rebirth.BonusPerRebirth
+-- Training gain multiplier from rebirths (distance itself is not boosted: Power is).
+function mRetention.GetPowerBonus(self, oPlayer: Player): number
+    return 1 + (PlayerDataServer:Get(oPlayer, "Rebirths") or 0) * RetentionConfig.Rebirth.PowerPerRebirth
 end
 
 -- Called by LaunchServer for every bounce result ("Perfect" | "Good" | "OK" | "Miss").
@@ -235,12 +236,15 @@ function mRetention.PreloadAsync(self)
         tBusy[oPlayer] = true
         local tResult
         if PlayerDataServer:SpendCash(oPlayer, nCost) then
-            -- Reset the launch progression; dinos, Index, slots and purchases are kept.
+            -- Reset the run: Power, cash, slingshot, bait and the park (best dino kept).
+            -- Index, slot tier, limited dinos, passes and codes are kept.
             PlayerDataServer:SpendCash(oPlayer, PlayerDataServer:Get(oPlayer, "Cash") or 0) -- via the currency replica
             PlayerDataServer:Set(oPlayer, "Power", GameConfig.StartingPower)
             PlayerDataServer:Set(oPlayer, "Slingshot", "Twig")
             PlayerDataServer:Set(oPlayer, "Bait", "Berries")
+            PlayerDataServer:Set(oPlayer, "BestDistance", 0)
             PlayerDataServer:Set(oPlayer, "Rebirths", iRebirths + 1)
+            EnclosureServer:ResetForRebirth(oPlayer)
             BadgeServer:Award(oPlayer, "Rebirth")
             AnalyticsServer:Progression(oPlayer, "Rebirth", Enum.AnalyticsProgressionType.Complete, iRebirths + 1)
             tResult = { Ok = true, Rebirths = iRebirths + 1 }

@@ -183,18 +183,39 @@ local function BuildRim()
     end
 end
 
+-- Per-area look. Prop: the main scattered prop (Tree props get trunk/leaf tints, others a Leaves tint
+-- or an explicit Tint table). Decor: small ground clutter { asset, scale, tint? }. Feature: a second
+-- terrain material splashed over the floor. Hero: a few big landmark props along the walls.
 local tBiomeLook = {
-    Jungle = { Floor = "4CC14A", Wall = "7A5230", Prop = "JungleTree", Trunk = "8B5A2B", Leaves = "1FA82F", Material = Enum.Material.Grass,
-        Terrain = Enum.Material.Grass },
-    Swamp = { Floor = "5C7A2E", Wall = "4F5A2A", Prop = "SwampTree", Trunk = "4E3B24", Leaves = "6B8E23", Material = Enum.Material.Mud,
-        Terrain = Enum.Material.Mud, Feature = Enum.Material.Water, FeatureCount = 7 },
-    TarPits = { Floor = "4A3B33", Wall = "3A2F2A", Prop = "TarRock", Trunk = "2A211D", Leaves = "5A4A40", Material = Enum.Material.Ground,
-        Terrain = Enum.Material.Ground, Feature = Enum.Material.Asphalt, FeatureCount = 9 },
-    IceAge = { Floor = "E8F6FF", Wall = "A9DDF5", Prop = "IceBlock", Trunk = "BFE9FF", Leaves = "FFFFFF", Material = Enum.Material.Snow,
-        Terrain = Enum.Material.Snow, Feature = Enum.Material.Glacier, FeatureCount = 6 },
-    Volcano = { Floor = "5A2A1E", Wall = "3B1A14", Prop = "LavaRock", Trunk = "2A140F", Leaves = "FF6A1A", Material = Enum.Material.Basalt,
-        Terrain = Enum.Material.Basalt, Feature = Enum.Material.CrackedLava, FeatureCount = 10 },
+    Jungle = { Wall = "7A5230", Prop = "JungleTree", Tree = true, Trunk = "8B5A2B", Leaves = "1FA82F",
+        Terrain = Enum.Material.Grass, Decor = { "GrassClump", 2.2 } },
+    Swamp = { Wall = "4F5A2A", Prop = "SwampTree", Tree = true, Trunk = "4E3B24", Leaves = "6B8E23",
+        Terrain = Enum.Material.Mud, Feature = Enum.Material.Water, FeatureCount = 7, Decor = { "GrassClump", 2.6, { Leaves = "6B8E23" } } },
+    TarPits = { Wall = "3A2F2A", Prop = "TarRock", Leaves = "5A4A40",
+        Terrain = Enum.Material.Ground, Feature = Enum.Material.Asphalt, FeatureCount = 9, Decor = { "Bones", 2 } },
+    Badlands = { Wall = "C8693A", Prop = "Cactus", Tree = true, PropScale = { 3, 4.6 }, Count = 20, Trunk = "3E8E3A", Leaves = "4FA83F", CliffTop = "D9A05A",
+        Terrain = Enum.Material.Sandstone, Feature = Enum.Material.Sand, FeatureCount = 8, Decor = { "Bones", 2.2 },
+        Hero = { "Mesa", 5, 7.5, { Rock = "D9824A", RockDark = "A9542E" } } },
+    CoralCoast = { Wall = "D8C08A", Prop = "PalmTree", Tree = true, PropScale = { 3.2, 4.6 }, Count = 20, Trunk = "B07A45", Leaves = "2FBF5A",
+        Terrain = Enum.Material.Sand, Lagoon = true, Decor = { "Coral", 3, { Glow = "FF7BA8", Band = "FF5A5A", Gold = "FFB13B" } } },
+    IceAge = { Wall = "A9DDF5", Prop = "IceBlock", Leaves = "FFFFFF",
+        Terrain = Enum.Material.Snow, Feature = Enum.Material.Glacier, FeatureCount = 6, Decor = { "Crystal", 2.5 } },
+    Redwood = { Wall = "6B4A32", Prop = "Redwood", Tree = true, PropScale = { 3.6, 5.6 }, Count = 24, Trunk = "8E3B22", Leaves = "1E7A3A",
+        Terrain = Enum.Material.LeafyGrass, Decor = { "GrassClump", 3, { Leaves = "2E8B3E" } } },
+    CrystalCaves = { Wall = "3A2E5A", Prop = "CrystalCluster", PropScale = { 2.6, 4.8 }, Count = 20, Tint = { Glow = "C27BFF", RockDark = "2A2240" }, CliffTop = "8A5CFF",
+        Terrain = Enum.Material.Rock, Decor = { "Crystal", 2.6, { Ice = "FF9BF0" } }, Lights = "C27BFF" },
+    Volcano = { Wall = "3B1A14", Prop = "LavaRock", Leaves = "FF6A1A", CliffTop = "5A2E24",
+        Terrain = Enum.Material.Asphalt, Feature = Enum.Material.CrackedLava, FeatureCount = 22, Lights = "FF6A1A" },
+    SkyIslands = { Wall = "BFD8FF", Prop = "Cloud", PropScale = { 2.5, 4.5 }, Tint = { Snow = "FFFFFF" },
+        Terrain = Enum.Material.Salt, Decor = { "Cloud", 1.2 }, NoWalls = true },
 }
+
+local function Tints(t: { [string]: string }?): { [string]: Color3 }?
+    if not t then return nil end
+    local tOut = {}
+    for k, v in t do tOut[k] = Color3.fromHex(v) end
+    return tOut
+end
 
 -- Stylised terrain palette (bright and saturated to match the art style).
 local function ApplyTerrainColours()
@@ -205,12 +226,20 @@ local function ApplyTerrainColours()
     oTerrain:SetMaterialColor(Enum.Material.Asphalt, Color3.fromHex("1E1A1C"))
     oTerrain:SetMaterialColor(Enum.Material.Snow, Color3.fromHex("F2F8FF"))
     oTerrain:SetMaterialColor(Enum.Material.Glacier, Color3.fromHex("9EDCF5"))
-    oTerrain:SetMaterialColor(Enum.Material.Basalt, Color3.fromHex("3B2722"))
+    oTerrain:SetMaterialColor(Enum.Material.Basalt, Color3.fromHex("3A1E18"))
+    oTerrain:SetMaterialColor(Enum.Material.Rock, Color3.fromHex("4A3A80"))
     oTerrain:SetMaterialColor(Enum.Material.CrackedLava, Color3.fromHex("FF6A1A"))
-    oTerrain.WaterColor = Color3.fromHex("4E9C8A")
+    oTerrain:SetMaterialColor(Enum.Material.Sandstone, Color3.fromHex("E09A5A"))
+    oTerrain:SetMaterialColor(Enum.Material.Sand, Color3.fromHex("F2D89A"))
+    oTerrain:SetMaterialColor(Enum.Material.LeafyGrass, Color3.fromHex("3E9A3A"))
+    oTerrain:SetMaterialColor(Enum.Material.Slate, Color3.fromHex("4A3F6B"))
+    oTerrain:SetMaterialColor(Enum.Material.Salt, Color3.fromHex("EAF3FF"))
+    oTerrain.WaterColor = Color3.fromHex("3AAFB8")
     oTerrain.WaterTransparency = 0.6
     oTerrain.WaterWaveSize = 0.1
 end
+
+local BuildLandmarks: (Folder) -> ()
 
 local function BuildCanyon()
     local oCanyon = Folder("Canyon", oWorld)
@@ -225,18 +254,29 @@ local function BuildCanyon()
         local oTerrain = Workspace.Terrain
         local vFloorSize = Vector3.new(nHalf * 2 + 40, 8, nLen)
         oTerrain:FillBlock(CFrame.new(0, CanyonMath.FloorY - 4, nMidZ), vFloorSize, tLook.Terrain)
+        if tLook.Lagoon then
+            -- A turquoise lagoon along the right-hand side of the beach.
+            local nW = nHalf + 20 - 76
+            oTerrain:FillBlock(CFrame.new(76 + nW / 2, CanyonMath.FloorY - 2, nMidZ), Vector3.new(nW, 8, nLen), Enum.Material.Air)
+            oTerrain:FillBlock(CFrame.new(76 + nW / 2, CanyonMath.FloorY - 4, nMidZ), Vector3.new(nW, 4, nLen), Enum.Material.Water)
+            oTerrain:FillBlock(CFrame.new(76 + nW / 2, CanyonMath.FloorY - 8, nMidZ), Vector3.new(nW, 4, nLen), Enum.Material.Sand)
+        end
         for _ = 1, tLook.FeatureCount or 0 do
             local vPos = Vector3.new(oRandom:NextNumber(-nHalf + 30, nHalf - 30), CanyonMath.FloorY - 0.6, nZ0 - oRandom:NextNumber(30, nLen - 30))
             local nSize = oRandom:NextNumber(18, 40)
-            oTerrain:FillCylinder(CFrame.new(vPos), 1.4, nSize / 2, tLook.Feature)
+            if tLook.DeepFeature then
+                oTerrain:FillCylinder(CFrame.new(vPos.X, CanyonMath.FloorY - 2.6, vPos.Z), 5, nSize / 2, tLook.Feature)
+            else
+                oTerrain:FillCylinder(CFrame.new(vPos.X, CanyonMath.FloorY - 1.8, vPos.Z), 4, nSize / 2, tLook.Feature)
+            end
         end
         local nWallHeight = 110 + i * 12
         local bCliffAsset = ReplicatedStorage:FindFirstChild("Assets") and ReplicatedStorage.Assets.World:FindFirstChild("CliffWall") ~= nil
-        for _, nSide in { -1, 1 } do
+        for _, nSide in (if tLook.NoWalls then {} else { -1, 1 }) do
             if bCliffAsset then
                 -- Blender cliff modules (100 studs wide at scale 2.5), facing into the canyon, tinted per biome.
                 local cWall = Color3.fromHex(tLook.Wall)
-                local tTint = { Rock = cWall:Lerp(Color3.new(1, 1, 1), 0.12), RockDark = cWall:Lerp(Color3.new(0, 0, 0), 0.25), Leaves = Color3.fromHex(tLook.Leaves) }
+                local tTint = { Rock = cWall:Lerp(Color3.new(1, 1, 1), 0.12), RockDark = cWall:Lerp(Color3.new(0, 0, 0), 0.25), Leaves = Color3.fromHex(tLook.CliffTop or tLook.Leaves or "4E8A3A") }
                 -- Overlapping modules with random scale, depth and height offsets so the strata don't read as tiles.
                 for k = 0, 4 do
                     local nScale = oRandom:NextNumber(2.1, 2.9)
@@ -251,11 +291,15 @@ local function BuildCanyon()
             end
         end
         -- Biome decoration from the Blender kit (cheap, small props).
-        local tDecor = ({ Jungle = { "GrassClump", 2.2 }, Swamp = { "GrassClump", 2.6 }, TarPits = { "Bones", 2 }, IceAge = { "Crystal", 2.5 } })[tBiome.Id]
+        local tDecor = tLook.Decor
         if tDecor then
-            local tTint = if tBiome.Id == "Swamp" then { Leaves = Color3.fromHex("6B8E23") } else nil
+            local tTint = Tints(tDecor[3])
             for _ = 1, 16 do
                 local vPos = Vector3.new(oRandom:NextNumber(-nHalf + 15, nHalf - 15), CanyonMath.FloorY, nZ0 - oRandom:NextNumber(15, nLen - 15))
+                if tLook.Lagoon then
+                    -- Coral grows on the lagoon bed.
+                    vPos = Vector3.new(oRandom:NextNumber(88, nHalf - 12), CanyonMath.FloorY - 5, vPos.Z)
+                end
                 PlaceProp(tDecor[1], CFrame.new(vPos) * CFrame.Angles(0, oRandom:NextNumber(0, 6.28), 0), tDecor[2] * oRandom:NextNumber(0.8, 1.3), function() end, tTint).Parent = oBiome
             end
         end
@@ -271,15 +315,44 @@ local function BuildCanyon()
             oBillboard.Size = UDim2.fromScale(110, 50)
         end
         -- Props
-        for _ = 1, 26 do
+        local tScale = tLook.PropScale or (if tLook.Tree then { 1.6, 3 } else { 2.5, 6 })
+        for _ = 1, tLook.Count or 26 do
             local vPos = Vector3.new(oRandom:NextNumber(-nHalf + 15, nHalf - 15), CanyonMath.FloorY, nZ0 - oRandom:NextNumber(20, nLen - 20))
-            if math.abs(vPos.X) > 25 then
+            if math.abs(vPos.X) > 25 and not (tLook.Lagoon and vPos.X > 66) then
                 local cfProp = CFrame.new(vPos) * CFrame.Angles(0, oRandom:NextNumber(0, 6.28), 0)
-                if tBiome.Id == "Jungle" or tBiome.Id == "Swamp" then
-                    PlaceProp(tLook.Prop, cfProp, oRandom:NextNumber(1.6, 3), TempTree(Color3.fromHex(tLook.Trunk), Color3.fromHex(tLook.Leaves), 16)).Parent = oBiome
-                else
-                    PlaceProp(tLook.Prop, cfProp, oRandom:NextNumber(2.5, 6), TempRock(Color3.fromHex(tLook.Leaves))).Parent = oBiome
+                local nScale = oRandom:NextNumber(tScale[1], tScale[2])
+                if tLook.Prop == "Cloud" then
+                    -- Sky Islands: clouds drift at different heights above the cloud floor.
+                    cfProp = cfProp + Vector3.new(0, oRandom:NextNumber(0, 40), 0)
                 end
+                if tLook.Tree then
+                    PlaceProp(tLook.Prop, cfProp, nScale, TempTree(Color3.fromHex(tLook.Trunk), Color3.fromHex(tLook.Leaves), 16),
+                        { Trunk = Color3.fromHex(tLook.Trunk), Leaves = Color3.fromHex(tLook.Leaves) }).Parent = oBiome
+                else
+                    local tTint = Tints(tLook.Tint)
+                    PlaceProp(tLook.Prop, cfProp, nScale, TempRock(Color3.fromHex(tLook.Leaves or "FFFFFF")), tTint).Parent = oBiome
+                end
+            end
+        end
+        -- Landmarks hugging the walls (e.g. Badlands mesas), leaving the flight lane clear.
+        if tLook.Hero then
+            local tHero = tLook.Hero
+            for k = 0, 3 do
+                local nSide = if k % 2 == 0 then -1 else 1
+                local vPos = Vector3.new(nSide * (nHalf - oRandom:NextNumber(10, 35)), CanyonMath.FloorY, nZ0 - 50 - k * 95)
+                PlaceProp(tHero[1], CFrame.new(vPos) * CFrame.Angles(0, oRandom:NextNumber(0, 6.28), 0), oRandom:NextNumber(tHero[2], tHero[3]), function() end, Tints(tHero[4])).Parent = oBiome
+            end
+        end
+        -- Coloured glow lights for the darker areas.
+        if tLook.Lights then
+            for k = 0, 3 do
+                local oLamp = Part({ Name = "AreaLight", Size = Vector3.one, Transparency = 1, CanCollide = false,
+                    Position = Vector3.new((k % 2 * 2 - 1) * nHalf * 0.5, 25, nZ0 - 50 - k * 100), Parent = oBiome })
+                local oLight = Instance.new("PointLight")
+                oLight.Range = 60
+                oLight.Brightness = 2
+                oLight.Color = Color3.fromHex(tLook.Lights)
+                oLight.Parent = oLamp
             end
         end
         -- Geysers: visual bounce vents along the floor (the actual bounce timing is server-planned)
@@ -290,23 +363,92 @@ local function BuildCanyon()
             end).Parent = oBiome
         end
     end
-    -- Hero volcano at the far end, with a glowing crater and lava streams visible from the rim.
-    local nEndZ = CanyonMath.CanyonEndZ
-    local oVolcano = PlaceProp("Volcano", CFrame.new(0, CanyonMath.FloorY, nEndZ - 150), 3.4, function(oModel)
-        for iLayer = 0, 7 do
-            local nRadius = 200 - iLayer * 22
-            Part({ Name = "RockDark", Shape = Enum.PartType.Cylinder, Size = Vector3.new(22, nRadius * 2, nRadius * 2), CFrame = CFrame.new(0, iLayer * 22 + 11, 0) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromHex("3B1A14"), Material = Enum.Material.Basalt, Parent = oModel })
+    BuildLandmarks(oCanyon)
+end
+
+local function BiomeStartZ(sId: string): number?
+    for i, tBiome in DinoConfig.Biomes do
+        if tBiome.Id == sId then
+            return CanyonMath.CanyonStartZ - (i - 1) * CanyonMath.BiomeLength
         end
-        Part({ Name = "Lava", Shape = Enum.PartType.Cylinder, Size = Vector3.new(4, 50, 50), CFrame = CFrame.new(0, 177, 0) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromHex("FF6A1A"), Material = Enum.Material.Neon, Parent = oModel })
-    end)
-    oVolcano.Parent = oCanyon
-    local _, vVolcanoSize = oVolcano:GetBoundingBox()
-    local oGlow = Part({ Name = "CraterGlow", Size = Vector3.one, Transparency = 1, CanCollide = false, Position = oVolcano:GetPivot().Position + Vector3.new(0, vVolcanoSize.Y + 10, 0), Parent = oCanyon })
-    local oLight = Instance.new("PointLight")
-    oLight.Range = 60
-    oLight.Brightness = 5
-    oLight.Color = Color3.fromHex("FF6A1A")
-    oLight.Parent = oGlow
+    end
+    return nil
+end
+
+-- Volcanoes towering over the Volcano area (one each side, outside the walls so the flight lane
+-- stays clear), with smoke, embers and a crater glow; then floating islands for the Sky Islands finale.
+BuildLandmarks = function(oCanyon: Folder)
+    local nHalf = CanyonMath.CanyonHalfWidth
+    local nLen = CanyonMath.BiomeLength
+    local nVolcanoZ = BiomeStartZ("Volcano")
+    if nVolcanoZ then
+        for _, t in { { -1, 0.55, 3.9 }, { 1, 0.9, 3.2 } } do
+            local nSide, nAlong, nScale = t[1], t[2], t[3]
+            local oVolcano = PlaceProp("VolcanoBig", CFrame.new(nSide * (nHalf + 70 * nScale * 0.85), CanyonMath.FloorY - 6, nVolcanoZ - nLen * nAlong), nScale, function(oModel)
+                for iLayer = 0, 5 do
+                    local nRadius = 70 - iLayer * 10
+                    Part({ Name = "RockDark", Shape = Enum.PartType.Cylinder, Size = Vector3.new(14, nRadius * 2, nRadius * 2), CFrame = CFrame.new(0, iLayer * 14 + 7, 0) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromHex("3B1A14"), Material = Enum.Material.Basalt, Parent = oModel })
+                end
+            end, { Rock = Color3.fromHex("5A2E24"), RockDark = Color3.fromHex("2A1612") })
+            oVolcano.Parent = oCanyon
+            local cfBox, vSize = oVolcano:GetBoundingBox()
+            local vCrater = cfBox.Position + Vector3.new(0, vSize.Y / 2 - 4, 0)
+            local oCrater = Part({ Name = "Crater", Size = Vector3.new(vSize.X * 0.2, 2, vSize.Z * 0.2), Transparency = 1, CanCollide = false, Position = vCrater, Parent = oCanyon })
+            local oLight = Instance.new("PointLight")
+            oLight.Range = 60
+            oLight.Brightness = 6
+            oLight.Color = Color3.fromHex("FF6A1A")
+            oLight.Parent = oCrater
+            local oSmoke = Instance.new("ParticleEmitter")
+            oSmoke.Name = "Smoke"
+            oSmoke.Texture = "rbxasset://textures/particles/smoke_main.dds"
+            oSmoke.Color = ColorSequence.new(Color3.fromHex("5A4A48"), Color3.fromHex("2A2222"))
+            oSmoke.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 18 * nScale), NumberSequenceKeypoint.new(1, 45 * nScale) })
+            oSmoke.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.35), NumberSequenceKeypoint.new(1, 1) })
+            oSmoke.Lifetime = NumberRange.new(8, 12)
+            oSmoke.Speed = NumberRange.new(10, 16)
+            oSmoke.SpreadAngle = Vector2.new(12, 12)
+            oSmoke.Rate = 3
+            oSmoke.RotSpeed = NumberRange.new(-15, 15)
+            oSmoke.Parent = oCrater
+            local oEmbers = Instance.new("ParticleEmitter")
+            oEmbers.Name = "Embers"
+            oEmbers.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+            oEmbers.Color = ColorSequence.new(Color3.fromHex("FFB13B"), Color3.fromHex("FF3A1A"))
+            oEmbers.LightEmission = 1
+            oEmbers.Size = NumberSequence.new(2.5, 0.5)
+            oEmbers.Lifetime = NumberRange.new(3, 5)
+            oEmbers.Speed = NumberRange.new(30, 55)
+            oEmbers.SpreadAngle = Vector2.new(25, 25)
+            oEmbers.Acceleration = Vector3.new(0, -20, 0)
+            oEmbers.Rate = 12
+            oEmbers.Parent = oCrater
+        end
+    end
+    local nSkyZ = BiomeStartZ("SkyIslands")
+    if nSkyZ then
+        local tIslands = {
+            { -110, 60, 70, 3.2 }, { 120, 100, 150, 4.0 }, { -50, 150, 240, 2.8 }, { 100, 55, 310, 3.4 }, { -130, 120, 370, 4.4 },
+            { 0, 170, nLen + 120, 9.0 }, -- the big finale island beyond the last metre
+        }
+        for _, t in tIslands do
+            local vPos = Vector3.new(t[1], CanyonMath.FloorY + t[2], nSkyZ - t[3])
+            PlaceProp("SkyIsland", CFrame.new(vPos) * CFrame.Angles(0, oRandom:NextNumber(0, 6.28), 0), t[4], function() end,
+                { Leaves = Color3.fromHex("6FD45A"), Leaves2 = Color3.fromHex("B8F06A") }).Parent = oCanyon
+        end
+        -- Cloud banks along the edges and the far end hide the cloud floor's hard edges.
+        local tWhite = { Snow = Color3.new(1, 1, 1) }
+        for k = 0, 13 do
+            for _, nSide in { -1, 1 } do
+                local vPos = Vector3.new(nSide * (nHalf + oRandom:NextNumber(-10, 25)), CanyonMath.FloorY - oRandom:NextNumber(8, 16), nSkyZ - k * 32 - oRandom:NextNumber(0, 20))
+                PlaceProp("Cloud", CFrame.new(vPos) * CFrame.Angles(0, math.rad(90 + oRandom:NextNumber(-20, 20)), 0), oRandom:NextNumber(5, 8), function() end, tWhite).Parent = oCanyon
+            end
+        end
+        for k = -4, 4 do
+            local vPos = Vector3.new(k * 48, CanyonMath.FloorY - oRandom:NextNumber(8, 16), nSkyZ - nLen - oRandom:NextNumber(0, 25))
+            PlaceProp("Cloud", CFrame.new(vPos) * CFrame.Angles(0, oRandom:NextNumber(-0.3, 0.3), 0), oRandom:NextNumber(5, 8), function() end, tWhite).Parent = oCanyon
+        end
+    end
 end
 
 local function BuildPlots()
