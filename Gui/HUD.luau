@@ -272,6 +272,9 @@ return function(scope, props)
                     Position = UDim2.new(0.5, 0, 0, 12),
                     Size = UDim2.fromOffset(760, 200),
                     [Children] = {
+                        -- Phones shrink the whole HUD to ~0.53; the status chips and goal text became ~10px.
+                        -- There's spare width up here on touch screens, so this cluster gets a size bump.
+                        scope:New("UIScale")({ Scale = scope:Computed(function(use) return if use(UI.IsTouch) then 1.3 else 1 end) }),
                         scope:New("UIListLayout")({ Padding = UDim.new(0, 6), HorizontalAlignment = Enum.HorizontalAlignment.Center, SortOrder = Enum.SortOrder.LayoutOrder }),
                         -- Row of status chips: best distance, personal luck boost, perfect streak.
                         scope:New("Frame")({

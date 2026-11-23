@@ -43,7 +43,7 @@ SPECIES = {
                         w=1.05, head=1.1, eyes=0.9, neck=1.0, tail=1.3, stripes=0, snout=1.7, teeth=True, sail=True),
     "Cryolophosaurus": dict(plan="theropod", body="E8EEF5", belly="FFFFFF", accent="3F8FD9",
                             w=0.92, head=1.05, eyes=1.0, neck=1.1, tail=1.2, stripes=5, fan_crest=True, teeth=True),
-    "Therizinosaurus": dict(plan="theropod", body="C9B79C", belly="F5EEE2", accent="6E5A45",
+    "Therizinosaurus": dict(plan="theropod", body="D9A45F", belly="FFF0D9", accent="8C4F2B",
                             w=1.1, head=0.72, eyes=1.2, neck=1.2, neck_up=1.4, tail=1.0, stripes=0, arms="long", scythe_claws=True, fluff=True),
     "Carnotaurus": dict(plan="theropod", body="B8402E", belly="F2C9A8", accent="2A1A16",
                         w=0.98, head=1.05, eyes=0.95, neck=1.0, tail=1.2, stripes=4, arms="tiny", bull_horns=True, brow=True, teeth=True),
@@ -57,7 +57,7 @@ SPECIES = {
     # ---- New areas ----
     "Protoceratops": dict(plan="ceratopsian", body="D9A066", belly="F7E6CC", accent="8C4A2F", horns="none", spots=True, eyewhite=420),
     "Gallimimus": dict(plan="theropod", body="E8C15A", belly="FFF5D6", accent="B5651D",
-                       w=0.78, head=0.8, eyes=1.15, neck=1.45, tail=1.3, stripes=4, beak=True),
+                       w=0.74, head=0.62, eyes=1.35, neck=1.5, neck_up=1.0, tail=1.3, stripes=4, beak=True),
     "Stegosaurus": dict(plan="stegosaur", body="7FA35A", belly="E9F0D0", accent="E0663A", accent_budget=1100),
     "Iguanodon": dict(plan="theropod", body="5BA3C9", belly="E6F4FA", accent="F2D65E",
                       w=1.05, head=0.9, eyes=1.1, neck=1.15, tail=1.1, stripes=4, bill=True, thumb_spike=True),
@@ -68,7 +68,7 @@ SPECIES = {
     "Allosaurus": dict(plan="theropod", body="A0522D", belly="F2D9C4", accent="3B2414",
                        w=1.02, head=1.2, eyes=0.95, neck=1.0, tail=1.2, stripes=5, teeth=True, brow_horns=True),
     "Styracosaurus": dict(plan="ceratopsian", body="6B8E3A", belly="E8EFD2", accent="D94A2B", horns="styraco", eyewhite=620),
-    "Diplodocus": dict(plan="sauropod", body="8A7B6A", belly="EDE4D6", accent="4F6B3A", neck="low"),
+    "Diplodocus": dict(plan="sauropod", body="E0A15E", belly="FBEBD3", accent="7B4FA8", neck="low", accent_budget=700),
     "Microraptor": dict(plan="theropod", body="3A3F7A", belly="B9C2FF", accent="45E0FF", accent_budget=600,
                         w=0.7, head=0.82, eyes=1.3, neck=1.2, tail=1.4, stripes=0, teeth=True, wings=True),
     "Kentrosaurus": dict(plan="stegosaur", body="7A5CC9", belly="E6DEFF", accent="FF5ED1", kentro=True, accent_budget=900),
@@ -76,7 +76,7 @@ SPECIES = {
     "Pteranodon": dict(plan="flyer", body="F2A65A", belly="FFF1E0", accent="D94F70", crest=1.0, span=1.0, accent_budget=700),
     "Archaeopteryx": dict(plan="flyer", body="3FA0E0", belly="F4FAFF", accent="F5C542", bird=True, span=0.8, accent_budget=800),
     "Quetzalcoatlus": dict(plan="flyer", body="E8E2D0", belly="FFFFFF", accent="E0503A", crest=0.7, span=1.25, neck=2.5, accent_budget=700),
-    "Brachiosaurus": dict(plan="sauropod", body="8FB8C9", belly="E6F2F7", accent="4A6E80"),
+    "Brachiosaurus": dict(plan="sauropod", body="5FB0D6", belly="EAF6FB", accent="2D6A8C"),
 }
 
 BUDGET = {"Body": 1900, "Belly": 300, "Accent": 320, "EyeWhite": 240, "Pupil": 80, "Leg": 260}
@@ -146,6 +146,46 @@ class Builder:
         """Thin mesh ellipsoid (half-extents size): for plates, wing skin and crests, which are too
         thin for the metaball resolution and would otherwise melt into blobs."""
         return self.sphere(region, loc, 1.0, scale=size, rot=rot)
+
+    def membrane(self, region, leading, trailing, thickness=0.07):
+        """Skin stretched between two edges (e.g. a wing: arm bones -> body), as a thin solid so it
+        reads from both sides. `leading` and `trailing` are resampled to the same point count."""
+        def resample(pts, n):
+            pts = [Vector(p) for p in pts]
+            seg = [(pts[i + 1] - pts[i]).length for i in range(len(pts) - 1)]
+            total = sum(seg) or 1.0
+            out = []
+            for k in range(n):
+                d = total * k / (n - 1)
+                i = 0
+                while i < len(seg) - 1 and d > seg[i]:
+                    d -= seg[i]
+                    i += 1
+                out.append(pts[i].lerp(pts[i + 1], min(1.0, d / (seg[i] or 1.0))))
+            return out
+        n = 10
+        a, c = resample(leading, n), resample(trailing, n)
+        verts = [tuple(v) for v in a + c]
+        faces = [(i, i + 1, n + i + 1, n + i) for i in range(n - 1)]
+        me = bpy.data.meshes.new(f"{self.name}_{region}_skin")
+        me.from_pydata(verts, [], faces)
+        me.update()
+        o = bpy.data.objects.new(f"{self.name}_{region}_skin", me)
+        self.coll.objects.link(o)
+        sol = o.modifiers.new("Thick", "SOLIDIFY")
+        sol.thickness = thickness
+        sol.offset = 0.0
+        bpy.ops.object.select_all(action="DESELECT")
+        bpy.context.view_layer.objects.active = o
+        o.select_set(True)
+        bpy.ops.object.modifier_apply(modifier=sol.name)
+        # Mirrored (right-hand) skins come out inside-out; make every shell face outwards so
+        # Roblox's backface culling never hides one wing.
+        bpy.ops.object.mode_set(mode="EDIT")
+        bpy.ops.mesh.select_all(action="SELECT")
+        bpy.ops.mesh.normals_make_consistent(inside=False)
+        bpy.ops.object.mode_set(mode="OBJECT")
+        return self._link(o, region)
 
     def cone(self, region, base, direction, r, length, verts=10):
         """Cone from `base` pointing along `direction`."""
@@ -245,7 +285,8 @@ def theropod(b, s):
     # Torso pitched nose-up, hips behind, belly/chest in a lighter region.
     b.ball("Body", (0, 0.1, 2.3), (0.92 * w, 1.3, 0.98 * w), rot=(-18, 0, 0))
     b.ball("Body", (0, 0.8, 2.15), (0.78 * w, 0.75, 0.82 * w))
-    b.ball("Belly", (0, -0.4, 1.95), (0.7 * w, 0.95, 0.68 * w), rot=(-18, 0, 0))
+    # Belly/chest patch: up and forward so it shows as a light chest, never bulging out between the legs.
+    b.ball("Belly", (0, -0.55, 2.2), (0.68 * w, 0.82, 0.6 * w), rot=(-24, 0, 0))
     # Neck to head.
     nu = s.get("neck_up", 0.0)  # extra neck height (Therizinosaurus stands tall)
     neck_top = Vector((0, -1.0 - 0.25 * (nk - 1) - 0.25 * nu, 3.05 + 0.45 * (nk - 1) + nu))
@@ -307,7 +348,8 @@ def theropod(b, s):
         for side in (-1, 1):
             b.cone("Accent", tuple(H + Vector((side * 0.42 * hs, -0.3 * hs, 0.5 * hs))), (side * 0.2, -0.3, 1), 0.12 * hs, 0.38 * hs, verts=6)
     if s.get("helmet"):             # Corythosaurus: tall rounded helmet crest
-        b.plate("Accent", tuple(top + Vector((0, 0.1 * hs, 0.05 * hs))), (0.12 * hs, 0.55 * hs, 0.5 * hs))
+        # half buried in the skull so it reads as a tall fin-shaped helmet, not a ball on top
+        b.plate("Accent", tuple(top + Vector((0, 0.0, -0.22 * hs))), (0.1 * hs, 0.62 * hs, 0.72 * hs))
     # Long tapered tail with a slight lift.
     pts = [(0, 1.2, 2.2), (0, 2.1 * tl, 2.35), (0, 3.0 * tl, 2.45), (0, 3.8 * tl, 2.5), (0, 4.4 * tl, 2.52)]
     tail = b.chain("Body", pts, [0.62 * w, 0.42 * w, 0.26 * w, 0.14 * w, 0.06 * w], squash=0.92)
@@ -323,7 +365,7 @@ def theropod(b, s):
         for i in range(13):
             t = i / 12
             y = -0.75 + t * 2.2
-            hgt = (0.35 + 1.25 * math.sin(math.pi * (0.1 + 0.8 * t))) * w
+            hgt = (0.45 + 1.75 * math.sin(math.pi * (0.1 + 0.8 * t))) * w   # big signature sail
             b.ball("Accent", (0, y, 3.0 + hgt * 0.55), (0.08, 0.3, hgt * 0.62))
             if i % 2 == 0:
                 b.cone("Accent", (0, y, 3.0 + hgt * 0.98), (0, 0.15, 1), 0.07, 0.3 * w, verts=5)
@@ -337,6 +379,21 @@ def theropod(b, s):
     for side in (-1, 1):
         # Arms grow from the shoulder (inside the body, above the belly) so they fuse instead of floating.
         sc = {"tiny": 0.55, "normal": 1.0, "long": 1.9}[arms]
+        if s.get("wings"):
+            # Microraptor: arms spread like a glider, feathered skin back to the hips and a fringe of
+            # long flight feathers along the trailing edge.
+            sh = Vector((side * 0.5 * w, -0.65, 2.75))
+            el = sh + Vector((side * 0.75, 0.1, 0.12))
+            tip = sh + Vector((side * 1.8, 0.45, 0.3))
+            b.chain("Body", [tuple(sh), tuple(el), tuple(tip)], [0.13, 0.1, 0.07])
+            hip = Vector((side * 0.5 * w, 0.75, 2.25))
+            sag = Vector((0, 0.3, -0.35))
+            b.membrane("Accent", [sh, el, tip], [hip, hip.lerp(tip, 0.45) + sag, hip.lerp(tip, 0.8) + sag * 0.5, tip])
+            for k in range(5):
+                t = 0.3 + 0.15 * k
+                p = hip.lerp(tip, t) + sag * (1 - abs(t - 0.55) * 1.5) + Vector((0, 0.2, -0.2))
+                b.plate("Accent", tuple(p), (0.12, 0.05, 0.36), rot=(0, side * (20 + 10 * k), 0))
+            continue
         hand = Vector((side * (0.95 + 0.15 * (sc - 1)) * w, -0.95 - 0.35 * sc, 2.45 - 0.45 * sc))
         b.chain("Body", [(side * 0.55 * w, -0.7, 2.7), tuple(hand)], [0.15 * sc ** 0.5, 0.1 * sc ** 0.5])
         if s.get("thumb_claw"):     # Baryonyx: one big hooked claw
@@ -346,8 +403,6 @@ def theropod(b, s):
                 b.cone("EyeWhite", tuple(hand + Vector((j * 0.07, 0, 0))), (side * 0.15 + j * 0.12, -0.8, -0.55), 0.05, 1.0)
         if s.get("thumb_spike"):    # Iguanodon: conical thumb spike pointing up
             b.cone("EyeWhite", tuple(hand), (side * 0.2, -0.3, 1), 0.08, 0.42)
-        if s.get("wings"):          # Microraptor: big feathered wing folded along each side
-            b.plate("Accent", (side * 0.95 * w, -0.25, 2.25), (0.06, 0.95, 0.4), rot=(-25, 0, 0))
     # Legs: separate regions so they can swing. Hip pivot ~ top of the thigh.
     for side, name in ((-1, "LegL"), (1, "LegR")):
         x = side * 0.62 * w
@@ -445,14 +500,15 @@ def ankylosaur(b, s):
 
 def sauropod(b, s):
     # Brachiosaurus: tall front, long upright neck, small head with nose crest, long tapered tail.
-    b.ball("Body", (0, 0.4, 3.3), (1.4, 2.05, 1.25), rot=(-10, 0, 0))
+    b.ball("Body", (0, 0.4, 3.3), (1.55, 2.15, 1.4), rot=(-10, 0, 0))   # big barrel torso
     b.ball("Belly", (0, 0.3, 2.65), (1.18, 1.7, 0.62), rot=(-10, 0, 0))
     # neck: "up" (Brachiosaurus), "low" (Diplodocus: long neck held forward, whip tail),
     # "spines" (Amargasaurus: shorter neck with a double row of tall spines).
     style = s.get("neck", "up")
     if style == "low":
-        neck = [(0, -1.4, 3.6), (0, -2.8, 4.2), (0, -4.2, 4.6), (0, -5.4, 4.7)]
-        H = Vector((0, -5.95, 4.75))
+        # long neck sweeping forward and gently up (a dead-level neck read as a plank)
+        neck = [(0, -1.4, 3.6), (0, -2.7, 4.35), (0, -3.9, 5.05), (0, -4.9, 5.45)]
+        H = Vector((0, -5.45, 5.6))
     elif style == "spines":
         neck = [(0, -1.3, 3.8), (0, -2.1, 4.8), (0, -2.8, 5.6), (0, -3.3, 6.1)]
         H = Vector((0, -3.8, 6.35))
@@ -471,18 +527,25 @@ def sauropod(b, s):
     for side in (-1, 1):
         _eye(b, H + Vector((side * 0.38, -0.1, 0.18)), 0.17, side)
     if style == "low":  # long whip tail
-        b.chain("Body", [(0, 2.3, 3.1), (0, 3.8, 3.0), (0, 5.3, 2.7), (0, 6.8, 2.4), (0, 8.0, 2.2)], [0.75, 0.5, 0.3, 0.14, 0.05], squash=0.9)
+        tail_pts = b.chain("Body", [(0, 2.3, 3.1), (0, 3.8, 3.0), (0, 5.3, 2.7), (0, 6.8, 2.4), (0, 8.0, 2.2)], [0.75, 0.5, 0.3, 0.14, 0.05], squash=0.9)
+        # Bold bands over the back and tail, and a row of little dorsal spikes down the neck and tail.
+        for y in (-0.85, -0.05, 0.75, 1.55):
+            b.ball("Accent", (0, y, 4.3 - 0.12 * abs(y - 0.3)), (1.2, 0.17, 0.42))
+        for p, r in tail_pts[2:len(tail_pts) - 3:3]:
+            b.ball("Accent", tuple(p + Vector((0, 0, r * 0.25))), (r * 1.05, 0.14, r * 0.9))
+        for p, r in (neck_pts[1::2] + tail_pts[1:len(tail_pts) - 2:2]):
+            b.cone("Accent", tuple(p + Vector((0, 0, r * 0.75))), (0, 0.25, 1), 0.08, 0.32, verts=5)
     else:
         b.chain("Body", [(0, 2.3, 3.0), (0, 3.6, 2.6), (0, 4.8, 2.2), (0, 5.7, 1.9)], [0.75, 0.45, 0.22, 0.08], squash=0.9)
     # Spots down the back and neck.
-    spots = ((-0.6, 4.55), (0.2, 4.5), (1.0, 4.3), (-1.75, 5.0), (-2.1, 6.4)) if style == "up" else ((-0.6, 4.45), (0.2, 4.5), (1.0, 4.35))
+    spots = ((-0.6, 4.55), (0.2, 4.5), (1.0, 4.3), (-1.75, 5.0), (-2.1, 6.4)) if style == "up" else (((-0.6, 4.45), (0.2, 4.5), (1.0, 4.35)) if style == "spines" else ())
     for (y, z) in spots:
         b.ball("Accent", (0.0, y, z), (0.32, 0.3, 0.1))
     # Front legs longer than back legs (classic brachiosaur stance).
     back = 2.9 if style == "up" else 2.75  # only brachiosaurs have the tall front
     for name, x, y, top in (("LegFL", -0.95, -1.05, 2.9 if style == "up" else 2.6), ("LegFR", 0.95, -1.05, 2.9 if style == "up" else 2.6), ("LegBL", -0.95, 1.6, 2.5 if style == "up" else back), ("LegBR", 0.95, 1.6, 2.5 if style == "up" else back)):
         # Continuous tube (separate tall balls left gaps at the knees).
-        b.chain(name, [(x, y, top), (x, y, top * 0.5), (x, y, 0.3)], [0.52, 0.42, 0.38])
+        b.chain(name, [(x, y, top + 0.3), (x, y, top * 0.5), (x, y, 0.3)], [0.66, 0.5, 0.44])   # sturdy, rooted in the torso
         b.ball(name, (x, y - 0.06, 0.13), (0.44, 0.46, 0.14))
         for dx in (-0.17, 0.0, 0.17):
             b.ball(name, (x + dx, y - 0.45, 0.11), (0.1, 0.12, 0.09))
@@ -551,23 +614,27 @@ def flyer(b, s):
         b.cone("Accent", tuple(H + Vector((0, 0.15, 0.15))), (0, 0.85, 0.5), 0.17, 1.2 * crest, verts=8)
     for side in (-1, 1):
         _eye(b, H + Vector((side * 0.27, -0.12, 0.12)), 0.15, side)
-    # Wings: a bony arm with a membrane (pterosaurs) or a feather fan (bird), half-spread and raised.
-    # The wing is ONE flat ellipsoid whose leading edge runs along the arm, so it can never float apart.
+    # Wings spread and raised: arm bones (shoulder -> elbow -> wrist -> long wing finger) with skin
+    # stretched from the whole arm back to the hip, sagging between, like a real pterosaur wing.
+    # bird=True: the same wing shape, finished with a row of long feathers along the trailing edge.
     for side in (-1, 1):
-        sh = Vector((side * 0.4, -0.25, 2.65))
-        tip = sh + Vector((side * 2.4 * span, 0.15, 0.75 * span))
-        b.chain("Body", [tuple(sh), tuple(sh.lerp(tip, 0.5)), tuple(tip)], [0.15, 0.11, 0.08])
-        arm = tip - sh
-        ang = math.degrees(math.atan2(arm.z, abs(arm.x)))
-        half = arm.length / 2
-        mid = (sh + tip) / 2 + Vector((0, 0.42, -0.12))
-        # Skin hangs below the arm in a near-vertical plane, so it reads from the front and the side.
-        mid = (sh + tip) / 2 + Vector((0, 0.12, -0.55 * span))
-        b.plate("Accent", tuple(mid), (half * 0.98, 0.06, 0.7 * span), rot=(0, -side * ang, 0))
-        if bird:  # scalloped feather tips along the trailing edge
-            for k in range(4):
-                p = sh.lerp(tip, 0.3 + 0.2 * k) + Vector((0, 0.12, -1.15 * span))
-                b.plate("Accent", tuple(p), (0.22, 0.05, 0.38), rot=(0, -side * ang, 0))
+        sh = Vector((side * 0.38, -0.3, 2.65))
+        el = sh + Vector((side * 0.75, 0.22, -0.1))
+        wr = sh + Vector((side * 1.5 * span, 0.1, 0.25 * span))
+        tip = sh + Vector((side * 2.9 * span, 0.55, 0.55 * span))
+        b.chain("Body", [tuple(sh), tuple(el), tuple(wr)], [0.16, 0.12, 0.1])
+        b.chain("Body", [tuple(wr), tuple(tip)], [0.09, 0.05])
+        for k in range(3):   # little hand claws at the wrist
+            b.cone("Belly", tuple(wr + Vector((0, -0.05, -0.05))), (side * 0.2, -0.6 + 0.3 * k, -0.8), 0.04, 0.28, verts=5)
+        hip = Vector((side * 0.32, 0.55, 1.95))
+        sag = Vector((0, 0.35, -0.55 * span))
+        trailing = [hip, hip.lerp(tip, 0.35) + sag, hip.lerp(tip, 0.7) + sag * 0.6, tip]
+        b.membrane("Accent", [sh, el, wr, tip], trailing)
+        if bird:  # long flight feathers fanning off the trailing edge
+            for k in range(6):
+                t = 0.25 + 0.13 * k
+                p = hip.lerp(tip, t) + sag * (1 - abs(t - 0.5) * 1.4) + Vector((0, 0.15, -0.35))
+                b.plate("Accent", tuple(p), (0.16, 0.05, 0.5), rot=(0, side * (15 + 8 * k), 0))
     if bird:
         b.chain("Body", [(0, 0.7, 2.0), (0, 1.5, 1.85)], [0.18, 0.1])
         for k in range(5):
@@ -575,11 +642,12 @@ def flyer(b, s):
     else:
         b.chain("Body", [(0, 0.75, 2.0), (0, 1.15, 1.85)], [0.18, 0.06])
     for side, name in ((-1, "LegL"), (1, "LegR")):
-        x = side * 0.32
-        b.chain(name, [(x, 0.25, 1.75), (x, 0.3, 0.9), (x, 0.2, 0.25)], [0.18, 0.12, 0.1])
-        b.ball(name, (x, 0.0, 0.12), (0.2, 0.3, 0.1))
-        for dx in (-0.1, 0.0, 0.1):
-            b.ball(name, (x + dx, -0.28, 0.1), (0.06, 0.12, 0.06))
+        x = side * 0.34
+        # sturdier, bent legs (thigh forward, shin back) so it crouches instead of standing on stilts
+        b.chain(name, [(x, 0.3, 1.85), (x, -0.05, 1.1), (x, 0.2, 0.25)], [0.24, 0.16, 0.12])
+        b.ball(name, (x, 0.0, 0.12), (0.22, 0.32, 0.11))
+        for dx in (-0.11, 0.0, 0.11):
+            b.ball(name, (x + dx, -0.3, 0.1), (0.07, 0.13, 0.07))
 
 
 PLANS = {"theropod": theropod, "ceratopsian": ceratopsian, "ankylosaur": ankylosaur, "sauropod": sauropod, "stegosaur": stegosaur, "flyer": flyer}

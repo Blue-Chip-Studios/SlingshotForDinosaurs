@@ -311,7 +311,8 @@ local function BuildCanyon()
             local oSign = Part({ Name = "GateSign", Size = Vector3.new(1, 1, 1), Transparency = 1, CanCollide = false, Position = Vector3.new(0, 70, nZ0), Parent = oBiome })
             local oBillboard = Label(oSign, `{tBiome.Name}\n{Format.Meters(tBiome.MinMeters)}`, 36, Color3.new(1, 1, 1), Vector3.zero)
             -- Sized in studs (scale) so distant gates shrink naturally but stay readable from the rim.
-            oBillboard.MaxDistance = 3000
+            -- Only the next few gates show; farther ones piled into an unreadable cluster on the horizon.
+            oBillboard.MaxDistance = 1300
             oBillboard.Size = UDim2.fromScale(110, 50)
         end
         -- Props

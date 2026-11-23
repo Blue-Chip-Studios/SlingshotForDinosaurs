@@ -83,12 +83,12 @@ local Species: { [string]: Species } = {
     Ouranosaurus = S("Ouranosaurus", "Ouranosaurus", "CoralCoast", "Legendary", 6000, "Ornithopod", 7, "2EB8A6", "E2FAF5", "FF7AB8"),
 
     Cryolophosaurus = S("Cryolophosaurus", "Cryolophosaurus", "IceAge", "Common", 3000, "Theropod", 6, "E8EEF5", "FFFFFF", "3F8FD9"),
-    Therizinosaurus = S("Therizinosaurus", "Therizinosaurus", "IceAge", "Rare", 9000, "Theropod", 9, "C9B79C", "F5EEE2", "6E5A45"),
-    Brachiosaurus = S("Brachiosaurus", "Brachiosaurus", "IceAge", "Legendary", 30000, "Sauropod", 16, "8FB8C9", "E6F2F7", "4A6E80"),
+    Therizinosaurus = S("Therizinosaurus", "Therizinosaurus", "IceAge", "Rare", 9000, "Theropod", 9, "D9A45F", "FFF0D9", "8C4F2B"),
+    Brachiosaurus = S("Brachiosaurus", "Brachiosaurus", "IceAge", "Legendary", 30000, "Sauropod", 16, "5FB0D6", "EAF6FB", "2D6A8C"),
 
     Allosaurus = S("Allosaurus", "Allosaurus", "Redwood", "Common", 15000, "Theropod", 9, "A0522D", "F2D9C4", "3B2414"),
     Styracosaurus = S("Styracosaurus", "Styracosaurus", "Redwood", "Rare", 45000, "Quadruped", 7, "6B8E3A", "E8EFD2", "D94A2B"),
-    Diplodocus = S("Diplodocus", "Diplodocus", "Redwood", "Legendary", 150000, "Sauropod", 14, "8A7B6A", "EDE4D6", "4F6B3A"),
+    Diplodocus = S("Diplodocus", "Diplodocus", "Redwood", "Legendary", 150000, "Sauropod", 14, "E0A15E", "FBEBD3", "7B4FA8"),
 
     Microraptor = S("Microraptor", "Microraptor", "CrystalCaves", "Common", 75000, "Small", 2.8, "3A3F7A", "B9C2FF", "45E0FF"),
     Kentrosaurus = S("Kentrosaurus", "Kentrosaurus", "CrystalCaves", "Rare", 225000, "Quadruped", 5.5, "7A5CC9", "E6DEFF", "FF5ED1"),

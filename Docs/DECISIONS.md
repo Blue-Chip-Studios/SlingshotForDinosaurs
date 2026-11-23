@@ -132,3 +132,26 @@ Significant autonomous (BCDK Recommended) decisions, newest last. Each entry: wh
     - **Cosmic:** glowing pink markings added.
 
     Eyes, teeth and horns (EyeWhite) are never tinted.
+
+## 2026-11-22/23: Economy redesign, 10 areas, celebration, world rebuild
+
+63. **Economy redesign (simulated before shipping).** Players reported that training past ~400 Power was pointless once they owned the top slingshot, and that progress felt too easy. Distance is now Power x slingshot multiplier x charge x bounce, and rebirth no longer multiplies distance, so training stays the gate through every area. Slingshot multipliers run 3 -> 23 over 9 tiers, and pad unlocks and power-per-tick scale with them (Pebble 1/tick up to Crystal 50/tick at 75k Power). Tapping a pad gives 20% of a hold tick, so holding on a pad is the efficient choice. Income per area grows about 5x per area (Common 1 -> 2,000,000/s; Rare x3, Legendary x10).
+64. **Rebirth is a real loop.** It needs 1.1M m (Volcano) and $20B x4 per rebirth. It resets cash, Power, slingshot, bait and best distance, and keeps the best dino. Each rebirth gives +50% income and +30% training forever. The Rebirth modal explains exactly what is lost and kept.
+65. **Depth luck.** Landing deeper inside an area raises luck by up to +60% (`GameConfig.DepthLuckBonus`), so a better throw inside the same area still matters.
+66. **Big-catch celebration.** Catches carry a Tier. Epic is any rare. Mythic is a Cosmic, or a Colossal Legendary or top mutation. Epic plays a flash, a spinning-ray banner, confetti, a camera shake and a fanfare. Mythic is bigger, adds a roar and rainbow confetti, gives the whole server x2 luck for 2 minutes, and shows a gold banner (with flash and confetti) for everyone else. Sounds were made with ElevenLabs.
+67. **5 -> 10 areas, 15 new species.** Desert Badlands, Coral Coast, Redwood Forest, Crystal Caves and Sky Islands slot between and after the originals, three species each. Pterosaurs use a new "flyer" plan and stegosaurs a "stegosaur" plan. `CanyonMath` reads the area count from DinoConfig, so the canyon grows automatically. Two new top slingshots (Crystal and Celestial) are also Robux products.
+68. **World rebuild.**
+    - **Kit:** new Blender props (cactus, layered mesa butte, palm, coral, redwood, crystal cluster, floating island with a waterfall, cloud, and a lathed stratovolcano with lava rivers).
+    - **Coral Coast:** a carved turquoise lagoon with coral on the bed.
+    - **Volcano:** two towering volcanoes outside the walls with smoke, embers and crater glow, on a black floor with lava cracks.
+    - **Sky Islands:** a cloud floor ringed by cloud banks under floating islands, with a giant finale island.
+    - **Terrain:** feature layers are 4 studs thick, because thinner fills fell below the voxel size and never rendered.
+    - **Gate signs:** they only draw within 1,300 studs, so distant ones don't pile up on the horizon.
+69. **Dino review loop (screenshots in game and in Blender).**
+    - **Flyers:** wings are now a real membrane stretched from the arm and wing finger back to the hip. The mesh is solidified and its normals recalculated so neither wing is culled. The old version had paddles hanging under stick arms.
+    - **Theropods:** the belly moved up to the chest. It used to bulge out between the legs like a nappy.
+    - **Gallimimus:** given ostrich proportions (long neck, small head).
+    - **Diplodocus:** warm colours, bands, dorsal spikes and a raised neck. It had read as a grey plank.
+    - **Microraptor:** gliding feathered wings instead of an oval shield.
+    - **Corythosaurus:** the crest is now half buried in the skull so it reads as a helmet.
+70. **Phone HUD.** On phones the whole HUD scales to about 0.53, which made the status chips and goal text about 10px. The top cluster now gets an extra 1.3x on touch devices.
