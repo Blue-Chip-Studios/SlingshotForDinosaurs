@@ -21,7 +21,7 @@ local Store = require(ReplicatedStorage.BCDKClient.LMGui.Store)
 local peek = require(ReplicatedStorage.Packages.fusion).peek
 
 local PULL_BACK = 3.4      -- studs at full charge (scaled with the model)
-local PULL_DOWN = 0.7
+local PULL_DOWN = 3.0      -- down toward the player's hands, so it reads as them drawing it
 local SNAP_FREQ = 19       -- release wobble (rad/s) and damping
 local SNAP_DAMP = 5.5
 

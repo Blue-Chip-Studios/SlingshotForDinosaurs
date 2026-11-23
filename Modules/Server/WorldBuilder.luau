@@ -481,10 +481,10 @@ local function BuildPlots()
         } do
             Part({ Name = "Fence", Size = t[1], Position = tPlot.Center + t[2], Color = cFence, Material = Enum.Material.Wood, CanCollide = true, Parent = oPlot })
         end
-        -- Launch stand: the giant slingshot (Blender), set to one side so the player stands in front of it.
+        -- Launch stand: the giant slingshot (Blender) on the canyon side of the pad, so the player stands behind it and looks through the fork.
         local vStand = tPlot.LaunchStand
         Part({ Name = "LaunchPad", Size = Vector3.new(10, 1, 8), Position = vStand + Vector3.new(0, 0.5, 0), Color = Color3.fromHex("FFC531"), Material = Enum.Material.SmoothPlastic, Parent = oPlot })
-        local oSling = PlaceProp("LaunchSlingshot", CFrame.new(vStand + Vector3.new(0, 1, 3.5)), 0.9, function(oModel)
+        local oSling = PlaceProp("LaunchSlingshot", CFrame.new(vStand + Vector3.new(0, 1, -3.4)), 1.15, function(oModel)
             Part({ Name = "Wood", Size = Vector3.new(1.2, 6, 1.2), CFrame = CFrame.new(0, 3, 0), Parent = oModel })
         end)
         -- Only the boulder base is solid: the fork, bands and pouch never snag the player.

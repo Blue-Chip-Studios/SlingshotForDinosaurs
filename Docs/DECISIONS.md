@@ -216,3 +216,6 @@ Significant autonomous (BCDK Recommended) decisions, newest last. Each entry: wh
     - **Brachiosaurus:** a taller nasal dome with an accent cap.
     - Together these stop the two long-necks reading as recolours of each other.
 89. **Notifications prompt waits for idle.** The Experience Notifications opt-in fired a fixed 6s after a launch (and on every join until answered), so it could land mid-flight. This is the same click-stealing problem as the old like/favourite prompt. It now uses SocialController's idle wait (6s idle: not charging, flying, revealing or in a menu). It is skipped in Studio playtests, which can't answer it and get no notifications anyway.
+90. **Slingshot placement and flyer pose (from the on-screen check).**
+    - **Placement:** the launch slingshot stood behind the launch stand, so the avatar stood inside it and hid it. It now sits on the canyon side of the pad at 1.15× scale. The player stands behind it, looks through the fork down the canyon, and the pouch draws back and down toward them while charging.
+    - **Flyer pose:** wild flyers are tipped forward to glide belly-down; the plush models are built standing up and looked like they were standing in mid-air.

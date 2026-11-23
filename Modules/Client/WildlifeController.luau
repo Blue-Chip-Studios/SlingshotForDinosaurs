@@ -239,8 +239,9 @@ local function UpdateGlider(t: Animal, nDt: number, nNow: number)
     local vLook = Vector3.new(-math.sin(t.nAngle), 0, math.cos(t.nAngle))
     t.vPos, t.vLook = vPos, vLook
     DinoModels.PlaceAt(t.oModel, vPos, vLook)
-    -- Bank into the turn and bob the nose with each lazy wingbeat.
-    t.oModel:PivotTo(t.oModel:GetPivot() * CFrame.Angles(math.sin(nNow * 2 + t.nSeed) * 0.05, 0, 0.32))
+    -- The plush flyers are built standing up: bank into the turn, then tip them forward (belly
+    -- down, head first) so they glide instead of hanging upright, nose bobbing with each beat.
+    t.oModel:PivotTo(t.oModel:GetPivot() * CFrame.Angles(0, 0, 0.32) * CFrame.Angles(-1.05 + math.sin(nNow * 2 + t.nSeed) * 0.06, 0, 0))
 end
 
 local function UpdateDarter(tArea: Area, t: Animal, nDt: number, nNow: number)
