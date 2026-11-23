@@ -23,7 +23,7 @@ return {
         Triceratops = 121257269740875, -- v2
         Cryolophosaurus = 130787204723420, -- v5 (predator silhouettes)
         Therizinosaurus = 113582516622719, -- v5 (lower eyes)
-        Brachiosaurus = 71628132987784, -- v4 (review loop)
+        Brachiosaurus = 130829217723682, -- v6 (sauropod legs / bird pose)
         Carnotaurus = 110466577490577, -- v5 (predator silhouettes)
         Giganotosaurus = 111371701237174, -- v5 (predator silhouettes)
         TRex = 80838018752271, -- v5 (predator silhouettes)
@@ -35,12 +35,12 @@ return {
         Ouranosaurus = 104048721421044, -- v5 (lower eyes)
         Allosaurus = 109177964894011, -- v5 (predator silhouettes)
         Styracosaurus = 79021982595781, -- v2
-        Diplodocus = 71814338898788, -- v4 (review loop)
+        Diplodocus = 139324583483712, -- v6 (sauropod legs / bird pose)
         Microraptor = 88486715413084, -- v5 (lower eyes)
         Kentrosaurus = 105056901181021, -- v2
-        Amargasaurus = 96542990756791, -- v4 (review loop)
+        Amargasaurus = 89423638834076, -- v6 (sauropod legs / bird pose)
         Pteranodon = 93632854399722, -- v4 (review loop)
-        Archaeopteryx = 108876757577352, -- v4 (review loop)
+        Archaeopteryx = 140347657320317, -- v6 (sauropod legs / bird pose)
         Quetzalcoatlus = 112969036373880, -- v4 (review loop)
     },
 
@@ -94,7 +94,7 @@ return {
         Triceratops = 114265819575656,
         Cryolophosaurus = 118627506599486,
         Therizinosaurus = 103821539356342,
-        Brachiosaurus = 71601964136367,
+        Brachiosaurus = 90673553482533,
         Carnotaurus = 96123925354784,
         Giganotosaurus = 135304581877576,
         TRex = 109788542590506,
@@ -106,12 +106,12 @@ return {
         Ouranosaurus = 140159657085568,
         Allosaurus = 90965721875133,
         Styracosaurus = 133213078257962,
-        Diplodocus = 140405072736570,
+        Diplodocus = 113124469322735,
         Microraptor = 113931666018735,
         Kentrosaurus = 135077094675129,
-        Amargasaurus = 104258349698180,
+        Amargasaurus = 122345651269010,
         Pteranodon = 138738360293701,
-        Archaeopteryx = 116342215788036,
+        Archaeopteryx = 77442181479513,
         Quetzalcoatlus = 117997148410318,
         -- Shop items
         SlingshotItem = 99032474657018,
