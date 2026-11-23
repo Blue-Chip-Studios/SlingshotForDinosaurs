@@ -19,6 +19,7 @@ local DinoConfig = require(ReplicatedStorage.Config.DinoConfig)
 local GameConfig = require(ReplicatedStorage.Config.GameConfig)
 local ShopConfig = require(ReplicatedStorage.Config.ShopConfig)
 local MonetizationConfig = require(ReplicatedStorage.Config.MonetizationConfig)
+local PetConfig = require(ReplicatedStorage.Config.PetConfig)
 local RetentionConfig = require(ReplicatedStorage.Config.RetentionConfig)
 local SocialConfig = require(ReplicatedStorage.Config.SocialConfig)
 local ExclusiveRotation = require(ReplicatedStorage.Shared.ExclusiveRotation)
@@ -75,6 +76,8 @@ function mEnclosure.GetIncome(self, oPlayer: Player): number
     if oPlayer:GetAttribute("GroupMember") then nTotal *= 1 + SocialConfig.GroupIncomeBonus end
     -- Rebirths: permanent income bonus (the reward for resetting the run).
     nTotal *= 1 + (PlayerDataServer:Get(oPlayer, "Rebirths") or 0) * RetentionConfig.Rebirth.IncomePerRebirth
+    -- Equipped pet perk.
+    nTotal *= PetConfig.Multiplier(PlayerDataServer:Get(oPlayer, "EquippedPet"), "Cash")
     return nTotal
 end
 

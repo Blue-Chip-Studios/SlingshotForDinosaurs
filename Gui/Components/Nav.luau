@@ -57,6 +57,21 @@ function Nav.BuyWithCash(sKind: string, iTier: number): (boolean, string?)
     return false, tResult and tResult.Reason
 end
 
+function Nav.BuyPet(sId: string): (boolean, string?)
+    local tResult = Remote:GetFunction("BuyPet"):InvokeServer({ Id = sId })
+    if tResult and tResult.Ok then
+        SoundController:Play("Coin")
+        return true
+    end
+    SoundController:Play("Error")
+    return false, tResult and tResult.Reason
+end
+
+function Nav.EquipPet(sId: string)
+    Remote:GetEvent("EquipPet"):FireServer({ Id = sId })
+    SoundController:Play("Click")
+end
+
 -- Opens the purchase prompt for gifting sPass to another player in this server.
 function Nav.PromptGift(sPass: string, iTargetUserId: number)
     Nav.Track("ProductViewed", "Gift_" .. sPass)

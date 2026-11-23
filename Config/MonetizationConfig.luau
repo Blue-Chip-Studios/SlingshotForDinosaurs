@@ -45,6 +45,10 @@ return {
         Bait_AmberMosquito = { Id = 3734667622, Price = 299, Name = "Amber Mosquito Bait", Kind = "Bait", Item = "AmberMosquito" },
         Bait_MeteorMeat = { Id = 3734667631, Price = 599, Name = "Meteor Meat Bait", Kind = "Bait", Item = "MeteorMeat" },
 
+        -- Pets (PetConfig): Robux-only mythic baby dinos. Id 0 = not created on Roblox yet.
+        Pet_GoldenRex = { Id = 0, Price = 399, Name = "Golden Baby Rex", Kind = "Pet", Item = "GoldenRex" },
+        Pet_CosmicPtero = { Id = 0, Price = 299, Name = "Cosmic Pterodactyl", Kind = "Pet", Item = "CosmicPtero" },
+
         -- Gifts: buy a pass for another player in the server (delivered even if they leave).
         Gift_DoubleCash = { Id = 3734731964, Price = 99, Name = "Gift: 2x Cash", Kind = "Gift", Pass = "DoubleCash" },
         Gift_DoublePower = { Id = 3734731982, Price = 149, Name = "Gift: 2x Slingshot Power", Kind = "Gift", Pass = "DoublePower" },

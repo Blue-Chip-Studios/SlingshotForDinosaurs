@@ -54,5 +54,7 @@ return {
         NotificationsPrompted = false,
         GroupPrompted = false,
         FavoritePrompted = false,
+        Pets = {}, -- [PetId] = true (PetConfig)
+        EquippedPet = "", -- PetId following the player ("" = none)
     },
 }

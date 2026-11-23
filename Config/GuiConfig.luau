@@ -54,6 +54,8 @@ local tValues = {
     ExclusiveDinos = {},
     GiftedPasses = {},
     GiftPass = "", -- pass key chosen in the Gift picker
+    Pets = {}, -- [PetId] = true (owned pets)
+    EquippedPet = "",
     DataLoaded = false,
 
     -- Player attributes
@@ -65,7 +67,7 @@ local tValues = {
 
     -- Navigation
     Modal = "", -- "" | "Shop" | "Index" | "Passes" | "Offer" | "Admin" | "Reroll"
-    ShopTab = "Slingshot", -- "Slingshot" | "Bait" | "Slots"
+    ShopTab = "Slingshot", -- "Slingshot" | "Bait" | "Slots" | "Pets"
     ShopFocus = 0, -- tier to scroll to when opened from a pedestal
 
     -- Launch

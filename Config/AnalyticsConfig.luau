@@ -30,6 +30,7 @@ return {
         GroupJoined = true,
         FavoritePrompted = true,
         GiftSent = true,
+        PetBought = true,
         Bounce = true,
         Catch = true,
         EnclosureFullChoice = true,

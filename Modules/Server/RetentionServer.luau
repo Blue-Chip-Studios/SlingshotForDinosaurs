@@ -22,6 +22,7 @@ local RetentionConfig = require(ReplicatedStorage.Config.RetentionConfig)
 local GameConfig = require(ReplicatedStorage.Config.GameConfig)
 local QuestPicker = require(ReplicatedStorage.Shared.QuestPicker)
 local SocialConfig = require(ReplicatedStorage.Config.SocialConfig)
+local PetConfig = require(ReplicatedStorage.Config.PetConfig)
 
 local PlayerDataServer = require(ServerStorage.ServerModules.PlayerDataServer)
 local AnalyticsServer = require(ServerStorage.ServerModules.AnalyticsServer)
@@ -84,12 +85,14 @@ function mRetention.GetLuckMultiplier(self, oPlayer: Player): number
     -- Playing with friends: +10% luck per friend here (SocialServer sets FriendsHere).
     local iFriends = math.min(oPlayer:GetAttribute("FriendsHere") or 0, SocialConfig.FriendLuckMaxFriends)
     n *= 1 + iFriends * SocialConfig.FriendLuckPerFriend
+    n *= PetConfig.Multiplier(PlayerDataServer:Get(oPlayer, "EquippedPet"), "Luck")
     return n * (1 + iStreak * tStreak.LuckPerStep)
 end
 
 -- Training gain multiplier from rebirths (distance itself is not boosted: Power is).
 function mRetention.GetPowerBonus(self, oPlayer: Player): number
-    return 1 + (PlayerDataServer:Get(oPlayer, "Rebirths") or 0) * RetentionConfig.Rebirth.PowerPerRebirth
+    return (1 + (PlayerDataServer:Get(oPlayer, "Rebirths") or 0) * RetentionConfig.Rebirth.PowerPerRebirth)
+        * PetConfig.Multiplier(PlayerDataServer:Get(oPlayer, "EquippedPet"), "Power")
 end
 
 -- Called by LaunchServer for every bounce result ("Perfect" | "Good" | "OK" | "Miss").

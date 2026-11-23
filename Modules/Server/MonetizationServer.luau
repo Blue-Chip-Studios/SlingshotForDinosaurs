@@ -31,6 +31,7 @@ local PlayerDataServer = require(ServerStorage.ServerModules.PlayerDataServer)
 local AnalyticsServer = require(ServerStorage.ServerModules.AnalyticsServer)
 local EnclosureServer = require(ServerStorage.ServerModules.EnclosureServer)
 local ShopServer = require(ServerStorage.ServerModules.ShopServer)
+local PetServer = require(ServerStorage.ServerModules.PetServer)
 local WeatherServer = require(ServerStorage.ServerModules.WeatherServer)
 local PlotServer = require(ServerStorage.ServerModules.PlotServer)
 local RetentionServer = require(ServerStorage.ServerModules.RetentionServer)
@@ -157,6 +158,11 @@ local function GrantProduct(oPlayer: Player, sKey: string): boolean
         ShopServer:GrantTier(oPlayer, "Slingshot", TierIndex(ShopConfig.Slingshots, "Bone") :: number, "StarterPack")
         ShopServer:GrantTier(oPlayer, "Bait", TierIndex(ShopConfig.Bait, "Steak") :: number, "StarterPack")
         PlayerDataServer:Set(oPlayer, "Rerolls", (PlayerDataServer:Get(oPlayer, "Rerolls") or 0) + 1)
+    elseif sKind == "Pet" then
+        if not PetServer:Grant(oPlayer, tProduct.Item, "Robux") then
+            -- Already owned (shouldn't be promptable): compensate with rerolls rather than lose the purchase.
+            PlayerDataServer:Set(oPlayer, "Rerolls", (PlayerDataServer:Get(oPlayer, "Rerolls") or 0) + 5)
+        end
     elseif sKind == "Slingshot" or sKind == "Bait" then
         local tList = if sKind == "Slingshot" then ShopConfig.Slingshots else ShopConfig.Bait
         local iTier = TierIndex(tList, tProduct.Item)
@@ -277,6 +283,7 @@ function mMonetization.PreloadAsync(self)
             local tProduct = MonetizationConfig.Products[sKey]
             if not tProduct then return end
             if tProduct.Kind == "ExclusiveDino" and (PlayerDataServer:Get(oPlayer, "ExclusiveDinos") or {})[(ExclusiveRotation.Current()).Id] then return end
+            if tProduct.Kind == "Pet" and PetServer:Owns(oPlayer, tProduct.Item) then return end
             if tProduct.Kind == "Gift" then
                 -- Validate the recipient: in this server, not the buyer, and not already owning the pass.
                 local oTarget = typeof(tPayload.Target) == "number" and Players:GetPlayerByUserId(tPayload.Target)

@@ -2,7 +2,7 @@
     Modals
     ------
     Every full-screen menu, one visible at a time (Store.Modal):
-      Shop    slingshots / bait / slots with side-by-side Cash and Robux buttons
+      Shop    slingshots / bait / slots with side-by-side Cash and Robux buttons, plus buyable pets
       Index   15 species x 6 mutations collection
       Passes  the four gamepasses + Auto-Launch / Auto-Replace toggles
       Offer   exclusive dino, starter pack, cash packs, reroll packs
@@ -22,6 +22,7 @@ local Theme = require(ReplicatedStorage.Shared.Theme)
 local Format = require(ReplicatedStorage.Shared.Format)
 local DinoConfig = require(ReplicatedStorage.Config.DinoConfig)
 local ShopConfig = require(ReplicatedStorage.Config.ShopConfig)
+local PetConfig = require(ReplicatedStorage.Config.PetConfig)
 local MonetizationConfig = require(ReplicatedStorage.Config.MonetizationConfig)
 local WeatherConfig = require(ReplicatedStorage.Config.WeatherConfig)
 local GameConfig = require(ReplicatedStorage.Config.GameConfig)
@@ -159,8 +160,62 @@ local function ShopItemCard(scope, sKind: string, iTier: number, tItem)
     })
 end
 
+-- Pet card: plush portrait, rarity, perk, then Buy (cash or Robux) / Equip / Equipped.
+local PET_TINT = { Golden = Color3.fromHex("FFD86B"), Cosmic = Color3.fromHex("C9A6FF") }
+local function PetCard(scope, i: number, tPet)
+    local tRarity = PetConfig.Rarities[tPet.Rarity]
+    local tProduct = tPet.ProductKey and MonetizationConfig.Products[tPet.ProductKey]
+    local bOwned = scope:Computed(function(use) return (use(V.Pets) or {})[tPet.Id] == true end)
+    local bEquipped = scope:Computed(function(use) return use(V.EquippedPet) == tPet.Id end)
+    local nCash = tPet.Price.Cash
+    local bAfford = scope:Computed(function(use) return nCash ~= nil and use(V.Cash) >= nCash end)
+    return Card(scope, {
+        Name = `Pet{i}`,
+        LayoutOrder = i,
+        Selected = bEquipped,
+        Visible = tProduct == nil or Purchasable(tProduct),
+        [Children] = {
+            UI.Text(scope, { Text = tPet.Name, TextSize = 28, TextScaled = true, Position = UDim2.fromOffset(10, 8), Size = UDim2.new(1, -20, 0, 34) }),
+            UI.Chip(scope, { Text = tPet.Rarity, Color = tRarity.Color, AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 44), Height = 28, TextSize = 18 }),
+            UI.Icon(scope, { Key = tPet.Species, Tint = tPet.Mutation and PET_TINT[tPet.Mutation], AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 72), Size = UDim2.fromOffset(120, 120) }),
+            UI.Text(scope, { Text = `+{math.floor(tPet.Bonus * 100 + 0.5)}% {PetConfig.Perks[tPet.Perk].Label}`, TextSize = 26, Color = Theme.Cash,
+                Position = UDim2.fromOffset(10, 192), Size = UDim2.new(1, -20, 0, 30) }),
+            UI.Button(scope, {
+                Name = "Action",
+                Variant = scope:Computed(function(use)
+                    if use(bEquipped) then return "Grey" end
+                    if use(bOwned) then return "Green" end
+                    if tProduct then return "Purple" end
+                    return if use(bAfford) then "Orange" else "Red"
+                end),
+                Text = scope:Computed(function(use)
+                    if use(bEquipped) then return "EQUIPPED" end
+                    if use(bOwned) then return "EQUIP" end
+                    if tProduct then return `R$ {tProduct.Price}` end
+                    return Format.Cash(nCash or 0)
+                end),
+                TextSize = 26,
+                Position = UDim2.new(0, 10, 1, -70),
+                Size = UDim2.new(1, -20, 0, 58),
+                OnClick = function()
+                    if peek(bEquipped) then
+                        Nav.EquipPet("") -- tap again to put the pet away
+                    elseif peek(bOwned) then
+                        Nav.EquipPet(tPet.Id)
+                    elseif tProduct then
+                        Nav.PromptProduct(tPet.ProductKey)
+                    else
+                        local bOk, sReason = Nav.BuyPet(tPet.Id)
+                        if not bOk and sReason == "Cash" then V.Toast:set("Not enough cash yet!") end
+                    end
+                end,
+            }),
+        },
+    })
+end
+
 local function Shop(scope)
-    local tTabs = { { "Slingshot", "Slingshots", "Green" }, { "Bait", "Bait", "Orange" }, { "Slots", "Park Slots", "Blue" } }
+    local tTabs = { { "Slingshot", "Slingshots", "Green" }, { "Bait", "Bait", "Orange" }, { "Slots", "Park Slots", "Blue" }, { "Pets", "Pets", "Pink" } }
     local tTabChildren = {}
     for i, t in tTabs do
         tTabChildren[i] = UI.Button(scope, {
@@ -178,9 +233,15 @@ local function Shop(scope)
     end
     local function TabGrid(sKind: string)
         local tCards = {}
-        local tList = TrackList(sKind) or ShopConfig.Slots
-        for iTier, tItem in tList do
-            tCards[iTier] = ShopItemCard(scope, sKind, iTier, tItem)
+        if sKind == "Pets" then
+            for i, tPet in PetConfig.List do
+                tCards[i] = PetCard(scope, i, tPet)
+            end
+        else
+            local tList = TrackList(sKind) or ShopConfig.Slots
+            for iTier, tItem in tList do
+                tCards[iTier] = ShopItemCard(scope, sKind, iTier, tItem)
+            end
         end
         return Grid(scope, {
             Name = sKind .. "Grid",

@@ -181,3 +181,10 @@ Significant autonomous (BCDK Recommended) decisions, newest last. Each entry: wh
     - The early-miss zone is 0.45–0.75s early.
     - Taps within 0.35s of a successful bounce are ignored.
 83. **Visible, silly training.** Standing on a training pad, the avatar now runs a dino workout that changes every 6–9s: squat-pressing a giant cartoon bone, juggling three speckled eggs, a tiny-arms T-Rex stomp with "RAWR!" pops, or pressing a wiggling plush Compy overhead, with sweat drops. TrainingController animates every training player on every client, writing joint Transforms just before physics (works for both Motor6D and the newer AnimationConstraint avatar joints).
+84. **Buyable pet dinos (requested by the developer).** Nine plush baby dinos in a new Pets tab in the Shop. Each follows its owner, hopping, and runs the dino idle animation when stopped; the Cosmic Pterodactyl hovers. Each gives one perk while equipped:
+    - Common, cash: Baby Compy $2.5K (+5% Cash), Baby Protoceratops $4K (+5% Power).
+    - Rare, cash: Baby Triceratops $250K (+10% Cash), Baby Stegosaurus $400K (+10% Power).
+    - Epic, cash: Baby Spinosaurus $25M (+15% Luck), Baby Brachiosaurus $40M (+20% Cash).
+    - Legendary, cash: Baby T-Rex $3B (+30% Cash).
+    - Mythic, Robux: Golden Baby Rex R$399 (+50% Cash), Cosmic Pterodactyl R$299 (+25% Luck).
+    Cash prices sit beside the matching slingshot tiers, so each pet is a goal at its stage. One pet is equipped at a time (tap EQUIPPED to put it away), and owned pets are saved. Perks plug into the existing income, luck and power multipliers. Everyone sees everyone's pets (a replicated "Pet" attribute). The two Robux developer products are Id 0 until they're created on Roblox: hidden in live servers, simulated in Studio.
