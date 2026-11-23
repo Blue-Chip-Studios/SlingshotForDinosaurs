@@ -208,12 +208,22 @@ function DinoModels.Build(tDino: { Species: string, Size: string, Mutation: stri
     if oTemplate and oTemplate:IsA("Model") then
         -- Blender model: colour each named region from DinoConfig, then normalise to species height.
         oModel = oTemplate:Clone()
+        -- Plush models (soft-toy style, Assets/Blender/scripts/plush.py) carry a Blush region:
+        -- softer pastel colours, a fuzzy fabric surface, glossy bead eyes with a bright shine dot.
+        local bPlush = false
+        for _, o in oModel:GetChildren() do
+            if Region(o) == "Blush" then bPlush = true break end
+        end
+        local function Soft(c: Color3, k: number): Color3
+            return if bPlush then c:Lerp(Color3.new(1, 1, 1), k) else c
+        end
         local tRegionColours = {
-            Body = tSpecies.Colors.Body,
-            Belly = tSpecies.Colors.Belly,
-            Accent = tSpecies.Colors.Accent,
+            Body = Soft(tSpecies.Colors.Body, 0.18),
+            Belly = Soft(tSpecies.Colors.Belly, 0.1),
+            Accent = Soft(tSpecies.Colors.Accent, 0.12),
             EyeWhite = Color3.new(1, 1, 1),
             Pupil = Theme.Ink,
+            Blush = Color3.fromHex("FF9DB4"),
         }
         for _, o in oModel:GetDescendants() do
             if o:IsA("BasePart") then
@@ -221,11 +231,13 @@ function DinoModels.Build(tDino: { Species: string, Size: string, Mutation: stri
                 o.CanCollide = false
                 o.CanQuery = false
                 o.CanTouch = false
-                o.Material = Enum.Material.SmoothPlastic
                 o.Name = o.Name:gsub("%.%d+$", "") -- Blender duplicate-name suffixes ("Body.001")
                 -- v2 models have separate legs (LegL/LegR, LegFL/LegFR/LegBL/LegBR) coloured like the body.
                 local sR = Region(o)
                 o.Color = tRegionColours[sR] or (if sR:match("^Leg") then tRegionColours.Body else o.Color)
+                -- SmoothPlastic for plush too: Fabric's normal map crushed the pastels to near-black in
+                -- shade, and reflective pupils mirrored the sky blue.
+                o.Material = Enum.Material.SmoothPlastic
                 if sR == "Joint" then
                     o.Transparency = 1
                     o.CastShadow = false
