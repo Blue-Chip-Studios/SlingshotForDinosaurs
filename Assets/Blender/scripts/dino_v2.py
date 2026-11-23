@@ -31,7 +31,8 @@ SPECIES = {
     "Compy": dict(plan="theropod", body="7ED957", belly="E8F7C8", accent="3E8E2F",
                   w=0.72, head=0.82, eyes=1.3, neck=1.25, tail=1.35, stripes=4, arms="normal"),
     "TRex": dict(plan="theropod", body="4E6B3A", belly="D8D2A8", accent="A83A1E",
-                 w=1.08, head=1.45, eyes=0.9, neck=0.85, tail=1.1, stripes=5, arms="tiny", teeth=True, brow=True),
+                 w=1.12, head=1.45, eyes=0.9, neck=0.85, tail=1.1, stripes=5, arms="tiny", teeth=True, brow=True,
+                 head_deep=1.2, jaw_open=True, eye_x=0.47, eye_z=0.12),
     "Triceratops": dict(plan="ceratopsian", body="6A8FBF", belly="E0E8F2", accent="F2C14E", spots=True, eyewhite=520),
     "Velociraptor": dict(plan="theropod", body="D9893B", belly="F7E2C1", accent="7A3E12",
                          w=0.82, head=0.95, eyes=1.1, neck=1.1, tail=1.35, stripes=5, teeth=True, sickle=True, head_tuft=True),
@@ -42,13 +43,15 @@ SPECIES = {
     "Spinosaurus": dict(plan="theropod", body="4A7D8C", belly="DDE9E0", accent="E8A33D",
                         w=1.05, head=1.1, eyes=0.9, neck=1.0, tail=1.3, stripes=0, snout=1.7, teeth=True, sail=True),
     "Cryolophosaurus": dict(plan="theropod", body="E8EEF5", belly="FFFFFF", accent="3F8FD9",
-                            w=0.92, head=1.05, eyes=1.0, neck=1.1, tail=1.2, stripes=5, fan_crest=True, teeth=True),
+                            w=0.92, head=1.05, eyes=1.0, neck=1.1, tail=1.2, stripes=5, fan_crest=1.6, teeth=True, eye_x=0.47, eye_z=0.14),
     "Therizinosaurus": dict(plan="theropod", body="D9A45F", belly="FFF0D9", accent="8C4F2B",
                             w=1.1, head=0.72, eyes=1.2, neck=1.2, neck_up=1.4, tail=1.0, stripes=0, arms="long", scythe_claws=True, fluff=True),
     "Carnotaurus": dict(plan="theropod", body="B8402E", belly="F2C9A8", accent="2A1A16",
-                        w=0.98, head=1.05, eyes=0.95, neck=1.0, tail=1.2, stripes=4, arms="tiny", bull_horns=True, brow=True, teeth=True),
+                        w=0.94, head=1.1, eyes=0.95, neck=1.05, tail=1.25, stripes=0, arms="stub", bull_horns=True, brow=True, teeth=True,
+                        head_len=0.72, head_deep=1.12, osteoderms=True, eye_x=0.47, eye_z=0.12),
     "Giganotosaurus": dict(plan="theropod", body="6B5A4E", belly="E0C9AE", accent="FF6A1A",
-                           w=1.12, head=1.35, eyes=0.85, neck=0.9, tail=1.2, stripes=5, arms="normal", brow=True, teeth=True),
+                           w=1.12, head=1.3, eyes=0.85, neck=0.95, tail=1.3, stripes=3, arms="normal", brow=True, teeth=True,
+                           head_len=1.3, head_deep=0.92, back_spikes=True, eye_x=0.47, eye_z=0.12),
     "Parasaurolophus": dict(plan="theropod", body="4FB3A9", belly="E3F5EC", accent="E8542F",
                             w=1.05, head=0.85, eyes=1.1, neck=1.2, tail=1.1, stripes=4, bill=True, tube_crest=True),
     "Pachycephalosaurus": dict(plan="theropod", body="B07A4F", belly="EFD9BF", accent="5C3A22",
@@ -66,7 +69,8 @@ SPECIES = {
     "Ouranosaurus": dict(plan="theropod", body="2EB8A6", belly="E2FAF5", accent="FF7AB8",
                          w=1.0, head=0.88, eyes=1.1, neck=1.15, tail=1.15, stripes=0, bill=True, sail=True),
     "Allosaurus": dict(plan="theropod", body="A0522D", belly="F2D9C4", accent="3B2414",
-                       w=1.02, head=1.2, eyes=0.95, neck=1.0, tail=1.2, stripes=5, teeth=True, brow_horns=True),
+                       w=1.0, head=1.15, eyes=0.95, neck=1.05, tail=1.2, stripes=5, teeth=True, brow_horns=True,
+                       head_len=1.12, snout_ridge=True, eye_x=0.47, eye_z=0.12),
     "Styracosaurus": dict(plan="ceratopsian", body="6B8E3A", belly="E8EFD2", accent="D94A2B", horns="styraco", eyewhite=620),
     "Diplodocus": dict(plan="sauropod", body="E0A15E", belly="FBEBD3", accent="7B4FA8", neck="low", accent_budget=700),
     "Microraptor": dict(plan="theropod", body="3A3F7A", belly="B9C2FF", accent="45E0FF", accent_budget=600,
@@ -293,11 +297,22 @@ def theropod(b, s):
     neck_mid = Vector((0, -0.75 - 0.15 * nu, 2.9 + 0.5 * nu))
     b.chain("Body", [(0, -0.55, 2.75), tuple(neck_mid), tuple(neck_top)], [0.55 * w, 0.5 * w, 0.45 * w * hs ** 0.3])
     H = neck_top + Vector((0, -0.45 * hs, 0.32 * hs))
-    b.ball("Body", tuple(H), (0.6 * hs * w ** 0.5, 0.75 * hs, 0.56 * hs))                    # cranium
-    snout = H + Vector((0, -0.78 * hs, -0.08 * hs))
-    b.ball("Body", tuple(snout), (0.48 * hs, 0.62 * hs, 0.38 * hs))                          # upper snout
-    jaw = H + Vector((0, -0.62 * hs, -0.42 * hs))
-    b.ball("Belly", tuple(jaw), (0.44 * hs, 0.66 * hs, 0.17 * hs))                          # lower jaw (smile line)
+    hl, hd = s.get("head_len", 1.0), s.get("head_deep", 1.0)   # skull length / depth (predator silhouettes)
+    b.ball("Body", tuple(H), (0.6 * hs * w ** 0.5, 0.75 * hs * hl, 0.56 * hs * hd))          # cranium
+    snout = H + Vector((0, -0.78 * hs * hl, -0.08 * hs))
+    b.ball("Body", tuple(snout), (0.48 * hs, 0.62 * hs * hl, 0.38 * hs * hd))                # upper snout
+    jaw = H + Vector((0, -0.62 * hs * hl, -0.42 * hs * hd))
+    if s.get("jaw_open"):
+        # Roaring: lower jaw dropped and tipped down, dark-red mouth inside, bottom teeth pointing up.
+        jaw = jaw + Vector((0, 0.05 * hs, -0.2 * hs))
+        b.ball("Belly", tuple(jaw), (0.44 * hs, 0.66 * hs * hl, 0.17 * hs), rot=(16, 0, 0))
+        b.ball("Accent", tuple(H + Vector((0, -0.5 * hs * hl, -0.4 * hs * hd))), (0.34 * hs, 0.42 * hs * hl, 0.2 * hs))
+        for side in (-1, 1):
+            for i in range(3):
+                base = jaw + Vector((side * 0.3 * hs, (-0.05 - 0.2 * i) * hs * hl, 0.06 * hs - 0.06 * i * hs))
+                b.cone("EyeWhite", tuple(base), (0, 0, 1), 0.05 * hs, 0.15 * hs, verts=6)
+    else:
+        b.ball("Belly", tuple(jaw), (0.44 * hs, 0.66 * hs * hl, 0.17 * hs))                  # lower jaw (smile line)
     sn = s.get("snout", 1.0)
     if sn != 1.0:
         # Long croc snout (Spinosaurus, Baryonyx): extra narrow snout and jaw reaching forward.
@@ -308,15 +323,15 @@ def theropod(b, s):
         b.ball("Belly", tuple(snout + Vector((0, -0.45 * hs, -0.12 * hs))), (0.5 * hs, 0.55 * hs, 0.2 * hs))
     er = 0.2 * hs * s.get("eyes", 1.0)
     for side in (-1, 1):
-        _eye(b, H + Vector((side * 0.5 * hs, -0.22 * hs, 0.24 * hs)), er, side)
+        _eye(b, H + Vector((side * s.get("eye_x", 0.5) * hs, -0.22 * hs * hl, s.get("eye_z", 0.24) * hs * hd)), er, side)
         if s.get("brow"):
-            b.ball("Accent", tuple(H + Vector((side * 0.42 * hs, -0.3 * hs, 0.5 * hs))), (0.24 * hs, 0.3 * hs, 0.09 * hs), rot=(0, side * 18, 0))
+            b.ball("Accent", tuple(H + Vector((side * 0.42 * hs, -0.3 * hs, (s.get("eye_z", 0.24) + (0.2 if "eye_z" in s else 0.26)) * hs * hd))), (0.24 * hs, 0.3 * hs, 0.09 * hs), rot=(0, side * 18, 0))
     if s.get("teeth"):
         n_teeth = 3 if sn == 1.0 else 5
         span = 0.24 if sn == 1.0 else 0.22 * sn
         for side in (-1, 1):
             for i in range(n_teeth):
-                base = snout + Vector((side * (0.33 if sn == 1.0 else 0.26) * hs, (0.32 - span * i) * hs, -0.3 * hs))
+                base = snout + Vector((side * (0.33 if sn == 1.0 else 0.26) * hs, (0.32 - span * i) * hs * hl, -0.3 * hs * hd))
                 b.cone("EyeWhite", tuple(base), (0, 0, -1), 0.055 * hs, 0.17 * hs, verts=6)
     # ---- Head ornaments ----
     top = H + Vector((0, 0, 0.5 * hs))  # just under the skull surface, so ornaments root into it
@@ -329,9 +344,10 @@ def theropod(b, s):
     if s.get("neck_frill"):         # Dilophosaurus umbrella frill behind the head
         b.ball("Accent", tuple(H + Vector((0, 0.55 * hs, -0.35 * hs))), (1.35 * hs, 0.11, 1.05 * hs), rot=(-15, 0, 0))
     if s.get("fan_crest"):          # Cryolophosaurus: wavy crest running side to side
+        fc = s.get("fan_crest") if isinstance(s.get("fan_crest"), float) else 1.0
         for i in range(7):
             x = (i - 3) * 0.13 * hs
-            b.ball("Accent", tuple(top + Vector((x, -0.15 * hs, 0.05 * hs + (0.18 - abs(i - 3) * 0.05) * hs))), (0.07 * hs, 0.06, 0.24 * hs))
+            b.ball("Accent", tuple(top + Vector((x, -0.15 * hs, 0.05 * hs + (0.18 - abs(i - 3) * 0.05) * fc * hs))), (0.07 * hs, 0.06, 0.24 * hs * fc))
     if s.get("bull_horns"):         # Carnotaurus
         for side in (-1, 1):
             b.cone("Accent", tuple(H + Vector((side * 0.32 * hs, -0.25 * hs, 0.55 * hs))), (side * 0.8, -0.15, 0.6), 0.13 * hs, 0.55 * hs)
@@ -347,6 +363,9 @@ def theropod(b, s):
     if s.get("brow_horns"):         # Allosaurus: little horn above each eye
         for side in (-1, 1):
             b.cone("Accent", tuple(H + Vector((side * 0.42 * hs, -0.3 * hs, 0.5 * hs))), (side * 0.2, -0.3, 1), 0.12 * hs, 0.38 * hs, verts=6)
+    if s.get("snout_ridge"):        # Allosaurus: pair of low ridges running along the top of the snout
+        for side in (-1, 1):
+            b.ball("Accent", tuple(snout + Vector((side * 0.16 * hs, 0.1 * hs, 0.32 * hs * hd))), (0.06 * hs, 0.55 * hs * hl, 0.1 * hs))
     if s.get("helmet"):             # Corythosaurus: tall rounded helmet crest
         # half buried in the skull so it reads as a tall fin-shaped helmet, not a ball on top
         b.plate("Accent", tuple(top + Vector((0, 0.0, -0.22 * hs))), (0.1 * hs, 0.62 * hs, 0.72 * hs))
@@ -360,6 +379,19 @@ def theropod(b, s):
         spots += [(p + Vector((0, 0, r * 0.88)), r) for p, r in tail[2:len(tail) - 2:max(1, len(tail) // 6)]]
         for p, r in spots[:n + 2]:
             b.ball("Accent", tuple(p), (r * 0.95, 0.11, 0.12))
+    if s.get("back_spikes"):
+        # Giganotosaurus: a row of short spikes down the spine, shrinking along the tail.
+        spine = [Vector((0, -0.35, 3.12)), Vector((0, 0.3, 3.02)), Vector((0, 0.95, 2.86))]
+        spine += [p + Vector((0, 0, r * 0.8)) for p, r in tail[1:-3:max(1, len(tail) // 7)]]
+        for i, p in enumerate(spine[:9]):
+            k = 1 - i / 10
+            b.cone("Accent", tuple(p), (0, 0.35, 1), 0.14 * w * k, 0.42 * w * k, verts=6)
+    if s.get("osteoderms"):
+        # Carnotaurus: rows of knobbly armour bumps down both flanks.
+        for side in (-1, 1):
+            for i in range(9):
+                row = i % 2   # two staggered rows, the upper one higher on the back
+                b.sphere("Accent", (side * (0.62 + 0.14 * row - 0.02 * i) * w, -0.6 + 0.3 * i, 3.0 - 0.22 * row - 0.05 * i), 0.07 + 0.015 * (1 - row))
     if s.get("sail"):
         # Spinosaurus: tall curved sail from the shoulders to the hips, with spine tips along the top.
         for i in range(13):
@@ -378,7 +410,7 @@ def theropod(b, s):
     arms = s.get("arms", "normal")
     for side in (-1, 1):
         # Arms grow from the shoulder (inside the body, above the belly) so they fuse instead of floating.
-        sc = {"tiny": 0.55, "normal": 1.0, "long": 1.9}[arms]
+        sc = {"stub": 0.35, "tiny": 0.55, "normal": 1.0, "long": 1.9}[arms]
         if s.get("wings"):
             # Microraptor: arms spread like a glider, feathered skin back to the hips and a fringe of
             # long flight feathers along the trailing edge.
