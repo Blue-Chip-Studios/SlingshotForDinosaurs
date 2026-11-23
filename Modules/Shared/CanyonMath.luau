@@ -72,7 +72,9 @@ end
 
 function CanyonMath.FlightTime(vFrom: Vector3, vTo: Vector3): number
     local nStuds = (vTo - vFrom).Magnitude
-    return math.min(GameConfig.FlightBaseTime + nStuds * GameConfig.FlightTimePerStud, GameConfig.FlightMaxTime)
+    return math.min(math.max(GameConfig.FlightBaseTime + nStuds * GameConfig.FlightTimePerStud,
+        -- Three-geyser flights stretch a little (a floatier arc) so all three taps fit, readably spaced.
+        if nStuds >= GameConfig.Bounce.ThreeBounceStuds then GameConfig.Bounce.ThreeBounceMinTime else 0), GameConfig.FlightMaxTime)
 end
 
 -- Parabolic arc from A to B, lifted nHeight above the straight line at its midpoint.
@@ -88,24 +90,25 @@ end
 -- Deterministic bounce windows (seconds from launch) for a flight of nDuration.
 function CanyonMath.BounceWindows(nSeed: number, nStuds: number, nDuration: number): { number }
     local oRandom = Random.new(nSeed)
-    local nCount = if nStuds < 180 then 1 elseif nStuds < 700 then 2 else 3
+    local nCount = if nStuds < 180 then 1 elseif nStuds < GameConfig.Bounce.ThreeBounceStuds then 2 else 3
     local nMaxFraction = GameConfig.Bounce.MaxWindowFraction
     -- Never squeeze geysers closer than MinGap: short flights get fewer of them instead.
     local nUsable = (nMaxFraction - 0.25) * nDuration
     nCount = math.max(1, math.min(nCount, math.floor(nUsable / GameConfig.Bounce.MinGap) + 1))
+    -- Spread them out: MinGap between each, and the spare time shared randomly before, between and
+    -- after them, so every geyser always fits inside the flight.
+    local nGap = GameConfig.Bounce.MinGap
+    local nFree = math.max(0, nUsable - (nCount - 1) * nGap)
+    local tWeights, nSum = {}, 0
+    for i = 1, nCount + 1 do
+        tWeights[i] = oRandom:NextNumber(0.4, 1)
+        nSum += tWeights[i]
+    end
     local tWindows = {}
-    local nSlot = (nMaxFraction - 0.25) / nCount
+    local nT = 0.25 * nDuration
     for i = 1, nCount do
-        local nLow = 0.25 + (i - 1) * nSlot
-        local nFraction = nLow + oRandom:NextNumber(0.15, 0.85) * nSlot
-        local nT = nFraction * nDuration
-        local nPrev = tWindows[#tWindows]
-        if nPrev and nT - nPrev < GameConfig.Bounce.MinGap then
-            nT = nPrev + GameConfig.Bounce.MinGap
-        end
-        if nT <= nMaxFraction * nDuration then
-            table.insert(tWindows, nT)
-        end
+        nT += (if i > 1 then nGap else 0) + nFree * tWeights[i] / nSum
+        table.insert(tWindows, nT)
     end
     return tWindows
 end

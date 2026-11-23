@@ -219,3 +219,20 @@ Significant autonomous (BCDK Recommended) decisions, newest last. Each entry: wh
 90. **Slingshot placement and flyer pose (from the on-screen check).**
     - **Placement:** the launch slingshot stood behind the launch stand, so the avatar stood inside it and hid it. It now sits on the canyon side of the pad at 1.15× scale. The player stands behind it, looks through the fork down the canyon, and the pouch draws back and down toward them while charging.
     - **Flyer pose:** wild flyers are tipped forward to glide belly-down; the plush models are built standing up and looked like they were standing in mid-air.
+91. **Shop and Offers scroll vertically.** Both used one horizontal strip of cards, which the mouse wheel doesn't scroll, cut cards off at the edge, and was fiddly to swipe. They are now vertical grids of centred cards, three per row, with a thicker scrollbar. The wheel, touch swipes and gamepad all scroll them naturally, and each shop tab opens at the top.
+92. **Three bounce taps again.** Decision 82's 1.2s minimum gap cut mid-length flights (about 700–1,000 studs, 2.7–3.3s) to two geysers.
+    - **Spacing:** MinGap is now 1.0s and the approach ring 0.9s, still one ring at a time.
+    - **Flight time:** flights of 700+ studs last at least 3.4s (a slightly floatier arc), so three geysers always fit.
+    - **Placement:** the spare time is now shared out randomly before, between and after the geysers, so the last one never falls off the end of the flight.
+    - **Checked:** over 200 seeds per distance, all 700+ stud flights get three taps at least 1.0s apart, the last by 85% of the flight.
+93. **Bigger, busier canyon wildlife (requested by the developer).**
+    - **Size:** wild dinos are 2.6× park size with a 14-stud minimum, so Compys and raptors read from the rim. Critters are 1.7×.
+    - **Numbers:** areas have 9–12 dinos plus more critters, and the mammoth herd spacing and flyer circles are scaled to match.
+    - **Catch reveal:** wild animals near the landing spot step out of view while a catch is shown.
+    - **Performance:** 34 animals active at 60 fps in Studio.
+94. **Running.**
+    - **Keyboard:** hold Shift.
+    - **Gamepad:** click the left stick to toggle, or hold the stick fully over.
+    - **Touch:** push the thumbstick all the way out for half a second.
+    - **Speed:** walk 16, run 28, eased (GameConfig.Sprint).
+    - **Shift-Lock:** Roblox's option is off (StarterPlayer.EnableMouseLockOption) so Shift is free.

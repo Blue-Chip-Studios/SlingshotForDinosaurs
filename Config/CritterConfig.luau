@@ -34,21 +34,26 @@ CritterConfig.Critters = {
 -- Per area (DinoConfig.Biomes Id): how many of the area's own dinos roam (spread over its three
 -- species; big sauropods count double) and which critters join them.
 CritterConfig.Areas = {
-    Jungle = { Dinos = 6, Critters = { Dragonfly = 3 } },
-    Swamp = { Dinos = 6, Critters = { Dragonfly = 5 } },
-    TarPits = { Dinos = 6, Critters = { SabreTooth = 3 } },
-    Badlands = { Dinos = 6 },
-    CoralCoast = { Dinos = 6, Critters = { SeaTurtle = 4 } },
-    IceAge = { Dinos = 5, Critters = { Mammoth = 4 } },
-    Redwood = { Dinos = 6 },
-    CrystalCaves = { Dinos = 6 },
-    Volcano = { Dinos = 6 },
-    SkyIslands = { Dinos = 7 },
+    Jungle = { Dinos = 11, Critters = { Dragonfly = 5 } },
+    Swamp = { Dinos = 11, Critters = { Dragonfly = 7 } },
+    TarPits = { Dinos = 11, Critters = { SabreTooth = 4 } },
+    Badlands = { Dinos = 12 },
+    CoralCoast = { Dinos = 10, Critters = { SeaTurtle = 6 } },
+    IceAge = { Dinos = 9, Critters = { Mammoth = 5 } },
+    Redwood = { Dinos = 11 },
+    CrystalCaves = { Dinos = 11 },
+    Volcano = { Dinos = 11 },
+    SkyIslands = { Dinos = 10 },
 }
 
 -- Dino archetypes that graze (everything else hunts: sniffs about and roars now and then).
 CritterConfig.GrazingArchetypes = { Quadruped = true, Sauropod = true, Ornithopod = true }
 CritterConfig.GrazingSpecies = { Gallimimus = true, Therizinosaurus = true }
+
+-- Wild animals are shown much bigger than park dinos so they read from the rim and during flights.
+CritterConfig.DinoScale = 2.6
+CritterConfig.MinDinoHeight = 14 -- small species (Compy, raptors) grow more so every wild dino reads from the rim
+CritterConfig.CritterScale = 1.7
 
 CritterConfig.ActiveRange = 380   -- an area wakes up when the camera is this close to it (studs)
 CritterConfig.DetailRange = 240   -- beyond this, animals update at a quarter rate

@@ -41,7 +41,11 @@ local function Purchasable(tItem): boolean
     return tItem ~= nil and (tItem.Id ~= 0 or IS_STUDIO)
 end
 
+-- Scrolling card grid. Always vertical: the mouse wheel, touch swipes and gamepad all scroll it
+-- naturally (a horizontal strip ignored the wheel and cut cards off at the edge). props.Cards lays
+-- out tall item cards (250x330, centred rows of three) instead of the default small tiles.
 local function Grid(scope, props)
+    local vCell = props.CellSize or (if props.Cards then UDim2.fromOffset(250, 330) else UDim2.fromOffset(250, 160))
     return scope:New("ScrollingFrame")({
         Name = props.Name or "Grid",
         BackgroundTransparency = 1,
@@ -49,14 +53,21 @@ local function Grid(scope, props)
         Position = props.Position,
         Size = props.Size or UDim2.fromScale(1, 1),
         CanvasSize = UDim2.new(),
-        AutomaticCanvasSize = props.Horizontal and Enum.AutomaticSize.X or Enum.AutomaticSize.Y,
-        ScrollingDirection = props.Horizontal and Enum.ScrollingDirection.X or Enum.ScrollingDirection.Y,
-        ScrollBarThickness = 8,
+        AutomaticCanvasSize = Enum.AutomaticSize.Y,
+        ScrollingDirection = Enum.ScrollingDirection.Y,
+        ScrollBarThickness = 14,
         ScrollBarImageColor3 = Theme.Ink,
+        VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar,
+        ElasticBehavior = Enum.ElasticBehavior.Always,
+        Selectable = false,
         [Children] = {
-            scope:New("UIPadding")({ PaddingLeft = UDim.new(0, 8), PaddingTop = UDim.new(0, 8), PaddingRight = UDim.new(0, 8), PaddingBottom = UDim.new(0, 8) }),
-            if props.Horizontal then scope:New("UIListLayout")({ FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 14), SortOrder = Enum.SortOrder.LayoutOrder })
-            else scope:New("UIGridLayout")({ CellSize = props.CellSize or UDim2.fromOffset(250, 160), CellPadding = UDim2.fromOffset(12, 12), SortOrder = Enum.SortOrder.LayoutOrder }),
+            scope:New("UIPadding")({ PaddingLeft = UDim.new(0, 8), PaddingTop = UDim.new(0, 8), PaddingRight = UDim.new(0, 8), PaddingBottom = UDim.new(0, 14) }),
+            scope:New("UIGridLayout")({
+                CellSize = vCell,
+                CellPadding = if props.Cards then UDim2.fromOffset(16, 16) else UDim2.fromOffset(12, 12),
+                HorizontalAlignment = if props.Cards then Enum.HorizontalAlignment.Center else Enum.HorizontalAlignment.Left,
+                SortOrder = Enum.SortOrder.LayoutOrder,
+            }),
             props[Children],
         },
     })
@@ -245,7 +256,7 @@ local function Shop(scope)
         end
         return Grid(scope, {
             Name = sKind .. "Grid",
-            Horizontal = true,
+            Cards = true,
             Position = UDim2.fromOffset(0, 76),
             Size = UDim2.new(1, 0, 1, -76),
             [Children] = tCards,
@@ -258,6 +269,7 @@ local function Shop(scope)
         table.insert(tGrids, oGrid)
         scope:Observer(V.ShopTab):onBind(function()
             oGrid.Visible = peek(V.ShopTab) == t[1]
+            oGrid.CanvasPosition = Vector2.zero -- each tab opens at the top
         end)
     end
     return UI.Modal(scope, {
@@ -505,7 +517,7 @@ local function Offer(scope)
         Variant = "Purple",
         Size = UDim2.fromOffset(1000, 520),
         OnClose = Nav.Close,
-        [Children] = Grid(scope, { Horizontal = true, [Children] = tCards }),
+        [Children] = Grid(scope, { Cards = true, [Children] = tCards }),
     })
 end
 

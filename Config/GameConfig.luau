@@ -25,13 +25,23 @@ return {
         Perfect = { Window = 0.15, Bonus = 0.35 },
         Good = { Window = 0.30, Bonus = 0.20 },
         OK = { Window = 0.45, Bonus = 0.10 },
-        MinGap = 1.2, -- seconds between geysers (before bounce extensions), so each tap is readable
-        ApproachTime = 1.0, -- the TAP ring starts shrinking this long before the perfect moment
+        MinGap = 1.0, -- seconds between geysers (before bounce extensions; each bounce adds BounceExtraTime), so each tap is readable
+        ApproachTime = 0.9, -- the TAP ring starts shrinking this long before the perfect moment (shorter than MinGap: one ring at a time)
+        ThreeBounceStuds = 700, -- flights this long get three geysers...
+        ThreeBounceMinTime = 3.4, -- ...and last at least this long so all three fit MinGap apart
         EarlyMissFrom = 0.75, -- a tap this far (or less) early but outside OK burns the window
         AfterBounceGrace = 0.35, -- taps this soon after a successful bounce are ignored (double-click safety)
         LuckPerBounce = 0.10,
         ServerClockTolerance = 0.35, -- allowed gap between client-reported and server-measured time
         MaxWindowFraction = 0.85, -- no geysers in the last 15% of a flight
+    },
+
+    -- Running (SprintController): Shift, a full stick push, or the left-stick click
+    Sprint = {
+        Walk = 16,
+        Run = 28,
+        Ease = 8,        -- how quickly speed changes (higher = snappier)
+        TiltDelay = 0.5, -- seconds of full stick push before an analogue run kicks in
     },
 
     -- Training

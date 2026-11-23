@@ -232,6 +232,8 @@ local function PresentCatch(tF: Flight, tResult)
     -- Dino pops out at the landing point; camera frames it while the reveal card shows.
     local vLand = tF.Segment.vTo
     local tDino = tResult.Dino
+    -- Wild animals step out of the shot while the catch is shown (WildlifeController reads this).
+    Workspace:SetAttribute("CatchSpot", vLand)
     local oModel = DinoModels.Build(tDino)
     local vFace = Workspace.CurrentCamera.CFrame.Position - vLand
     DinoModels.PlaceAt(oModel, vLand, vFace)
@@ -317,6 +319,7 @@ local function PresentCatch(tF: Flight, tResult)
     end
     Store.Values.Reveal:set(false)
     -- Shrink away (it reappears on the plot via PlotController).
+    Workspace:SetAttribute("CatchSpot", nil)
     Burst(vLook, Color3.fromHex("FFE14D"), 30, 1)
     oModel:Destroy()
     if tResult.Placement and (tResult.Placement.Status == "Placed" or tResult.Placement.Status == "Replaced") then

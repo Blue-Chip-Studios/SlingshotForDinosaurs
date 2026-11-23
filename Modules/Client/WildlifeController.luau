@@ -102,7 +102,9 @@ local function NewAnimal(tArea: Area, sId: string, bCritter: boolean): Animal?
         oModel = ok and o or nil
     end
     if not oModel then return nil end
-    oModel:ScaleTo(oModel:GetScale() * oRandom:NextNumber(0.85, 1.15))
+    local nWild = if bCritter then CritterConfig.CritterScale
+        else math.max(CritterConfig.DinoScale, CritterConfig.MinDinoHeight / math.max(DinoModels.Height(oModel), 0.5))
+    oModel:ScaleTo(oModel:GetScale() * oRandom:NextNumber(0.85, 1.15) * nWild)
     for _, o in oModel:GetDescendants() do
         if o:IsA("BillboardGui") then o:Destroy() end
     end
@@ -115,7 +117,7 @@ local function NewAnimal(tArea: Area, sId: string, bCritter: boolean): Animal?
         oModel = oModel, sId = sId, bCritter = bCritter, tCfg = tCfg,
         vPos = Vector3.zero, vLook = Vector3.new(oRandom:NextNumber(-1, 1), 0, oRandom:NextNumber(-1, 1)), vTarget = Vector3.zero,
         sState = "Idle", nStateAt = 0, nUntil = 0,
-        nSpeed = if bCritter then tCfg.Speed else math.clamp(2 + nHeight * 0.35, 2.5, 7),
+        nSpeed = if bCritter then tCfg.Speed * math.sqrt(CritterConfig.CritterScale) else math.clamp(2 + nHeight * 0.3, 3, 10),
         nPhase = oRandom:NextNumber(0, 6.28), nSeed = oRandom:NextNumber(0, 100), nHeight = nHeight,
         bGrazer = bGrazer, sFly = sFly, bWater = bCritter and tCfg.Water == true,
         tIdle = DinoModels.NewIdleState(), tHerd = nil, vHerdOffset = Vector3.zero,
@@ -137,9 +139,9 @@ local function NewAnimal(tArea: Area, sId: string, bCritter: boolean): Animal?
     t.vPos = RandomPoint(tArea, t)
     t.vTarget = t.vPos
     if sFly == "Glide" then
-        t.nAlt = oRandom:NextNumber(16, 42)
+        t.nAlt = oRandom:NextNumber(28, 60)
         t.vCentre = t.vPos
-        t.nRadius = oRandom:NextNumber(18, 45)
+        t.nRadius = oRandom:NextNumber(30, 70)
     elseif sFly == "Dart" then
         t.nAlt = oRandom:NextNumber(3, 8)
     end
@@ -170,7 +172,7 @@ local function BuildArea(tArea: Area)
                 if tHerd then
                     -- Herd: everyone starts and travels together, spaced out around a shared goal.
                     t.tHerd = tHerd
-                    t.vHerdOffset = Vector3.new((k - 1) % 2 * 22 - 11, 0, math.floor((k - 1) / 2) * 19) + Vector3.new(oRandom:NextNumber(-2, 2), 0, oRandom:NextNumber(-2, 2))
+                    t.vHerdOffset = Vector3.new((k - 1) % 2 * 36 - 18, 0, math.floor((k - 1) / 2) * 32) + Vector3.new(oRandom:NextNumber(-2, 2), 0, oRandom:NextNumber(-2, 2))
                     if tLeader then
                         local vStart = tLeader.vPos + t.vHerdOffset
                         t.vPos = Vector3.new(vStart.X, Ground(vStart.X, vStart.Z), vStart.Z)
@@ -342,6 +344,7 @@ function mWildlife.StartAsync(self)
         local oCamera = Workspace.CurrentCamera
         if not oCamera then return end
         local vCam = oCamera.CFrame.Position
+        local vCatch = Workspace:GetAttribute("CatchSpot")
         local nNow = os.clock()
         if nNow - nLastWake > 0.5 then
             nLastWake = nNow
@@ -353,6 +356,10 @@ function mWildlife.StartAsync(self)
         for _, tArea in tAreas do
             if tArea.bAwake then
                 for _, t in tArea.tAnimals do
+                    -- Keep the catch reveal clear: anything near the landing spot steps out of view.
+                    local bHide = typeof(vCatch) == "Vector3" and (Vector3.new(t.vPos.X - vCatch.X, 0, t.vPos.Z - vCatch.Z)).Magnitude < 30 + t.nHeight
+                    local oWant = if bHide then nil else oFolder
+                    if t.oModel.Parent ~= oWant then t.oModel.Parent = oWant end
                     -- Far animals: a quarter of the updates (they still move the same distance).
                     t.nAccum += nDt
                     local bNear = (t.vPos - vCam).Magnitude < CritterConfig.DetailRange
