@@ -273,6 +273,18 @@ class Builder:
                          "Jaw": {"Body": 0.1, "Belly": 0.45, "Accent": 0.3, "EyeWhite": 0.4},
                          "Tail": {"Body": 0.25, "Belly": 0.3, "Accent": 0.5, "EyeWhite": 0.5}}
                 budget = int(budget * share.get(group, {}).get(base, 1.0 if not group else 0.4))
+            if getattr(self, "smooth_pass", False) and (base in ("Body", "Belly", "Accent", "Blush") or base.startswith("Leg")):
+                # Plush quality pass: even voxel topology, then relax, so decimation leaves soft round
+                # curves instead of metaball ripples and long thin facets.
+                rm = o.modifiers.new("Remesh", "REMESH")
+                rm.mode = "VOXEL"
+                rm.voxel_size = 0.035
+                rm.use_smooth_shade = True
+                bpy.ops.object.modifier_apply(modifier=rm.name)
+                sm0 = o.modifiers.new("Relax", "SMOOTH")
+                sm0.factor = 0.5
+                sm0.iterations = 4
+                bpy.ops.object.modifier_apply(modifier=sm0.name)
             tris = _tris(o)
             if tris > budget:
                 dec = o.modifiers.new("Decimate", "DECIMATE")

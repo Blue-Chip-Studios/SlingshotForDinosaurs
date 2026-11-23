@@ -16,7 +16,7 @@ import math
 
 from mathutils import Vector
 
-BUDGET.update({"Pupil": 900, "EyeWhite": 300, "Blush": 600})
+BUDGET.update({"Pupil": 900, "EyeWhite": 300, "Blush": 600, "Body": 2600, "Belly": 500, "Leg": 380})
 
 
 def _surf(c, size, d, k=1.0):
@@ -85,34 +85,191 @@ def _tail(b, length=1.0, r=1.0, club=False, spikes=False):
 def plush_theropod(b, s):
     w, hs = s.get("w", 1.0), 1.0 + 0.25 * (s.get("head", 1.0) - 1.0)
     _body(b, w)
-    H = Vector((0, -0.28, 3.05))
+    # Long-necked species (Gallimimus, Therizinosaurus) lift the head on a soft neck.
+    lift = 0.55 * max(0.0, s.get("neck", 1.0) - 1.15) + 0.45 * s.get("neck_up", 0.0)
+    H = Vector((0, -0.28 - 0.2 * lift, 3.05 + lift))
+    if lift > 0:
+        b.chain("Body", [(0, -0.1, 2.3), (0, -0.2 - 0.1 * lift, 2.5 + lift * 0.6)], [0.48 * w, 0.4 * w])
+        b.chain("Belly", [(0, -0.38, 2.2), (0, -0.45 - 0.1 * lift, 2.45 + lift * 0.55)], [0.3 * w, 0.24 * w])
     cs = (1.02 * hs, 0.95 * hs, 0.9 * hs)
-    b.joint("Head", (0, -0.15, 2.45))
+    hl = s.get("head_len", 1.0) * s.get("snout", 1.0) ** 0.45
+    b.joint("Head", (0, -0.15 - 0.15 * lift, 2.45 + lift * 0.8))
     b.joint("Jaw", H + Vector((0, -0.1 * hs, -0.45 * hs)))
     b.group = "Head"
     b.ball("Body", tuple(H), cs)
-    muz = H + Vector((0, -0.78 * hs, -0.22 * hs))
-    ms = (0.76 * hs, 0.72 * hs * s.get("snout", 1.0) ** 0.5, 0.52 * hs)
+    muz = H + Vector((0, -(0.78 + 0.35 * (hl - 1)) * hs, -0.22 * hs))
+    ms = (0.76 * hs / max(1.0, hl) ** 0.4, 0.72 * hs * hl, 0.52 * hs)
     b.ball("Body", tuple(muz), ms)
-    for side in (-1, 1):                  # little nostrils
-        b.sphere("Pupil", tuple(_surf(muz, ms, (side * 0.3, -1, 0.45))), 0.035 * hs)
-    if s.get("teeth"):                    # two tiny cute fangs at the front of the smile
+    if s.get("bill"):                     # hadrosaur duck bill: broad, flat, belly-coloured
+        bill = muz + Vector((0, -0.42 * hs, -0.08 * hs))
+        b.ball("Belly", tuple(bill), (0.66 * hs, 0.5 * hs, 0.22 * hs))
+    elif s.get("beak"):                   # Gallimimus: short pointed beak
+        b.cone("Accent", tuple(_surf(muz, ms, (0, -1, -0.1), 0.85)), (0, -1, -0.2), 0.24 * hs, 0.42 * hs, verts=16)
+    else:
+        for side in (-1, 1):              # little nostrils
+            b.sphere("Pupil", tuple(_surf(muz, ms, (side * 0.3, -1, 0.45))), 0.035 * hs)
+    if s.get("teeth") and not s.get("bill"):   # two tiny cute fangs at the front of the smile
         for side in (-1, 1):
             b.cone("EyeWhite", tuple(_surf(muz, ms, (side * 0.2, -1, -0.5), 0.93)), (0, -0.3, -1), 0.045 * hs, 0.11 * hs, verts=8)
-    _face(b, H, cs, hs)
-    # soft spikes down the back of the head
-    if s.get("stripes", 0) or s.get("back_spikes"):
+    _face(b, H, cs, hs, eye=0.13 * min(1.15, max(0.9, s.get("eyes", 1.0))))
+
+    def top(d, k=0.86):
+        return _surf(H, cs, d, k)
+
+    # ---- soft head ornaments ----
+    if s.get("head_tuft"):                # raptor feather tuft
+        for a in (-0.3, 0.0, 0.3):
+            b.cone("Accent", tuple(top((a, 0.2, 1))), (a * 0.8, 0.7, 0.8), 0.12 * hs, 0.55 * hs, verts=12)
+    if s.get("double_crest"):             # Dilophosaurus: two rounded crests
+        for side in (-1, 1):
+            b.plate("Accent", tuple(top((side * 0.3, -0.25, 1), 0.92) + Vector((0, 0, 0.18 * hs))), (0.06 * hs, 0.5 * hs, 0.32 * hs), rot=(-12, side * 8, 0))
+    if s.get("neck_frill"):               # Dilophosaurus umbrella frill
+        b.plate("Accent", tuple(H + Vector((0, 0.55 * hs, -0.2 * hs))), (1.35 * hs, 0.08 * hs, 1.05 * hs), rot=(-10, 0, 0))
+        for i in range(9):
+            a = math.radians(-120 + i * 30)
+            b.sphere("Accent", tuple(H + Vector((1.3 * hs * math.sin(a), 0.6 * hs, -0.2 * hs + 1.0 * hs * math.cos(a)))), 0.16 * hs, scale=(1, 0.6, 1))
+    if s.get("fan_crest"):                # Cryolophosaurus: wavy crest across the head
+        for i in range(5):
+            x = (i - 2) * 0.2
+            b.plate("Accent", tuple(top((x, -0.1, 1), 0.9) + Vector((0, 0, (0.3 - abs(i - 2) * 0.07) * hs))), (0.07 * hs, 0.12 * hs, (0.36 - abs(i - 2) * 0.07) * hs))
+    if s.get("bull_horns"):               # Carnotaurus: two soft horns
+        for side in (-1, 1):
+            b.cone("Accent", tuple(top((side * 0.45, -0.1, 0.9))), (side * 0.7, -0.1, 0.7), 0.14 * hs, 0.45 * hs, verts=14)
+    if s.get("brow_horns"):               # Allosaurus: little horn over each eye
+        for side in (-1, 1):
+            b.cone("Accent", tuple(top((side * 0.38, -0.55, 0.75))), (side * 0.2, -0.2, 1), 0.11 * hs, 0.3 * hs, verts=12)
+    if s.get("tube_crest"):               # Parasaurolophus: long backswept tube
+        t0 = top((0, 0.1, 1), 0.85)
+        b.chain("Accent", [tuple(t0), tuple(t0 + Vector((0, 0.7 * hs, 0.25 * hs))), tuple(t0 + Vector((0, 1.35 * hs, 0.35 * hs)))], [0.17 * hs, 0.16 * hs, 0.14 * hs])
+    if s.get("dome"):                     # Pachycephalosaurus: thick round dome with a ring of bumps
+        b.ball("Accent", tuple(H + Vector((0, 0.05 * hs, 0.45 * hs))), (0.85 * hs, 0.8 * hs, 0.6 * hs))
+        for i in range(10):
+            a = math.radians(i * 36)
+            b.sphere("Accent", tuple(top((math.cos(a), math.sin(a) * 0.9 + 0.05, 0.25), 0.95)), 0.1 * hs)
+    if s.get("helmet"):                   # Corythosaurus: tall rounded helmet crest
+        b.plate("Accent", tuple(top((0, 0.05, 1), 0.85) + Vector((0, 0, 0.2 * hs))), (0.12 * hs, 0.6 * hs, 0.55 * hs))
+    if s.get("stripes", 0) or s.get("back_spikes"):   # soft spikes down the back of the head
         for d in ((0, 0.25, 1), (0, 0.75, 0.7), (0, 1, 0.2)):
-            b.ball("Accent", tuple(_surf(H, cs, d, 0.8)), (0.13, 0.15, 0.14))
+            b.ball("Accent", tuple(top(d, 0.8)), (0.13, 0.15, 0.14))
     b.group = "Jaw"
-    b.ball("Body", tuple(H + Vector((0, -0.66 * hs, -0.56 * hs))), (0.66 * hs, 0.6 * hs, 0.26 * hs))
+    jaw_c = H + Vector((0, -(0.66 + 0.3 * (hl - 1)) * hs, -0.56 * hs))
+    b.ball("Belly" if s.get("bill") else "Body", tuple(jaw_c), (0.66 * hs / max(1.0, hl) ** 0.4, 0.6 * hs * hl, 0.26 * hs))
     b.group = None
-    if s.get("stripes", 0) or s.get("back_spikes"):
+    # ---- body features ----
+    body_c, body_s = (0, 0.05, 1.45), (0.95 * w, 0.85, 1.12)
+    if s.get("sail"):                     # Spinosaurus / Ouranosaurus: big rounded back sail
+        big = 1.25 if s.get("snout", 1.0) > 1.2 else 1.0
+        for i in range(6):
+            t = i / 5
+            z = 2.55 - 1.2 * t
+            root = _surf(body_c, body_s, (0, 1, (z - 1.45) * 1.1), 0.85)
+            hgt = (0.75 + 0.75 * math.sin(math.pi * t)) * big
+            b.plate("Accent", tuple(root + Vector((0, 0.3 * hgt, 0.55 * hgt))), (0.07, 0.34, hgt), rot=(-30 + 15 * t, 0, 0))
+    elif s.get("stripes", 0) or s.get("back_spikes"):
         for z in (2.35, 1.9, 1.45):
-            b.ball("Accent", tuple(_surf((0, 0.05, 1.45), (0.95 * w, 0.85, 1.12), (0, 1, (z - 1.45) * 1.1), 0.9)), (0.15, 0.17, 0.16))
-    _arms(b, w, 0.75 if s.get("arms") == "tiny" else 1.0)
+            p = _surf(body_c, body_s, (0, 1, (z - 1.45) * 1.1), 0.9)
+            if s.get("back_spikes"):
+                b.cone("Accent", tuple(p), (0, 0.8, 0.6), 0.16, 0.5, verts=12)
+            else:
+                b.ball("Accent", tuple(p), (0.15, 0.17, 0.16))
+    if s.get("osteoderms"):               # Carnotaurus: soft armour bumps on the flanks
+        for side in (-1, 1):
+            for (y, z) in ((0.1, 2.0), (0.35, 1.6), (0.0, 1.35), (0.4, 2.2)):
+                _patch(b, "Accent", body_c, body_s, (side * 1.0, y, z - 1.45), 0.13)
+    arms = s.get("arms", "normal")
+    if s.get("wings"):                    # Microraptor: little feathered wings on the arms
+        for side in (-1, 1):
+            sh = Vector((side * 0.8 * w, -0.2, 1.95))
+            b.chain("Body", [tuple(sh), tuple(sh + Vector((side * 1.1, 0.05, 0.35)))], [0.2, 0.12])
+            for k in range(4):
+                b.plate("Accent", tuple(sh + Vector((side * (0.4 + 0.25 * k), 0.25, 0.1 - 0.15 * k))), (0.1, 0.4, 0.6 - 0.05 * k), rot=(25, side * (15 + 12 * k), 0))
+    else:
+        sc = {"tiny": 0.75, "normal": 1.0, "long": 1.35}.get(arms, 1.0)
+        _arms(b, w, sc)
+        for side in (-1, 1):
+            # raised paw: the upper-front end of the stubby arm ball (tilted 28 deg, 22 deg out)
+            hand = Vector((side * (0.84 * w + 0.12 * sc), -0.32 - 0.24 * sc, 1.78 + 0.33 * sc))
+            if s.get("scythe_claws"):     # Therizinosaurus: three long soft claws
+                for j in (-1, 0, 1):
+                    b.cone("EyeWhite", tuple(hand + Vector((j * 0.07, 0, 0))), (side * 0.1 + j * 0.2, -1, 0.15), 0.05, 0.5, verts=10)
+            if s.get("thumb_claw"):       # Baryonyx: one hooked claw
+                b.cone("EyeWhite", tuple(hand), (side * 0.1, -1, 0.1), 0.06, 0.3, verts=10)
+            if s.get("thumb_spike"):      # Iguanodon: thumb spike pointing up
+                b.cone("EyeWhite", tuple(hand), (side * 0.2, -0.3, 1), 0.07, 0.28, verts=10)
     _legs(b, w)
-    _tail(b, s.get("tail", 1.0))
+    if s.get("sickle"):                   # Velociraptor: raised toe claw
+        for side, name in ((-1, "LegL"), (1, "LegR")):
+            b.cone(name, (side * 0.5 * w - side * 0.18, -0.45, 0.25), (0, -0.4, 0.9), 0.07, 0.3, verts=10)
+    tl = s.get("tail", 1.0) * (1.15 if s.get("wings") else 1.0)
+    _tail(b, tl)
+    if s.get("wings"):                    # tail feather fan
+        b.group = "Tail"
+        for k in (-1, 0, 1):
+            b.plate("Accent", (k * 0.15, 0.55 + 1.5 * tl, 0.4), (0.1, 0.4, 0.04), rot=(0, 0, k * 20))
+        b.group = None
+
+
+def plush_flyer(b, s):
+    """Pterosaurs: plush body, long beak and crest, soft wings held out to the sides."""
+    span = s.get("span", 1.0)
+    _body(b, 0.95)
+    lift = 0.5 * max(0.0, s.get("neck", 0.0) - 1.0)      # Quetzalcoatlus: long neck
+    H = Vector((0, -0.3 - 0.2 * lift, 3.0 + lift))
+    if lift > 0:
+        b.chain("Body", [(0, -0.15, 2.3), (0, -0.25 - 0.1 * lift, 2.5 + lift * 0.6)], [0.42, 0.34])
+    hs = 0.92
+    cs = (0.95 * hs, 0.95 * hs, 0.88 * hs)
+    b.joint("Head", (0, -0.15 - 0.15 * lift, 2.45 + lift * 0.8))
+    b.group = "Head"
+    b.ball("Body", tuple(H), cs)
+    beak_root = _surf(H, cs, (0, -1, -0.15), 0.8)
+    b.cone("Accent", tuple(beak_root), (0, -1, -0.12), 0.32 * hs, 1.0 * hs * (1.15 if lift else 1.0), verts=18)
+    crest = s.get("crest", 0.0)
+    if crest:
+        b.cone("Accent", tuple(_surf(H, cs, (0, 0.45, 0.9), 0.85)), (0, 0.85, 0.45), 0.2 * hs, 0.9 * hs * crest, verts=16)
+    _face(b, H, cs, hs)
+    b.group = None
+    for side in (-1, 1):
+        sh = Vector((side * 0.75, -0.1, 2.15))
+        tip = sh + Vector((side * 1.7 * span, 0.15, 0.35))
+        b.chain("Body", [tuple(sh), tuple(sh.lerp(tip, 0.55)), tuple(tip)], [0.2, 0.14, 0.09])
+        mid = sh.lerp(tip, 0.5) + Vector((0, 0.12, -0.45))
+        b.plate("Accent", tuple(mid), (0.95 * span, 0.07, 0.55), rot=(0, side * -10, 0))
+    _legs(b, 0.95)
+    b.joint("Tail", (0, 0.6, 1.05))   # no real tail: a short nub
+    b.group = "Tail"
+    b.ball("Body", (0, 0.75, 0.95), (0.25, 0.3, 0.22))
+    b.group = None
+
+
+def plush_bird(b, s):
+    """Archaeopteryx: plush body, small beak, feather crest, feathered wings and a long feather tail."""
+    _body(b, 0.95)
+    hs = 0.95
+    H = Vector((0, -0.3, 3.0))
+    cs = (0.98 * hs, 0.95 * hs, 0.9 * hs)
+    b.joint("Head", (0, -0.15, 2.45))
+    b.group = "Head"
+    b.ball("Body", tuple(H), cs)
+    b.cone("Belly", tuple(_surf(H, cs, (0, -1, -0.2), 0.82)), (0, -1, -0.15), 0.26 * hs, 0.45 * hs, verts=16)
+    for k in range(3):
+        b.cone("Accent", tuple(_surf(H, cs, (0, 0.2 + 0.3 * k, 1), 0.85)), (0, 0.8, 0.6 - 0.15 * k), 0.09 * hs, 0.5 * hs - 0.06 * k, verts=12)
+    _face(b, H, cs, hs)
+    b.group = None
+    for side in (-1, 1):
+        sh = Vector((side * 0.8, -0.15, 2.05))
+        tip = sh + Vector((side * 1.3, 0.2, 0.55))
+        b.chain("Body", [tuple(sh), tuple(tip)], [0.2, 0.12])
+        for k in range(5):
+            t = 0.3 + 0.17 * k
+            p = sh.lerp(tip, t) + Vector((0, 0.18, -0.3))
+            b.plate("Accent", tuple(p), (0.12, 0.08, 0.45 + 0.05 * k), rot=(10, side * (25 + 6 * k), 0))
+    _legs(b, 0.95)
+    _tail(b, 1.1, 0.9)
+    b.group = "Tail"
+    for k in (-2, -1, 0, 1, 2):
+        b.plate("Accent", (k * 0.16, 0.55 + 1.5 * 1.1, 0.42 + 0.06 * (2 - abs(k))), (0.11, 0.45, 0.04), rot=(-10, 0, k * 16))
+    b.group = None
 
 
 def plush_ceratopsian(b, s):
@@ -175,7 +332,7 @@ def plush_sauropod(b, s):
     if style == "spines":
         for p in neck[1:]:
             for side in (-1, 1):
-                b.cone("Accent", tuple(Vector(p) + Vector((side * 0.12, 0.15, 0.3))), (side * 0.2, 0.3, 1), 0.08, 0.55, verts=10)
+                b.cone("Accent", tuple(Vector(p) + Vector((side * 0.14, 0.2, 0.25))), (side * 0.25, 0.45, 1), 0.1, 1.0, verts=12)
     hs = 0.82
     cs = (0.95 * hs, 0.95 * hs, 0.85 * hs)
     b.joint("Head", Vector(neck[-1]) + Vector((0, -0.05, 0.1)))
@@ -223,16 +380,16 @@ def plush_stegosaur(b, s):
     body_c, body_s = (0, 0.05, 1.45), (1.0, 0.85, 1.12)
     for i in range(5):
         t = i / 4
-        z = 2.65 - 1.7 * t                               # shoulders down to the hips
+        z = 2.85 - 1.8 * t                               # behind the head down to the hips
         d = Vector((0, 0.75 + 0.25 * t, (z - 1.45) * 1.1))
         n = (d.normalized() + Vector((0, 0, 0.9))).normalized()   # plates stand up, not out
-        size = 0.55 + 0.3 * math.sin(math.pi * min(1.0, t * 1.4))   # tall enough to show over the shoulders
+        size = 0.7 + 0.35 * math.sin(math.pi * min(1.0, t * 1.4))   # tall enough to show over the shoulders
         side = 1 if i % 2 == 0 else -1
         root = _surf(body_c, body_s, d, 0.85) + Vector((side * 0.1, 0, 0))
         if kentro and t > 0.5:
             b.cone("Accent", tuple(root), tuple(n + Vector((side * 0.25, 0, 0))), 0.11, size * 1.5, verts=10)
         else:
-            b.plate("Accent", tuple(root + n * size * 0.62), (0.07, size * 0.42, size), rot=(-math.degrees(math.atan2(n.y, n.z)), 0, side * 6))
+            b.plate("Accent", tuple(root + n * size * 0.62), (0.07, size * 0.42, size), rot=(-math.degrees(math.atan2(n.y, n.z)), 0, side * 16))
     _arms(b, 1.05)
     _legs(b, 1.05)
     _tail(b, 1.0, 1.0, spikes=True)
@@ -251,19 +408,24 @@ def plush_ankylosaur(b, s):
     ms = (0.7 * hs, 0.55 * hs, 0.45 * hs)
     b.ball("Body", tuple(muz), ms)
     _face(b, H, cs, hs)
-    for side in (-1, 1):
-        b.cone("Accent", tuple(_surf(H, cs, (side * 0.8, 0.3, 0.45))), (side * 0.8, 0.4, 0.35), 0.12 * hs, 0.3 * hs, verts=10)
     b.group = "Jaw"
     b.ball("Body", tuple(H + Vector((0, -0.58 * hs, -0.52 * hs))), (0.6 * hs, 0.48 * hs, 0.22 * hs))
     b.group = None
-    for (x, z) in ((-0.5, 2.2), (0.5, 2.2), (0.0, 2.35), (-0.85, 1.6), (0.85, 1.6), (-0.4, 1.75), (0.4, 1.75), (0, 1.2), (-0.85, 1.0), (0.85, 1.0)):
-        _patch(b, "Accent", (0, 0.05, 1.33), (1.14, 0.85, 1.03), (x, 0.55, z - 1.33), 0.22)
+    # Armour: a domed shell over the back with soft studs, and a row of cream spikes down each side.
+    shell_c, shell_s = Vector((0, 0.42, 1.5)), (1.18, 0.62, 1.02)
+    b.ball("Accent", tuple(shell_c), shell_s)
+    for (x, z) in ((-0.45, 0.45), (0.45, 0.45), (0.0, 0.6), (-0.75, 0.0), (0.75, 0.0), (-0.35, 0.05), (0.35, 0.05), (0.0, -0.45), (-0.6, -0.45), (0.6, -0.45)):
+        b.sphere("Accent", tuple(_surf(shell_c, shell_s, (x, 0.7, z), 0.9)), 0.13, scale=(1, 0.8, 1))
+    for side in (-1, 1):
+        for z in (0.95, 1.4, 1.85, 2.25):
+            p = _surf((0, 0.05, 1.33), (1.14, 0.85, 1.03), (side, 0.25, (z - 1.33) * 0.9), 0.95)
+            b.cone("EyeWhite", tuple(p), (side, 0.35, 0.1), 0.13, 0.38, verts=12)
     _arms(b, 1.2)
     _legs(b, 1.2)
     _tail(b, 1.0, 1.0, club=True)
 
 
-PLUSH_PLANS = {"theropod": plush_theropod, "ceratopsian": plush_ceratopsian, "sauropod": plush_sauropod,
+PLUSH_PLANS = {"flyer": plush_flyer, "bird": plush_bird, "theropod": plush_theropod, "ceratopsian": plush_ceratopsian, "sauropod": plush_sauropod,
                "stegosaur": plush_stegosaur, "ankylosaur": plush_ankylosaur}
 
 
@@ -275,6 +437,7 @@ def _pastel(hexs, k=0.18):
 def build_plush(species):
     s = SPECIES[species]
     b = Builder(species)
+    b.smooth_pass = True
     b.eyewhite_budget = 260
     b.accent_budget = max(1000, s.get("accent_budget", 0))
     PLUSH_PLANS[s["plan"]](b, s)
@@ -322,4 +485,133 @@ def render_plush(species, out_dir, size=512):
     bpy.ops.render.render(write_still=True)
     for c in bpy.data.collections:
         c.hide_render = False
+    return scene.render.filepath
+
+
+def _ink_material():
+    """Outline shader for an inverted hull that works in Cycles: transparent where the hull faces
+    the camera, dark ink only around the silhouette."""
+    m = bpy.data.materials.get("PL_Ink2")
+    if m:
+        return m
+    m = bpy.data.materials.new("PL_Ink2")
+    m.use_nodes = True
+    nt = m.node_tree
+    nt.nodes.clear()
+    out = nt.nodes.new("ShaderNodeOutputMaterial")
+    mix = nt.nodes.new("ShaderNodeMixShader")
+    geo = nt.nodes.new("ShaderNodeNewGeometry")
+    emit = nt.nodes.new("ShaderNodeEmission")
+    emit.inputs["Color"].default_value = (0.03, 0.025, 0.04, 1)
+    tr = nt.nodes.new("ShaderNodeBsdfTransparent")
+    # Ink only for camera rays (so the shell never shadows the dino), and only where it faces away.
+    lp = nt.nodes.new("ShaderNodeLightPath")
+    inv = nt.nodes.new("ShaderNodeMath")
+    inv.operation = "SUBTRACT"
+    inv.inputs[0].default_value = 1.0
+    nt.links.new(lp.outputs["Is Camera Ray"], inv.inputs[1])
+    mx = nt.nodes.new("ShaderNodeMath")
+    mx.operation = "MAXIMUM"
+    nt.links.new(geo.outputs["Backfacing"], mx.inputs[0])
+    nt.links.new(inv.outputs[0], mx.inputs[1])
+    nt.links.new(mx.outputs[0], mix.inputs[0])
+    nt.links.new(emit.outputs[0], mix.inputs[1])
+    nt.links.new(tr.outputs[0], mix.inputs[2])
+    nt.links.new(mix.outputs[0], out.inputs["Surface"])
+    return m
+
+
+def render_plush_portrait(species, out_dir, size=512, samples=48):
+    """Index-card portrait: Cycles, soft three-light studio, fuzzy sheen, contact shadow, thin ink line."""
+    coll = bpy.data.collections[species]
+    scene = bpy.context.scene
+    saved = {"engine": scene.render.engine, "lights": {}}
+    for c in bpy.data.collections:
+        c.hide_render = c != coll
+    for o in scene.objects:
+        if o.type == "LIGHT":
+            saved["lights"][o.name] = o.hide_render
+            o.hide_render = True
+    pts = [o.matrix_world @ Vector(cn) for o in coll.objects for cn in o.bound_box]
+    mn = Vector((min(p.x for p in pts), min(p.y for p in pts), min(p.z for p in pts)))
+    mx = Vector((max(p.x for p in pts), max(p.y for p in pts), max(p.z for p in pts)))
+    centre = (mn + mx) / 2
+    span = (mx - mn).length
+    made = []
+
+    def light(name, kind, loc, energy, colour, size_):
+        data = bpy.data.lights.new(name, kind)
+        data.energy = energy
+        data.color = colour
+        if kind == "AREA":
+            data.size = size_
+        o = bpy.data.objects.new(name, data)
+        scene.collection.objects.link(o)
+        o.location = loc
+        o.rotation_euler = (centre - Vector(loc)).to_track_quat("-Z", "Y").to_euler()
+        made.append(o)
+
+    k = span * span
+    light("PL_Key", "AREA", centre + Vector((-1.2, -1.6, 1.4)) * span * 0.9, 260 * k, (1.0, 0.95, 0.88), span * 0.9)
+    light("PL_Fill", "AREA", centre + Vector((1.6, -1.0, 0.3)) * span * 0.9, 85 * k, (0.85, 0.92, 1.0), span * 1.2)
+    light("PL_Rim", "AREA", centre + Vector((0.6, 1.6, 1.3)) * span * 0.9, 170 * k, (1.0, 1.0, 1.0), span * 0.6)
+    # Soft white ambient from the world (restored afterwards).
+    bg = next((n for n in scene.world.node_tree.nodes if n.type == "BACKGROUND"), None) if scene.world and scene.world.use_nodes else None
+    if bg:
+        saved["bg"] = (tuple(bg.inputs[0].default_value), bg.inputs[1].default_value)
+        bg.inputs[0].default_value = (1, 1, 1, 1)
+        bg.inputs[1].default_value = 0.22
+    # Soft contact shadow on an invisible floor.
+    bpy.ops.mesh.primitive_plane_add(size=span * 4, location=(centre.x, centre.y, mn.z))
+    floor = bpy.context.active_object
+    floor.is_shadow_catcher = True
+    made.append(floor)
+    # Thin ink outline (inverted hull).
+    ink = _ink_material()
+    hulls = []
+    for o in coll.objects:
+        if o.type != "MESH" or o.name.startswith("Joint"):
+            continue
+        o.data.materials.append(ink)
+        sol = o.modifiers.new("PL_Outline", "SOLIDIFY")
+        sol.thickness = span * 0.006
+        sol.offset = 1.0
+        sol.use_flip_normals = True
+        sol.use_rim = False
+        sol.material_offset = len(o.data.materials) - 1
+        hulls.append(o)
+    cam = bpy.data.objects["Camera"]
+    look = centre + Vector((0, 0, (mx.z - mn.z) * 0.08))
+    cam.location = look + Vector((-0.62, -1.0, 0.3)).normalized() * span * 1.2
+    cam.rotation_euler = (look - cam.location).to_track_quat("-Z", "Y").to_euler()
+    saved["view"] = (scene.view_settings.view_transform, scene.view_settings.look)
+    scene.view_settings.view_transform = "AgX"        # AgX keeps highlights soft; Punchy keeps pastels saturated
+    scene.view_settings.look = "AgX - Punchy"
+    scene.render.engine = "CYCLES"
+    scene.cycles.samples = samples
+    scene.cycles.use_denoising = True
+    scene.render.film_transparent = True
+    scene.render.resolution_x = scene.render.resolution_y = size
+    scene.render.filepath = os.path.join(out_dir, f"{species}.png")
+    bpy.ops.render.render(write_still=True)
+    # Restore the scene.
+    for o in hulls:
+        o.modifiers.remove(o.modifiers["PL_Outline"])
+        o.data.materials.pop(index=len(o.data.materials) - 1)
+    for o in made:
+        data = o.data
+        bpy.data.objects.remove(o, do_unlink=True)
+        if isinstance(data, bpy.types.Light):
+            bpy.data.lights.remove(data)
+        elif data is not None and data.users == 0:
+            bpy.data.meshes.remove(data)
+    for name, hidden in saved["lights"].items():
+        if name in bpy.data.objects:
+            bpy.data.objects[name].hide_render = hidden
+    for c in bpy.data.collections:
+        c.hide_render = False
+    if bg and "bg" in saved:
+        bg.inputs[0].default_value, bg.inputs[1].default_value = saved["bg"]
+    scene.view_settings.view_transform, scene.view_settings.look = saved["view"]
+    scene.render.engine = saved["engine"]
     return scene.render.filepath
