@@ -32,7 +32,7 @@ SPECIES = {
                   w=0.72, head=0.82, eyes=1.3, neck=1.25, tail=1.35, stripes=4, arms="normal"),
     "TRex": dict(plan="theropod", body="4E6B3A", belly="D8D2A8", accent="A83A1E",
                  w=1.12, head=1.45, eyes=0.9, neck=0.85, tail=1.1, stripes=5, arms="tiny", teeth=True, brow=True,
-                 head_deep=1.2, jaw_open=True, eye_x=0.47, eye_z=0.12),
+                 head_deep=1.2, jaw_open=True, eye_z=0.12),
     "Triceratops": dict(plan="ceratopsian", body="6A8FBF", belly="E0E8F2", accent="F2C14E", spots=True, eyewhite=520),
     "Velociraptor": dict(plan="theropod", body="D9893B", belly="F7E2C1", accent="7A3E12",
                          w=0.82, head=0.95, eyes=1.1, neck=1.1, tail=1.35, stripes=5, teeth=True, sickle=True, head_tuft=True),
@@ -48,10 +48,10 @@ SPECIES = {
                             w=1.1, head=0.72, eyes=1.2, neck=1.2, neck_up=1.4, tail=1.0, stripes=0, arms="long", scythe_claws=True, fluff=True),
     "Carnotaurus": dict(plan="theropod", body="B8402E", belly="F2C9A8", accent="2A1A16",
                         w=0.94, head=1.1, eyes=0.95, neck=1.05, tail=1.25, stripes=0, arms="stub", bull_horns=True, brow=True, teeth=True,
-                        head_len=0.72, head_deep=1.12, osteoderms=True, eye_x=0.47, eye_z=0.12),
+                        head_len=0.72, head_deep=1.12, osteoderms=True, eye_z=0.12),
     "Giganotosaurus": dict(plan="theropod", body="6B5A4E", belly="E0C9AE", accent="FF6A1A",
                            w=1.12, head=1.3, eyes=0.85, neck=0.95, tail=1.3, stripes=3, arms="normal", brow=True, teeth=True,
-                           head_len=1.3, head_deep=0.92, back_spikes=True, eye_x=0.47, eye_z=0.12),
+                           head_len=1.3, head_deep=0.92, back_spikes=True, eye_z=0.12),
     "Parasaurolophus": dict(plan="theropod", body="4FB3A9", belly="E3F5EC", accent="E8542F",
                             w=1.05, head=0.85, eyes=1.1, neck=1.2, tail=1.1, stripes=4, bill=True, tube_crest=True),
     "Pachycephalosaurus": dict(plan="theropod", body="B07A4F", belly="EFD9BF", accent="5C3A22",
@@ -70,7 +70,7 @@ SPECIES = {
                          w=1.0, head=0.88, eyes=1.1, neck=1.15, tail=1.15, stripes=0, bill=True, sail=True),
     "Allosaurus": dict(plan="theropod", body="A0522D", belly="F2D9C4", accent="3B2414",
                        w=1.0, head=1.15, eyes=0.95, neck=1.05, tail=1.2, stripes=5, teeth=True, brow_horns=True,
-                       head_len=1.12, snout_ridge=True, eye_x=0.47, eye_z=0.12),
+                       head_len=1.12, snout_ridge=True, eye_z=0.12),
     "Styracosaurus": dict(plan="ceratopsian", body="6B8E3A", belly="E8EFD2", accent="D94A2B", horns="styraco", eyewhite=620),
     "Diplodocus": dict(plan="sauropod", body="E0A15E", belly="FBEBD3", accent="7B4FA8", neck="low", accent_budget=700),
     "Microraptor": dict(plan="theropod", body="3A3F7A", belly="B9C2FF", accent="45E0FF", accent_budget=600,
@@ -322,10 +322,13 @@ def theropod(b, s):
         # Duck bill (hadrosaurs): broad flat beak in the belly colour.
         b.ball("Belly", tuple(snout + Vector((0, -0.45 * hs, -0.12 * hs))), (0.5 * hs, 0.55 * hs, 0.2 * hs))
     er = 0.2 * hs * s.get("eyes", 1.0)
+    # Eyes sit in the side of the skull: narrow skulls with big eyes pull them inward so they do
+    # not stick out like googly eyes from the front.
+    ex = s.get("eye_x", min(0.47, 0.6 * w ** 0.5 - 0.7 * 0.2 * s.get("eyes", 1.0)))
     for side in (-1, 1):
-        _eye(b, H + Vector((side * s.get("eye_x", 0.5) * hs, -0.22 * hs * hl, s.get("eye_z", 0.24) * hs * hd)), er, side)
+        _eye(b, H + Vector((side * ex * hs, -0.22 * hs * hl, s.get("eye_z", 0.14) * hs * hd)), er, side)
         if s.get("brow"):
-            b.ball("Accent", tuple(H + Vector((side * 0.42 * hs, -0.3 * hs, (s.get("eye_z", 0.24) + (0.2 if "eye_z" in s else 0.26)) * hs * hd))), (0.24 * hs, 0.3 * hs, 0.09 * hs), rot=(0, side * 18, 0))
+            b.ball("Accent", tuple(H + Vector((side * 0.42 * hs, -0.3 * hs, (s.get("eye_z", 0.14) + 0.2) * hs * hd))), (0.24 * hs, 0.3 * hs, 0.09 * hs), rot=(0, side * 18, 0))
     if s.get("teeth"):
         n_teeth = 3 if sn == 1.0 else 5
         span = 0.24 if sn == 1.0 else 0.22 * sn
@@ -357,7 +360,7 @@ def theropod(b, s):
         b.ball("Accent", tuple(top + Vector((0, 0.05 * hs, -0.12 * hs))), (0.55 * hs, 0.6 * hs, 0.42 * hs))
         for i in range(9):
             a = math.radians(i * 40)
-            b.sphere("EyeWhite", tuple(top + Vector((math.cos(a) * 0.62 * hs, 0.05 * hs + math.sin(a) * 0.66 * hs, -0.32 * hs))), 0.07 * hs)
+            b.sphere("EyeWhite", tuple(top + Vector((math.cos(a) * 0.56 * hs, 0.05 * hs + math.sin(a) * 0.62 * hs, -0.18 * hs))), 0.07 * hs)
     if s.get("beak"):               # Gallimimus: toothless pointed beak
         b.cone("Accent", tuple(snout + Vector((0, -0.35 * hs, -0.12 * hs))), (0, -1, -0.15), 0.26 * hs, 0.55 * hs, verts=10)
     if s.get("brow_horns"):         # Allosaurus: little horn above each eye
