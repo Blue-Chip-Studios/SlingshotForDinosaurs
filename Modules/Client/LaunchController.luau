@@ -233,8 +233,23 @@ local function PresentCatch(tF: Flight, tResult)
     local vLand = tF.Segment.vTo
     local tDino = tResult.Dino
     local oModel = DinoModels.Build(tDino)
-    DinoModels.PlaceAt(oModel, vLand, Workspace.CurrentCamera.CFrame.Position - vLand)
+    local vFace = Workspace.CurrentCamera.CFrame.Position - vLand
+    DinoModels.PlaceAt(oModel, vLand, vFace)
     oModel.Parent = Workspace
+    -- Pop out and roar at the camera, then idle (breathing, looking around) until it leaves.
+    local nAppear = os.clock()
+    local tIdle = DinoModels.NewIdleState()
+    local bRoared = false
+    local oAnim = RunService.Heartbeat:Connect(function()
+        if not oModel.Parent then return end
+        DinoModels.PlaceAt(oModel, vLand, vFace)
+        if not bRoared then
+            bRoared = DinoModels.Roar(oModel, vLand, vFace, os.clock() - nAppear)
+        else
+            DinoModels.Idle(oModel, vLand, vFace, tIdle)
+        end
+    end)
+    oModel.Destroying:Connect(function() oAnim:Disconnect() end)
     local tMut = DinoConfig.GetMutation(tDino.Mutation)
     Burst(vLand + Vector3.new(0, 3, 0), if tMut.Default then Color3.new(1, 1, 1) else tMut.Color, 60, 1.6)
     -- Roar pitch by size: bigger dinos roar deeper (GDD 19).

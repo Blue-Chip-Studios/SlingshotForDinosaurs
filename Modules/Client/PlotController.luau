@@ -185,6 +185,12 @@ function mPlot.StartAsync(self)
                     if not tw.vTarget and nT >= tw.nNextMove then
                         local vHalf = tLayout.Size / 2 - Vector3.new(5, 0, 6)
                         tw.vTarget = OnGround(tLayout.Center + Vector3.new(oRandom:NextNumber(-vHalf.X, vHalf.X), 0, oRandom:NextNumber(-vHalf.Z, vHalf.Z)))
+                        -- Keep the idle head-turn as the starting heading so it doesn't snap.
+                        if tw.tIdle then
+                            t.vLook = CFrame.Angles(0, tw.tIdle.nYaw, 0):VectorToWorldSpace(t.vLook)
+                            tw.tIdle.nYaw, tw.tIdle.nYawTarget, tw.tIdle.sAction = 0, 0, nil
+                            tw.tIdle.nNextAction = nT + 3 + oRandom:NextNumber(0, 6)
+                        end
                     end
                     local nBob, nRoll = math.abs(math.sin(nT * 2 + t.nPhase)) * 0.12, 0
                     local nStride, nSwing = 0, 0
@@ -207,10 +213,17 @@ function mPlot.StartAsync(self)
                             nRoll = math.sin(nStride) * 0.035
                         end
                     end
-                    DinoModels.PlaceAt(t.oModel, tw.vPos + Vector3.new(0, nBob, 0), t.vLook)
-                    DinoModels.Pose(t.oModel, nStride, nSwing)
-                    if nRoll ~= 0 then
-                        t.oModel:PivotTo(t.oModel:GetPivot() * CFrame.Angles(0, 0, nRoll))
+                    if tw.vTarget then
+                        DinoModels.PlaceAt(t.oModel, tw.vPos + Vector3.new(0, nBob, 0), t.vLook)
+                        DinoModels.Pose(t.oModel, nStride, nSwing)
+                        if nRoll ~= 0 then
+                            t.oModel:PivotTo(t.oModel:GetPivot() * CFrame.Angles(0, 0, nRoll))
+                        end
+                    else
+                        -- Standing: breathing, looking around, the odd hop / shuffle / sniff.
+                        tw.tIdle = tw.tIdle or DinoModels.NewIdleState()
+                        DinoModels.PlaceAt(t.oModel, tw.vPos, t.vLook)
+                        DinoModels.Idle(t.oModel, tw.vPos, t.vLook, tw.tIdle)
                     end
                 end
             end

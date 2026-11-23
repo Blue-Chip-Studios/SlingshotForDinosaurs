@@ -278,6 +278,138 @@ function DinoModels.PlaceAt(oModel: Model, vFeet: Vector3, vLookDir: Vector3?)
     oModel:PivotTo(CFrame.lookAt(vPivot, vPivot + vLook.Unit))
 end
 
+-- ===== Idle life =====
+-- The models are one fused mesh plus separate legs, so idle life is whole-body motion pivoting
+-- around the feet: breathing, weight shifts, looking around, the odd hop, shuffle or sniff. Each
+-- dino gets its own random timing so a park never moves in sync.
+
+export type IdleState = {
+    nSeed: number, nYaw: number, nYawTarget: number, nNextLook: number,
+    nActionStart: number, sAction: string?, nNextAction: number,
+}
+
+-- Rest height per model (the bounding box changes while it tilts, so measure once).
+local tRestHeight: { [Model]: number } = setmetatable({}, { __mode = "k" }) :: any
+local function RestHeight(oModel: Model): number
+    local n = tRestHeight[oModel]
+    if not n then
+        local _, vSize = oModel:GetBoundingBox()
+        n = vSize.Y
+        tRestHeight[oModel] = n
+    end
+    return n
+end
+
+function DinoModels.NewIdleState(): IdleState
+    local nNow = os.clock()
+    return {
+        nSeed = math.random() * 100, nYaw = 0, nYawTarget = 0, nNextLook = nNow + math.random() * 3,
+        nActionStart = 0, sAction = nil, nNextAction = nNow + 3 + math.random() * 8,
+    }
+end
+
+-- Rotates the whole model about its feet in its own frame (pitch = nose up, roll = lean) and lifts it.
+local function TiltAboutFeet(oModel: Model, vFeet: Vector3, vLook: Vector3, nPitch: number, nYaw: number, nRoll: number, nLift: number)
+    local vFlat = Vector3.new(vLook.X, 0, vLook.Z)
+    if vFlat.Magnitude < 1e-3 then vFlat = Vector3.new(0, 0, -1) end
+    local cfFeet = CFrame.lookAt(vFeet, vFeet + vFlat.Unit)
+    local cfDelta = cfFeet * CFrame.Angles(nPitch, nYaw, nRoll) * cfFeet:Inverse()
+    oModel:PivotTo(CFrame.new(0, nLift, 0) * cfDelta * oModel:GetPivot())
+end
+
+local function Ease(x: number): number
+    x = math.clamp(x, 0, 1)
+    return x * x * (3 - 2 * x)
+end
+
+-- Call every frame for a standing dino, right after PlaceAt(oModel, vFeet, vLook).
+function DinoModels.Idle(oModel: Model, vFeet: Vector3, vLook: Vector3, tState: IdleState)
+    local nT = os.clock()
+    local s = tState.nSeed
+    local nH = RestHeight(oModel)
+    local nScale = math.clamp(nH / 8, 0.4, 2.5)
+
+    -- Look around: turn toward a new angle every few seconds, eased.
+    if nT >= tState.nNextLook then
+        tState.nYawTarget = if math.random() < 0.35 then 0 else (math.random() - 0.5) * math.rad(70)
+        tState.nNextLook = nT + 1.5 + math.random() * 4
+    end
+    tState.nYaw += (tState.nYawTarget - tState.nYaw) * 0.06
+
+    -- Breathing (slow nose rise and chest lift) and a lazy side-to-side weight shift.
+    local nBreath = math.sin(nT * 1.7 + s)
+    local nPitch = nBreath * 0.022
+    local nRoll = math.sin(nT * 0.6 + s * 2) * 0.03
+    local nLift = (nBreath * 0.5 + 0.5) * 0.04 * nScale
+    local nStride, nSwing = 0, 0
+
+    -- Occasional actions: a happy hop, a little stomp in place, or a sniff of the ground.
+    if not tState.sAction and nT >= tState.nNextAction then
+        local r = math.random()
+        tState.sAction = if r < 0.4 then "Hop" elseif r < 0.75 then "Shuffle" else "Sniff"
+        tState.nActionStart = nT
+    end
+    if tState.sAction then
+        local u = nT - tState.nActionStart
+        if tState.sAction == "Hop" then
+            if u < 0.5 then
+                local k = math.sin(math.pi * u / 0.5)
+                nLift += k * 0.09 * nH
+                nPitch += k * 0.12
+                nStride, nSwing = math.pi / 2, 0.35 * k
+            else
+                tState.sAction = nil
+            end
+        elseif tState.sAction == "Shuffle" then
+            if u < 1.2 then
+                nStride, nSwing = u * 14, 0.28 * math.sin(math.pi * u / 1.2)
+                nRoll += math.sin(u * 14) * 0.04
+            else
+                tState.sAction = nil
+            end
+        else -- Sniff: lower the head, two quick sniffs, back up
+            if u < 1.6 then
+                local k = Ease(u / 0.4) * (1 - Ease((u - 1.2) / 0.4))
+                nPitch -= k * 0.18 + k * math.max(0, math.sin(u * 22)) * 0.025
+            else
+                tState.sAction = nil
+            end
+        end
+        if not tState.sAction then
+            tState.nNextAction = nT + 4 + math.random() * 9
+        end
+    end
+
+    DinoModels.Pose(oModel, nStride, nSwing)
+    TiltAboutFeet(oModel, vFeet, vLook, nPitch, tState.nYaw, nRoll, nLift)
+end
+
+-- Catch reveal: pop out with a bounce, rear back and roar with a shake and stamping feet.
+-- Call every frame right after PlaceAt; u = seconds since the dino appeared. Returns true once done.
+function DinoModels.Roar(oModel: Model, vFeet: Vector3, vLook: Vector3, u: number): boolean
+    local nH = RestHeight(oModel)
+    local nPitch, nRoll, nLift, nStride, nSwing = 0, 0, 0, 0, 0
+    if u < 0.45 then                       -- pop out of the ground with a bounce
+        local k = math.sin(math.pi * u / 0.45)
+        nLift = k * 0.25 * nH
+        nPitch = k * 0.15
+        nStride, nSwing = math.pi / 2, 0.4 * k
+    elseif u < 0.65 then                   -- landing squash: dip forward
+        nPitch = -math.sin(math.pi * (u - 0.45) / 0.2) * 0.08
+    elseif u < 1.9 then                    -- rear back and roar, shaking
+        local k = Ease((u - 0.65) / 0.3) * (1 - Ease((u - 1.55) / 0.35))
+        nPitch = k * 0.3
+        nRoll = k * math.sin(u * 45) * 0.035
+        nLift = k * 0.03 * nH
+        nStride, nSwing = u * 18, k * 0.12
+    else
+        return true
+    end
+    DinoModels.Pose(oModel, nStride, nSwing)
+    TiltAboutFeet(oModel, vFeet, vLook, nPitch, 0, nRoll, nLift)
+    return false
+end
+
 -- Height of the built model's bounding box (for placing labels).
 function DinoModels.Height(oModel: Model): number
     local _, vSize = oModel:GetBoundingBox()
