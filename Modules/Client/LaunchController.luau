@@ -235,6 +235,19 @@ local function PresentCatch(tF: Flight, tResult)
     local oModel = DinoModels.Build(tDino)
     local vFace = Workspace.CurrentCamera.CFrame.Position - vLand
     DinoModels.PlaceAt(oModel, vLand, vFace)
+    -- Reveal spotlight: a soft warm light on the new dino so it pops even in a canyon shadow.
+    do
+        local oBody = oModel:FindFirstChild("Body") or oModel:FindFirstChildWhichIsA("BasePart", true)
+        if oBody then
+            local oLight = Instance.new("PointLight")
+            oLight.Name = "RevealLight"
+            oLight.Color = Color3.fromHex("FFF1DC")
+            oLight.Brightness = 1.1
+            oLight.Range = math.clamp(DinoModels.Height(oModel) * 2.2, 10, 40)
+            oLight.Shadows = false
+            oLight.Parent = oBody
+        end
+    end
     oModel.Parent = Workspace
     -- Pop out and roar at the camera, then idle (breathing, looking around) until it leaves.
     local nAppear = os.clock()
@@ -261,11 +274,42 @@ local function PresentCatch(tF: Flight, tResult)
     local nHeight = DinoModels.Height(oModel)
     local oCamera = Workspace.CurrentCamera
     local vLook = vLand + Vector3.new(0, nHeight * 0.5, 0)
-    local vFrom = vLook + (oCamera.CFrame.Position - vLook).Unit * (nHeight * 2.2 + 10) + Vector3.new(0, 2, 0)
+    local nDist = nHeight * 1.7 + 8
+    local vFrom = vLook + (oCamera.CFrame.Position - vLook).Unit * nDist + Vector3.new(0, 2, 0)
     if oCameraConnection then oCameraConnection:Disconnect() oCameraConnection = nil end
-    TweenService:Create(oCamera, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { CFrame = CFrame.lookAt(vFrom, vLook) }):Play()
+    oCamera.FieldOfView = 70
 
     Store.Values.Reveal:set(tResult)
+    task.wait() -- let the reveal card lay out
+    -- The reveal card (and its portrait icon poking out of the top-left corner) covers the middle
+    -- of the screen, and its size differs per device. Read where it is and put the dino in the
+    -- clear space to its left, a third of the way down, using the vertical FOV and aspect.
+    -- The card springs open from 60% size, so its edges are scaled back out to their final place.
+    local vView = oCamera.ViewportSize
+    local nLeft = vView.X * 0.4
+    local oPopups = oPlayer:FindFirstChildOfClass("PlayerGui") and oPlayer.PlayerGui:FindFirstChild("Popups")
+    local oCard = oPopups and oPopups:FindFirstChild("Card", true)
+    if oCard and oCard:IsA("GuiObject") then
+        local oSpring = oCard:FindFirstChildOfClass("UIScale")
+        local nNow = math.max(oSpring and oSpring.Scale or 1, 0.3)
+        local nCentreX = oCard.AbsolutePosition.X + oCard.AbsoluteSize.X / 2
+        local function Final(x: number): number
+            return nCentreX - (nCentreX - x) / nNow
+        end
+        nLeft = Final(oCard.AbsolutePosition.X)
+        local oIcon = oCard:FindFirstChild("Icon")
+        if oIcon and oIcon:IsA("GuiObject") and oIcon.Visible then nLeft = math.min(nLeft, Final(oIcon.AbsolutePosition.X)) end
+    end
+    local nTargetX = math.clamp(nLeft * 0.5, vView.X * 0.08, vView.X * 0.3)
+    local nNdcX = nTargetX / math.max(vView.X, 1) * 2 - 1
+    local nTanV = math.tan(math.rad(70) / 2)
+    local nTanH = nTanV * vView.X / math.max(vView.Y, 1)
+    local nYaw = math.atan(-nNdcX * nTanH)
+    local nPitch = math.atan(0.36 * nTanV) -- dino at ndc y = +0.36
+    -- Offset yaw about world-up and pitch about the camera's own right axis (keeps the horizon level).
+    local rx, ry = CFrame.lookAt(vFrom, vLook):ToOrientation()
+    local cfTarget = CFrame.new(vFrom) * CFrame.fromOrientation(rx - nPitch, ry - nYaw, 0)
+    TweenService:Create(oCamera, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { CFrame = cfTarget }):Play()
     -- Wait until the player closes the reveal card (or 6s).
     local nWaitUntil = os.clock() + 6
     while peek(Store.Values.Reveal) ~= false and os.clock() < nWaitUntil do

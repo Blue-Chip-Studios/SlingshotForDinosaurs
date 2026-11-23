@@ -439,6 +439,7 @@ function UI.Icon(scope, props)
         AnchorPoint = props.AnchorPoint,
         ZIndex = props.ZIndex,
         LayoutOrder = props.LayoutOrder,
+        Visible = if props.Visible == nil then true else props.Visible,
         [Children] = props[Children],
     })
 end

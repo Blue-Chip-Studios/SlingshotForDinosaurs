@@ -46,7 +46,9 @@ local function AddLabel(oModel: Model, tDino, nIncome: number)
     if not oRoot then return end
     local oBillboard = Instance.new("BillboardGui")
     oBillboard.Name = "Label"
-    oBillboard.Size = UDim2.fromOffset(160, 46)
+    -- Mostly world-sized (studs) so labels shrink with distance like the dinos do and a crowded
+    -- park stays readable on small phones; the pixel part keeps far labels legible.
+    oBillboard.Size = UDim2.new(6.5, 46, 1.85, 13)
     oBillboard.StudsOffsetWorldSpace = Vector3.new(0, DinoModels.Height(oModel) * 0.6 + 1.5, 0)
     oBillboard.MaxDistance = 70
     oBillboard.LightInfluence = 0

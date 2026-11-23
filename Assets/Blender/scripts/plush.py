@@ -116,41 +116,45 @@ def plush_theropod(b, s):
     def top(d, k=0.86):
         return _surf(H, cs, d, k)
 
-    # ---- soft head ornaments ----
+    # ---- soft head ornaments (sized to read at game distance, ~1.4x the first pass) ----
     if s.get("head_tuft"):                # raptor feather tuft
-        for a in (-0.3, 0.0, 0.3):
-            b.cone("Accent", tuple(top((a, 0.2, 1))), (a * 0.8, 0.7, 0.8), 0.12 * hs, 0.55 * hs, verts=12)
+        for a in (-0.35, 0.0, 0.35):
+            b.cone("Accent", tuple(top((a, 0.2, 1))), (a * 0.8, 0.7, 0.8), 0.17 * hs, 0.8 * hs, verts=12)
     if s.get("double_crest"):             # Dilophosaurus: two rounded crests
         for side in (-1, 1):
-            b.plate("Accent", tuple(top((side * 0.3, -0.25, 1), 0.92) + Vector((0, 0, 0.18 * hs))), (0.06 * hs, 0.5 * hs, 0.32 * hs), rot=(-12, side * 8, 0))
+            b.plate("Accent", tuple(top((side * 0.3, -0.25, 1), 0.92) + Vector((0, 0, 0.3 * hs))), (0.11 * hs, 0.66 * hs, 0.46 * hs), rot=(-12, side * 8, 0))
     if s.get("neck_frill"):               # Dilophosaurus umbrella frill
-        b.plate("Accent", tuple(H + Vector((0, 0.55 * hs, -0.2 * hs))), (1.35 * hs, 0.08 * hs, 1.05 * hs), rot=(-10, 0, 0))
+        b.plate("Accent", tuple(H + Vector((0, 0.55 * hs, -0.2 * hs))), (1.45 * hs, 0.1 * hs, 1.12 * hs), rot=(-10, 0, 0))
         for i in range(9):
             a = math.radians(-120 + i * 30)
-            b.sphere("Accent", tuple(H + Vector((1.3 * hs * math.sin(a), 0.6 * hs, -0.2 * hs + 1.0 * hs * math.cos(a)))), 0.16 * hs, scale=(1, 0.6, 1))
-    if s.get("fan_crest"):                # Cryolophosaurus: wavy crest across the head
+            b.sphere("Accent", tuple(H + Vector((1.4 * hs * math.sin(a), 0.6 * hs, -0.2 * hs + 1.07 * hs * math.cos(a)))), 0.19 * hs, scale=(1, 0.6, 1))
+    if s.get("fan_crest"):                # Cryolophosaurus: tall wavy crest across the head
         for i in range(5):
-            x = (i - 2) * 0.2
-            b.plate("Accent", tuple(top((x, -0.1, 1), 0.9) + Vector((0, 0, (0.3 - abs(i - 2) * 0.07) * hs))), (0.07 * hs, 0.12 * hs, (0.36 - abs(i - 2) * 0.07) * hs))
-    if s.get("bull_horns"):               # Carnotaurus: two soft horns
+            x = (i - 2) * 0.22
+            ht = (0.55 - abs(i - 2) * 0.12) * hs
+            b.plate("Accent", tuple(top((x, -0.1, 1), 0.9) + Vector((0, 0, ht * 0.85))), (0.1 * hs, 0.15 * hs, ht))
+    if s.get("bull_horns"):               # Carnotaurus: two big soft horns
         for side in (-1, 1):
-            b.cone("Accent", tuple(top((side * 0.45, -0.1, 0.9))), (side * 0.7, -0.1, 0.7), 0.14 * hs, 0.45 * hs, verts=14)
-    if s.get("brow_horns"):               # Allosaurus: little horn over each eye
+            b.cone("Accent", tuple(top((side * 0.45, -0.1, 0.9))), (side * 0.75, -0.1, 0.65), 0.2 * hs, 0.7 * hs, verts=14)
+    if s.get("brow_horns"):               # Allosaurus: horn over each eye
         for side in (-1, 1):
-            b.cone("Accent", tuple(top((side * 0.38, -0.55, 0.75))), (side * 0.2, -0.2, 1), 0.11 * hs, 0.3 * hs, verts=12)
+            b.cone("Accent", tuple(top((side * 0.38, -0.55, 0.75))), (side * 0.2, -0.2, 1), 0.15 * hs, 0.45 * hs, verts=12)
     if s.get("tube_crest"):               # Parasaurolophus: long backswept tube
         t0 = top((0, 0.1, 1), 0.85)
-        b.chain("Accent", [tuple(t0), tuple(t0 + Vector((0, 0.7 * hs, 0.25 * hs))), tuple(t0 + Vector((0, 1.35 * hs, 0.35 * hs)))], [0.17 * hs, 0.16 * hs, 0.14 * hs])
+        b.chain("Accent", [tuple(t0), tuple(t0 + Vector((0, 0.85 * hs, 0.35 * hs))), tuple(t0 + Vector((0, 1.7 * hs, 0.5 * hs)))], [0.22 * hs, 0.21 * hs, 0.19 * hs])
     if s.get("dome"):                     # Pachycephalosaurus: thick round dome with a ring of bumps
-        b.ball("Accent", tuple(H + Vector((0, 0.05 * hs, 0.45 * hs))), (0.85 * hs, 0.8 * hs, 0.6 * hs))
+        b.ball("Accent", tuple(H + Vector((0, 0.05 * hs, 0.5 * hs))), (0.92 * hs, 0.86 * hs, 0.7 * hs))
         for i in range(10):
             a = math.radians(i * 36)
-            b.sphere("Accent", tuple(top((math.cos(a), math.sin(a) * 0.9 + 0.05, 0.25), 0.95)), 0.1 * hs)
+            b.sphere("Accent", tuple(top((math.cos(a), math.sin(a) * 0.9 + 0.05, 0.25), 0.95)), 0.13 * hs)
     if s.get("helmet"):                   # Corythosaurus: tall rounded helmet crest
-        b.plate("Accent", tuple(top((0, 0.05, 1), 0.85) + Vector((0, 0, 0.2 * hs))), (0.12 * hs, 0.6 * hs, 0.55 * hs))
-    if s.get("stripes", 0) or s.get("back_spikes"):   # soft spikes down the back of the head
-        for d in ((0, 0.25, 1), (0, 0.75, 0.7), (0, 1, 0.2)):
-            b.ball("Accent", tuple(top(d, 0.8)), (0.13, 0.15, 0.14))
+        b.plate("Accent", tuple(top((0, 0.05, 1), 0.72) + Vector((0, 0, 0.05 * hs))), (0.17 * hs, 0.75 * hs, 0.75 * hs))   # half sunk into the skull
+    spiky = (s.get("stripes", 0) or s.get("back_spikes")) and not s.get("sail")
+    if spiky:                             # soft dino spikes from the crown down the back of the head
+        for i, d in enumerate(((0, 0.15, 1), (0, 0.6, 0.8), (0, 0.95, 0.35))):
+            p = top(d, 0.8)
+            n = (Vector(d).normalized() + Vector((0, 0.3, 0.4))).normalized()
+            b.cone("Accent", tuple(p), tuple(n), (0.17 - 0.02 * i) * hs, (0.42 - 0.05 * i) * hs, verts=12)
     b.group = "Jaw"
     jaw_c = H + Vector((0, -(0.66 + 0.3 * (hl - 1)) * hs, -0.56 * hs))
     b.ball("Belly" if s.get("bill") else "Body", tuple(jaw_c), (0.66 * hs / max(1.0, hl) ** 0.4, 0.6 * hs * hl, 0.26 * hs))
@@ -158,24 +162,30 @@ def plush_theropod(b, s):
     # ---- body features ----
     body_c, body_s = (0, 0.05, 1.45), (0.95 * w, 0.85, 1.12)
     if s.get("sail"):                     # Spinosaurus / Ouranosaurus: big rounded back sail
+        # A thick soft fan (reads from the front too) with a beaded top edge, like a stitched plush fin.
         big = 1.25 if s.get("snout", 1.0) > 1.2 else 1.0
-        for i in range(6):
-            t = i / 5
-            z = 2.55 - 1.2 * t
-            root = _surf(body_c, body_s, (0, 1, (z - 1.45) * 1.1), 0.85)
-            hgt = (0.75 + 0.75 * math.sin(math.pi * t)) * big
-            b.plate("Accent", tuple(root + Vector((0, 0.3 * hgt, 0.55 * hgt))), (0.07, 0.34, hgt), rot=(-30 + 15 * t, 0, 0))
+        # One wide fan rising from the back, tilted back a little, with soft beads round its rim.
+        fan_c = Vector((0, 0.95, 2.35 + 0.55 * big))
+        fan_s = (0.15, 0.95 * big, 0.95 * big)
+        b.plate("Accent", tuple(fan_c), fan_s, rot=(-18, 0, 0))
+        tilt = math.radians(-18)
+        for i in range(7):
+            a = math.radians(-75 + i * 25)
+            ly, lz = 0.93 * fan_s[1] * math.sin(a), 0.93 * fan_s[2] * math.cos(a)
+            p = fan_c + Vector((0, ly * math.cos(tilt) - lz * math.sin(tilt), ly * math.sin(tilt) + lz * math.cos(tilt)))
+            b.sphere("Accent", tuple(p), 0.17 * big, scale=(1.1, 1, 1))
     elif s.get("stripes", 0) or s.get("back_spikes"):
-        for z in (2.35, 1.9, 1.45):
-            p = _surf(body_c, body_s, (0, 1, (z - 1.45) * 1.1), 0.9)
-            if s.get("back_spikes"):
-                b.cone("Accent", tuple(p), (0, 0.8, 0.6), 0.16, 0.5, verts=12)
-            else:
-                b.ball("Accent", tuple(p), (0.15, 0.17, 0.16))
+        # Soft dino spikes down the spine onto the tail (the classic plush-dino read).
+        for i, z in enumerate((2.45, 2.05, 1.65, 1.25)):
+            d = Vector((0, 1, (z - 1.45) * 1.1))
+            p = _surf(body_c, body_s, d, 0.92)
+            n = (d.normalized() + Vector((0, 0, 0.55))).normalized()
+            k = 1.0 + (0.25 if s.get("back_spikes") else 0.0)
+            b.cone("Accent", tuple(p), tuple(n), 0.2 * k, (0.48 - 0.04 * i) * k, verts=12)
     if s.get("osteoderms"):               # Carnotaurus: soft armour bumps on the flanks
         for side in (-1, 1):
             for (y, z) in ((0.1, 2.0), (0.35, 1.6), (0.0, 1.35), (0.4, 2.2)):
-                _patch(b, "Accent", body_c, body_s, (side * 1.0, y, z - 1.45), 0.13)
+                b.sphere("Accent", tuple(_surf(body_c, body_s, (side * 1.0, y, z - 1.45), 0.92)), 0.14, scale=(0.8, 1, 1))
     arms = s.get("arms", "normal")
     if s.get("wings"):                    # Microraptor: little feathered wings on the arms
         for side in (-1, 1):
@@ -202,6 +212,15 @@ def plush_theropod(b, s):
             b.cone(name, (side * 0.5 * w - side * 0.18, -0.45, 0.25), (0, -0.4, 0.9), 0.07, 0.3, verts=10)
     tl = s.get("tail", 1.0) * (1.15 if s.get("wings") else 1.0)
     _tail(b, tl)
+    if (s.get("stripes", 0) or s.get("back_spikes")) and not s.get("sail") and not s.get("wings"):
+        b.group = "Tail"
+        for k in range(3):                # spikes carry on down the tail, shrinking
+            t = 0.2 + 0.28 * k
+            y = 0.55 + 1.5 * tl * t
+            zc = 1.0 - 0.62 * t
+            r = 0.5 - 0.35 * t
+            b.cone("Accent", (0, y, zc + r * 0.75), (0, 0.5, 1), 0.15 - 0.04 * k, 0.38 - 0.08 * k, verts=12)
+        b.group = None
     if s.get("wings"):                    # tail feather fan
         b.group = "Tail"
         for k in (-1, 0, 1):
@@ -389,7 +408,7 @@ def plush_stegosaur(b, s):
         if kentro and t > 0.5:
             b.cone("Accent", tuple(root), tuple(n + Vector((side * 0.25, 0, 0))), 0.11, size * 1.5, verts=10)
         else:
-            b.plate("Accent", tuple(root + n * size * 0.62), (0.07, size * 0.42, size), rot=(-math.degrees(math.atan2(n.y, n.z)), 0, side * 16))
+            b.plate("Accent", tuple(root + n * size * 0.62), (0.15, size * 0.42, size), rot=(-math.degrees(math.atan2(n.y, n.z)), 0, side * 16))
     _arms(b, 1.05)
     _legs(b, 1.05)
     _tail(b, 1.0, 1.0, spikes=True)

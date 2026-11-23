@@ -56,14 +56,8 @@ local function RevealCard(scope)
                     scope:New("UIScale")({ Scale = nOpen }),
                     UI.Corner(scope, Theme.Radius.Modal),
                     UI.Stroke(scope, Theme.Stroke.Modal),
-                    -- Blender portrait popping out of the card's top-left corner.
-                    UI.Icon(scope, {
-                        Key = Field(function(t) return t.Dino.Species end, ""),
-                        AnchorPoint = Vector2.new(1, 1),
-                        Position = UDim2.fromOffset(40, 40),
-                        Size = UDim2.fromOffset(180, 180),
-                        ZIndex = 4,
-                    }),
+                    -- (No portrait icon here: the catch camera frames the real 3D dino right beside the
+                    -- card, and the icon used to sit on top of it.)
                     -- "NEW!" sticker: orange tag with the label inside it (child renders above parent).
                     scope:New("Frame")({
                         Name = "Sticker",
