@@ -92,6 +92,8 @@ local PROP_ROLES = {
     Gold = { Color3.fromHex("FFC531"), Enum.Material.SmoothPlastic },
     Bait = { Color3.fromHex("D81B60"), Enum.Material.SmoothPlastic },
     BaitAccent = { Color3.fromHex("43A047"), Enum.Material.SmoothPlastic },
+    Leather = { Color3.fromHex("7A4A2A"), Enum.Material.SmoothPlastic },
+    Pouch = { Color3.fromHex("8A5530"), Enum.Material.SmoothPlastic },
 }
 
 -- Applies role colours; tOverrides[role] = Color3 recolours a role (e.g. slingshot tiers, biome leaves).
@@ -101,6 +103,12 @@ local function ColourProp(oModel: Model, tOverrides: { [string]: Color3 }?)
             -- Blender may suffix duplicate names ("Rock.003"); the role is the base name.
             local sRole = o.Name:gsub("%.%d+$", "")
             o.Name = sRole
+            -- Hidden anchor markers (slingshot band tips and pouch centre).
+            if sRole == "TipL" or sRole == "TipR" or sRole == "PouchMark" then
+                o.Transparency = 1
+                o.CanCollide = false
+                o.CastShadow = false
+            end
             local tRole = PROP_ROLES[sRole]
             if tRole then
                 o.Color = (tOverrides and tOverrides[sRole]) or tRole[1]
@@ -476,9 +484,14 @@ local function BuildPlots()
         -- Launch stand: the giant slingshot (Blender), set to one side so the player stands in front of it.
         local vStand = tPlot.LaunchStand
         Part({ Name = "LaunchPad", Size = Vector3.new(10, 1, 8), Position = vStand + Vector3.new(0, 0.5, 0), Color = Color3.fromHex("FFC531"), Material = Enum.Material.SmoothPlastic, Parent = oPlot })
-        PlaceProp("LaunchSlingshot", CFrame.new(vStand + Vector3.new(0, 1, 3.5)), 0.9, function(oModel)
+        local oSling = PlaceProp("LaunchSlingshot", CFrame.new(vStand + Vector3.new(0, 1, 3.5)), 0.9, function(oModel)
             Part({ Name = "Wood", Size = Vector3.new(1.2, 6, 1.2), CFrame = CFrame.new(0, 3, 0), Parent = oModel })
-        end).Parent = oPlot
+        end)
+        -- Only the boulder base is solid: the fork, bands and pouch never snag the player.
+        for _, o in oSling:GetDescendants() do
+            if o:IsA("BasePart") and o.Name ~= "Rock" then o.CanCollide = false end
+        end
+        oSling.Parent = oPlot
         local oSign = Part({ Name = "OwnerSign", Size = Vector3.new(14, 4, 1), Position = tPlot.Center + Vector3.new(0, 6, vSize.Z / 2 + 1), Color = INK, Parent = oPlot })
         local oSurface = Instance.new("SurfaceGui")
         oSurface.Face = Enum.NormalId.Back

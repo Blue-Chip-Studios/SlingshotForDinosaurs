@@ -541,6 +541,65 @@ function DinoModels.Roar(oModel: Model, vFeet: Vector3, vLook: Vector3, u: numbe
     return false
 end
 
+-- Grazing: lean in, head down to the grass, chewing, with the odd look-up and a lazy tail.
+-- Call every frame right after PlaceAt; nT = seconds since grazing began, nSeed varies the rhythm.
+function DinoModels.Graze(oModel: Model, vFeet: Vector3, vLook: Vector3, nT: number, nSeed: number)
+    local bSplit = Rest(oModel).tGroups.Head ~= nil
+    local nIn = Ease(nT / 0.6)                                       -- ease down into it
+    local nLookUp = Ease((math.sin(nT * 0.45 + nSeed) - 0.75) * 4)  -- now and then glance up
+    local k = nIn * (1 - nLookUp)
+    local nChew = math.max(0, math.sin(nT * 7 + nSeed))
+    DinoModels.Pose(oModel, 0, 0)
+    DinoModels.Articulate(oModel, {
+        HeadPitch = -0.8 * k + nChew * 0.06 * k,
+        HeadYaw = math.sin(nT * 0.6 + nSeed) * 0.25,
+        Jaw = 0.05 + nChew * 0.22 * k,
+        TailYaw = math.sin(nT * 1.2 + nSeed) * 0.2,
+        TailPitch = 0.08,
+    })
+    TiltAboutFeet(oModel, vFeet, vLook, -(if bSplit then 0.14 else 0.3) * k, 0, math.sin(nT * 0.7 + nSeed) * 0.02, 0)
+end
+
+-- Builds an ambient critter (CritterConfig) from ReplicatedStorage.Assets.Critters, coloured by
+-- region like the plush dinos; dragonfly wings (WingL / WingR) are pale and see-through. Nil if
+-- the model hasn't loaded.
+function DinoModels.BuildCritter(sId: string, tCfg): Model?
+    local oAssets = ReplicatedStorage:FindFirstChild("Assets")
+    local oFolder = oAssets and oAssets:FindFirstChild("Critters")
+    local oTemplate = oFolder and oFolder:FindFirstChild(sId)
+    if not (oTemplate and oTemplate:IsA("Model")) then return nil end
+    local oModel = oTemplate:Clone()
+    local tColours = {
+        Body = tCfg.Colors.Body, Belly = tCfg.Colors.Belly, Accent = tCfg.Colors.Accent,
+        EyeWhite = Color3.fromHex("FFF8E8"), Pupil = Theme.Ink, Blush = Color3.fromHex("FF9DB4"),
+    }
+    for _, o in oModel:GetDescendants() do
+        if o:IsA("BasePart") then
+            o.Anchored = true
+            o.CanCollide = false
+            o.CanQuery = false
+            o.CanTouch = false
+            o.Name = o.Name:gsub("%.%d+$", "")
+            o.Material = Enum.Material.SmoothPlastic
+            local sR = Region(o)
+            if sR == "Joint" then
+                o.Transparency = 1
+                o.CastShadow = false
+            elseif sR:match("^Wing") then
+                o.Color = Color3.fromHex("DDF6FF")
+                o.Transparency = 0.45
+                o.CastShadow = false
+            else
+                o.Color = tColours[sR] or (if sR:match("^Leg") then tColours.Body else o.Color)
+            end
+        end
+    end
+    local _, vSize = oModel:GetBoundingBox()
+    oModel:ScaleTo(oModel:GetScale() * tCfg.Height / math.max(vSize.Y, 0.1))
+    oModel:SetAttribute("Critter", sId)
+    return oModel
+end
+
 -- Height of the built model's bounding box (for placing labels).
 function DinoModels.Height(oModel: Model): number
     local _, vSize = oModel:GetBoundingBox()

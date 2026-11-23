@@ -65,6 +65,7 @@ function AssetLoader.LoadAll(nTimeout: number?)
     local oAssets = Folder(ReplicatedStorage, "Assets")
     local oDinos = Folder(oAssets, "Dinos")
     local oWorld = Folder(oAssets, "World")
+    local oCritters = Folder(oAssets, "Critters")
     local iPending = 0
     local function Queue(tList, oFolder: Folder, bCollide: boolean)
         for sName, iId in tList do
@@ -80,6 +81,7 @@ function AssetLoader.LoadAll(nTimeout: number?)
     end
     Queue(AssetConfig.Dinos, oDinos, false)
     Queue(AssetConfig.World, oWorld, true)
+    Queue(AssetConfig.Critters, oCritters, false)
     local nStart = os.clock()
     while iPending > 0 and os.clock() - nStart < (nTimeout or 8) do
         task.wait(0.05)

@@ -173,7 +173,11 @@ function mGuide.StartAsync(self)
             end
         end
         RunService.Heartbeat:Connect(function()
+            -- Only spin what the camera is near: the shop is off screen for most of a session.
+            local oCam = Workspace.CurrentCamera
+            local vCam = if oCam then oCam.CFrame.Position else Vector3.zero
             for _, t in tItems do
+                if (t[2].Position - vCam).Magnitude > 180 then continue end
                 local cf = t[2] * CFrame.new(0, math.sin(nSpin * 2) * 0.4, 0) * CFrame.Angles(0, nSpin * 1.2, 0)
                 if t[1]:IsA("Model") then
                     (t[1] :: Model):PivotTo(cf)

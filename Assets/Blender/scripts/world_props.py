@@ -23,6 +23,7 @@ PREVIEW = {
     "Trunk": (0.55, 0.35, 0.17), "Leaves": (0.18, 0.66, 0.18), "Leaves2": (0.42, 0.56, 0.14), "Rock": (0.55, 0.47, 0.40),
     "RockDark": (0.23, 0.18, 0.16), "Ice": (0.66, 0.87, 0.96), "Snow": (0.96, 0.98, 1.0), "Lava": (1.0, 0.42, 0.1),
     "Glow": (0.37, 0.78, 0.95), "Wood": (0.55, 0.35, 0.17), "Band": (0.85, 0.2, 0.25), "Stone": (0.93, 0.9, 0.85),
+    "Leather": (0.48, 0.29, 0.16), "Pouch": (0.48, 0.29, 0.16), "TipL": (1, 0, 1), "TipR": (1, 0, 1), "PouchMark": (1, 0, 1),
     "Gold": (1.0, 0.77, 0.19), "Bait": (0.85, 0.15, 0.35), "BaitAccent": (0.2, 0.6, 0.2), "Water": (0.3, 0.7, 0.9),
 }
 
@@ -72,14 +73,15 @@ class PropBuilder:
         bpy.ops.mesh.primitive_cube_add(location=loc, rotation=Euler([math.radians(a) for a in rot]))
         o = bpy.context.active_object
         o.scale = scale
-        m = o.modifiers.new("Bevel", "BEVEL")
-        m.width = bevel * min(scale)
-        m.segments = 2
-        m.limit_method = "NONE"
+        if bevel > 0:
+            m = o.modifiers.new("Bevel", "BEVEL")
+            m.width = bevel * min(scale)
+            m.segments = 2
+            m.limit_method = "NONE"
         return self._add(o, role)
 
-    def torus(self, role, loc, major, minor, rot=(0, 0, 0)):
-        bpy.ops.mesh.primitive_torus_add(major_radius=major, minor_radius=minor, major_segments=24, minor_segments=8, location=loc, rotation=Euler([math.radians(a) for a in rot]))
+    def torus(self, role, loc, major, minor, rot=(0, 0, 0), segs=(24, 8)):
+        bpy.ops.mesh.primitive_torus_add(major_radius=major, minor_radius=minor, major_segments=segs[0], minor_segments=segs[1], location=loc, rotation=Euler([math.radians(a) for a in rot]))
         return self._add(bpy.context.active_object, role)
 
     def finish(self, smooth_roles=("Leaves", "Leaves2", "Bait", "Snow", "Water")):
@@ -181,24 +183,70 @@ def geyser_vent(b):
     b.cyl("Glow", (0, 0, 0.55), 1.2, 0.2, verts=16)
 
 
+def _limb(b, role, pts, radii, verts=10):
+    """Bent branch: tapered segments between the points, with a ball at each bend so it reads as
+    one smooth piece of wood."""
+    pts = [Vector(p) for p in pts]
+    for i in range(len(pts) - 1):
+        a, c = pts[i], pts[i + 1]
+        d = c - a
+        rot = d.to_track_quat("Z", "Y").to_euler()
+        b.cyl(role, tuple((a + c) / 2), radii[i], d.length, rot=tuple(math.degrees(x) for x in rot), verts=verts, r2=radii[i + 1])
+    for p, r in zip(pts[1:-1], radii[1:-1]):
+        b.ico(role, tuple(p), (r, r, r), sub=2)
+
+
+def _slingshot(b, k=1.0, base=True):
+    """The game's slingshot: a gnarled wooden fork with leather grip wraps, dino-tooth tips, fat
+    rubber bands and a leather pouch. TipL / TipR mark the band anchors (hidden in game) so the
+    launch stand can stretch the bands back while the player charges; Pouch moves with them."""
+    def v(x, y, z):
+        return (x * k, y * k, z * k)
+    random.seed(7)
+    z0 = 0.0
+    if base:
+        # Mossy boulder base with two crossed dino bones and a few pebbles.
+        b.ico("Rock", v(0, 0, 0.35), (2.5 * k, 2.1 * k, 0.75 * k), sub=2, jitter=0.12 * k)
+        b.ico("Leaves", v(-0.6, -0.5, 0.75), (1.3 * k, 1.0 * k, 0.32 * k), sub=2, jitter=0.08 * k)
+        for (x, y, s) in ((1.9, 1.1, 0.45), (-2.1, 0.9, 0.38), (1.4, -1.5, 0.32)):
+            b.ico("RockDark", v(x, y, 0.2), (s * k, s * k, s * 0.7 * k), sub=1, jitter=0.05 * k)
+        for ang in (25, -35):
+            a = math.radians(ang)
+            dx, dy = math.cos(a) * 1.15, math.sin(a) * 1.15
+            _limb(b, "Stone", [v(-dx, -dy + 0.9, 1.0), v(dx, dy + 0.9, 1.0)], [0.14 * k, 0.14 * k], verts=8)
+            for s in (-1, 1):
+                for o in (-0.13, 0.13):
+                    b.ico("Stone", v(s * dx + o * math.sin(a), s * dy + 0.9 - o * math.cos(a), 1.0), (0.17 * k,) * 3, sub=1)
+        z0 = 0.8
+    # Trunk: slightly bent, wide at the root.
+    _limb(b, "Wood", [v(0, 0, z0), v(0.12, 0.05, z0 + 1.5), v(-0.06, 0, z0 + 2.9), v(0, 0, z0 + 3.6)], [0.85 * k, 0.66 * k, 0.6 * k, 0.66 * k])
+    for z in (1.5, 1.95, 2.4):                        # leather grip wrap
+        b.torus("Leather", v(0.04, 0.02, z0 + z), 0.66 * k, 0.12 * k, rot=(4, 0, 0), segs=(14, 6))
+    # Fork: two curving prongs ending in knobs, each wrapped and capped with a big dino tooth.
+    for side, tip in ((-1, "TipL"), (1, "TipR")):
+        pts = [v(0, 0, z0 + 3.6), v(side * 0.85, 0, z0 + 4.4), v(side * 1.6, 0, z0 + 5.5), v(side * 1.85, 0, z0 + 6.7)]
+        _limb(b, "Wood", pts, [0.58 * k, 0.48 * k, 0.42 * k, 0.4 * k])
+        b.ico("Wood", v(side * 1.88, 0, z0 + 6.85), (0.5 * k, 0.5 * k, 0.45 * k), sub=2)
+        b.torus("Leather", v(side * 1.8, 0, z0 + 6.25), 0.44 * k, 0.11 * k, rot=(0, side * -12, 0), segs=(12, 6))
+        b.cyl("Stone", v(side * 1.98, 0, z0 + 7.45), 0.26 * k, 0.8 * k, rot=(0, side * 14, 0), verts=8, r2=0.02 * k)
+        # Band anchor marker (just inside the knob, on the pouch side).
+        b.box(tip, v(side * 1.75, 0.25, z0 + 6.55), (0.04 * k,) * 3, bevel=0)
+        # Rubber band from the prong back to the pouch.
+        _limb(b, "Band", [v(side * 1.75, 0.25, z0 + 6.55), v(side * 0.95, 0.85, z0 + 6.2), v(side * 0.45, 1.05, z0 + 6.05)], [0.17 * k, 0.16 * k, 0.15 * k], verts=8)
+    # Pouch: a soft leather cup with a stitched seam, holding the bait.
+    b.ico("Pouch", v(0, 1.1, z0 + 6.0), (0.62 * k, 0.32 * k, 0.5 * k), sub=2)
+    b.torus("Pouch", v(0, 1.1, z0 + 6.0), 0.5 * k, 0.05 * k, rot=(90, 0, 0), segs=(14, 4))
+    b.box("PouchMark", v(0, 1.1, z0 + 6.0), (0.04 * k,) * 3, bevel=0)
+
+
 def launch_slingshot(b):
-    # Giant Y-frame at each plot's launch stand.
-    b.cyl("Wood", (0, 0, 2.2), 0.7, 4.4, verts=10, bevel=0.1)
-    for side in (-1, 1):
-        b.cyl("Wood", (side * 1.6, 0, 5.8), 0.5, 4.2, rot=(0, side * 25, 0), verts=10, bevel=0.1)
-        b.ico("Wood", (side * 2.5, 0, 7.6), (0.6, 0.6, 0.6), sub=2)
-    b.box("Band", (0, 0.6, 6.4), (2.5, 0.12, 0.25), bevel=0.4)
-    b.box("Band", (0, 1.2, 6.3), (0.6, 0.5, 0.4), bevel=0.4)  # pouch
-    b.cyl("Stone", (0, 0, 0.25), 2.4, 0.5, verts=16, bevel=0.1)
+    # Giant slingshot at each plot's launch stand (its bands stretch back while charging, in game).
+    _slingshot(b, 1.0, base=True)
 
 
 def slingshot_item(b):
-    # Hand slingshot for pedestals (recoloured per tier in game).
-    b.cyl("Wood", (0, 0, 1.0), 0.18, 2.0, verts=8, bevel=0.03)
-    for side in (-1, 1):
-        b.cyl("Wood", (side * 0.45, 0, 2.45), 0.14, 1.2, rot=(0, side * 25, 0), verts=8)
-    b.box("Band", (0, 0.1, 2.75), (0.7, 0.05, 0.08), bevel=0.4)
-    b.box("Band", (0, 0.35, 2.7), (0.2, 0.18, 0.15), bevel=0.4)
+    # Hand slingshot for the shop pedestals (Wood recoloured per tier in game).
+    _slingshot(b, 0.36, base=False)
 
 
 def bait_item(b, kind):

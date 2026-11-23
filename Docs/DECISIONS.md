@@ -193,3 +193,26 @@ Significant autonomous (BCDK Recommended) decisions, newest last. Each entry: wh
     - **Big hunters:** T-Rex, Giganotosaurus and Carnotaurus get grumpy-cute brow ridges, a row of soft bumps over each eye. Big-headed hunters get four cute fangs instead of two specks. The T-Rex arms are smaller still (comically tiny). Together these stop the big meat-eaters reading as recoloured copies of each other.
     - **Markings:** T-Rex, Velociraptor and Allosaurus have tiger stripes across the back. Giganotosaurus, Baryonyx and Dilophosaurus have soft spots.
     - **Signature features enlarged:** Therizinosaurus claws (about 1.5× longer), the Baryonyx hook claw and the Iguanodon thumb spikes. Stegosaurus and Kentrosaurus plates now fan out from the spine, staggered left and right. Standing upright, they had stacked into one sail.
+86. **Roaming wildlife on the canyon floor (requested by the developer).** Every area now has its own dinos wandering about (WildlifeController, client-only, purely visual; tuned in Config/CritterConfig.luau).
+    - **Grazers:** herbivores stop to eat grass (lean in, head down, chewing, the odd glance up).
+    - **Hunters:** sniff about, yawn and sometimes rear up and roar.
+    - **Flyers:** the Sky Islands flyers circle overhead, banking.
+    - **Themed critters,** made as plush models in Blender (Assets/Blender/scripts/critters.py):
+      - a woolly mammoth herd that travels together through the Ice Age;
+      - sabre-tooth cats prowling the Tar Pits;
+      - sea turtles paddling in and out of the Coral Coast lagoon;
+      - giant dragonflies darting low over the Jungle and Swamp.
+    - **Visual only:** animals avoid water and canyon props when choosing where to go.
+    - **Mutant wanderers:** about 3% are Golden, Frost or Cosmic, for players to spot.
+    - **Cost:** an area only wakes when the camera is within 380 studs. Sleeping areas keep their models unparented. Animals beyond 240 studs update at a quarter rate.
+87. **New slingshot with a stretchy band.**
+    - **Model:** the launch slingshot was a straight cylinder Y with a flat box band. It's now a gnarled, curved wooden fork with leather grip wraps, dino-tooth prong tips, fat rubber bands, a leather pouch, and a mossy boulder base with crossed dino bones. It is about 1.9k faces; the tori use low segment counts. The shop pedestals reuse the same design at hand size.
+    - **Game feel:** on your own plot, SlingshotController draws the pouch back and down while you charge, and the bands stretch (thinning) from the prong tips. On release it snaps forward past the frame and wobbles to rest.
+    - **Collision:** only the boulder base collides, so the fork never snags the player.
+    - **Optimisation:** pedestal items only spin while the camera is within 180 studs.
+88. **Plush round 4: herbivores.**
+    - **Stegosaurus and Kentrosaurus:** the plates are biggest just behind the head, so they show over it from the front.
+    - **Diplodocus:** a row of soft spines along the neck and back.
+    - **Brachiosaurus:** a taller nasal dome with an accent cap.
+    - Together these stop the two long-necks reading as recolours of each other.
+89. **Notifications prompt waits for idle.** The Experience Notifications opt-in fired a fixed 6s after a launch (and on every join until answered), so it could land mid-flight. This is the same click-stealing problem as the old like/favourite prompt. It now uses SocialController's idle wait (6s idle: not charging, flying, revealing or in a menu). It is skipped in Studio playtests, which can't answer it and get no notifications anyway.

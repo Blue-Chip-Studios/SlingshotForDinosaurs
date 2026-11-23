@@ -386,7 +386,8 @@ def plush_sauropod(b, s):
     ms = (0.66 * hs, 0.55 * hs, 0.48 * hs)
     b.ball("Body", tuple(muz), ms)
     if style == "up":
-        b.ball("Body", tuple(H + Vector((0, -0.2 * hs, 0.6 * hs))), (0.45 * hs, 0.5 * hs, 0.4 * hs))   # nasal bump
+        b.ball("Body", tuple(H + Vector((0, -0.15 * hs, 0.7 * hs))), (0.55 * hs, 0.58 * hs, 0.52 * hs))   # tall Brachiosaurus nasal dome
+        b.sphere("Accent", tuple(H + Vector((0, -0.12 * hs, 1.02 * hs))), 0.36 * hs, scale=(1, 1.1, 0.6))  # dome cap in the accent colour
     _face(b, H, cs, hs, eye=0.15)
     b.group = "Jaw"
     b.ball("Body", tuple(H + Vector((0, -0.55 * hs, -0.52 * hs))), (0.56 * hs, 0.5 * hs, 0.22 * hs))
@@ -397,6 +398,12 @@ def plush_sauropod(b, s):
     if style == "low":
         for z in (1.2, 1.7, 2.2):
             b.ball("Accent", (0, 0.45, z), (1.0, 0.12, 0.13))
+        # Diplodocus: a row of soft spines along the top of the neck and down the back.
+        for p, r in zip(neck, nr):
+            b.cone("Accent", tuple(Vector(p) + Vector((0, 0.2, r * 1.2))), (0, 0.3, 1), 0.17, 0.55, verts=10)
+        for z in (2.45, 2.0, 1.55):
+            p = _surf((0, 0.05, 1.45), (1.12, 0.85, 1.12), (0, 1, (z - 1.45) * 1.1), 0.92)
+            b.cone("Accent", tuple(p), (0, 1, 0.5), 0.18, 0.55, verts=10)
     _arms(b, 1.12)
     _legs(b, 1.12)
     _tail(b, 1.4 if style == "low" else 1.1, 1.05)
@@ -428,7 +435,7 @@ def plush_stegosaur(b, s):
         z = 2.8 - 1.75 * t                               # behind the head down to the hips
         d = Vector((0, 0.75 + 0.25 * t, (z - 1.45) * 1.1))
         n = (d.normalized() + Vector((0, 0.15, 0.3))).normalized()
-        size = 0.88 + 0.45 * math.sin(math.pi * min(1.0, t * 1.3))
+        size = 0.85 + 0.55 * (1 - t) + 0.15 * math.sin(math.pi * t)   # biggest behind the head, so they show over it
         side = 1 if i % 2 == 0 else -1
         root = _surf(body_c, body_s, d, 0.85) + Vector((side * 0.22, 0, 0))
         if kentro and t > 0.5:

@@ -28,7 +28,7 @@ local function IsIdle(): boolean
     return not peek(V.Charging) and not peek(V.Flying) and peek(V.Reveal) == false
         and peek(V.Modal) == "" and not peek(V.PopupOpen)
 end
-local function WaitUntilIdle(): boolean
+local function WaitUntilIdle(): boolean -- also used by NotificationController (mSocial.WaitUntilIdle)
     local nIdleSince, nGiveUp = nil, os.clock() + 300
     while os.clock() < nGiveUp do
         if IsIdle() then
@@ -46,6 +46,12 @@ local oLocalPlayer = Players.LocalPlayer
 local bGroupAsked, bFavoriteAsked = false, false
 
 local mSocial = Module()
+
+-- Waits until the player has been idle (not charging, flying, revealing or in a menu) for a few
+-- seconds, so system prompts never steal a click mid-launch. False if they never go idle.
+function mSocial.WaitUntilIdle(self): boolean
+    return WaitUntilIdle()
+end
 
 function mSocial.Invite(self)
     local bOk, bCan = pcall(SocialService.CanSendGameInviteAsync, SocialService, oLocalPlayer)

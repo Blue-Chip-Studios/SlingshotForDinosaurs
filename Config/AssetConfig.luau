@@ -24,21 +24,21 @@ return {
         Triceratops = 109907411392092, -- plush r2
         Cryolophosaurus = 139047778204455, -- plush r3
         Therizinosaurus = 76784798304965, -- plush r3
-        Brachiosaurus = 96505991308240, -- plush r2
+        Brachiosaurus = 90369738224379, -- plush r4
         Carnotaurus = 106950365663927, -- plush r3
         Giganotosaurus = 114192853837494, -- plush r3
         TRex = 119682496520336, -- plush r3
         Protoceratops = 86482998597490, -- plush r2
         Gallimimus = 79158093183311, -- plush r2
-        Stegosaurus = 74995695860087, -- plush r3
+        Stegosaurus = 92606218100190, -- plush r4
         Iguanodon = 88588932115135, -- plush r3
         Corythosaurus = 124795688371995, -- plush r2
         Ouranosaurus = 118471787589572, -- plush r2
         Allosaurus = 75197357942357, -- plush r3
         Styracosaurus = 119524864877582, -- plush r2
-        Diplodocus = 115187685388958, -- plush r2
+        Diplodocus = 132408190367360, -- plush r4
         Microraptor = 106897337456446, -- plush r3
-        Kentrosaurus = 104250686209707, -- plush r3
+        Kentrosaurus = 80407737986896, -- plush r4
         Amargasaurus = 131493747364578, -- plush r2
         Pteranodon = 94994397236759, -- plush r2
         Archaeopteryx = 97641336750077, -- plush r2
@@ -64,8 +64,8 @@ return {
         SkyIsland = 90782611166780,
         Cloud = 76483736936847,
         VolcanoBig = 103299850582351,
-        LaunchSlingshot = 99721449867774,
-        SlingshotItem = 118343737652140,
+        LaunchSlingshot = 111335399092205,
+        SlingshotItem = 133661315809449,
         Bait_Berries = 139213804648851,
         Bait_Fish = 100215674017841,
         Bait_Steak = 93890753615551,
@@ -79,6 +79,14 @@ return {
         GrassClump = 81031363976889,
         Bones = 115852318422328,
         Crystal = 127805842040289,
+    },
+
+    -- Ambient wildlife (Config/CritterConfig.luau), plush models from Assets/Blender/scripts/critters.py.
+    Critters = {
+        Mammoth = 116556042307238,
+        SabreTooth = 87450081395608,
+        SeaTurtle = 105264916875270,
+        Dragonfly = 88060630803164,
     },
 
     -- Images (rbxassetid) for UI icons / portraits.
@@ -95,21 +103,21 @@ return {
         Triceratops = 77970047380326, -- plush r3
         Cryolophosaurus = 109170057327912, -- plush r3
         Therizinosaurus = 90078786130097, -- plush r3
-        Brachiosaurus = 124079301386340, -- plush r3
+        Brachiosaurus = 74210656295950, -- plush r4
         Carnotaurus = 75782736709128, -- plush r3
         Giganotosaurus = 105635145053487, -- plush r3
         TRex = 135617285490463, -- plush r3
         Protoceratops = 86228841907346, -- plush r3
         Gallimimus = 109149374079087, -- plush r3
-        Stegosaurus = 140558686827492, -- plush r3
+        Stegosaurus = 73139504855189, -- plush r4
         Iguanodon = 128636109736963, -- plush r3
         Corythosaurus = 102776905699407, -- plush r3
         Ouranosaurus = 138498788374207, -- plush r3
         Allosaurus = 102351079478065, -- plush r3
         Styracosaurus = 128019407123037, -- plush r3
-        Diplodocus = 134463244718195, -- plush r3
+        Diplodocus = 130121742349490, -- plush r4
         Microraptor = 101735983006612, -- plush r3
-        Kentrosaurus = 107109813262231, -- plush r3
+        Kentrosaurus = 115113527024125, -- plush r4
         Amargasaurus = 98101923817560, -- plush r3
         Pteranodon = 98639818082639, -- plush r3
         Archaeopteryx = 103624126204951, -- plush r3
