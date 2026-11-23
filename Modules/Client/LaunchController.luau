@@ -8,9 +8,10 @@
     animates it, forwards one tap per window, and presents the result.
 
     Input (actions, not hardcoded per device):
-        Charge/release: LAUNCH button (touch/click), Space, gamepad R2, or
+        Charge/release: LAUNCH button (touch/click), F, gamepad R2, or
                         holding the left mouse button on the world.
-        Bounce:         tap anywhere / click / Space / R2 / A while flying.
+        Bounce:         tap anywhere / click / Space / F / R2 / A while flying.
+                        (Space is never a launch key: it is jump on the rim.)
 ]]
 
 local ContextActionService = game:GetService("ContextActionService")
@@ -462,16 +463,16 @@ function mLaunch.StartAsync(self)
             self:Release()
         end
         return Enum.ContextActionResult.Pass
-    end, false, Enum.KeyCode.Space, Enum.KeyCode.ButtonR2)
+    end, false, Enum.KeyCode.F, Enum.KeyCode.ButtonR2)
     ContextActionService:BindAction("SFD_Bounce", function(_, eState)
         if tFlight and eState == Enum.UserInputState.Begin then
             self:Tap()
             return Enum.ContextActionResult.Sink
         end
         return Enum.ContextActionResult.Pass
-    end, false, Enum.KeyCode.ButtonA)
+    end, false, Enum.KeyCode.ButtonA, Enum.KeyCode.Space)
 
-    -- Charging only starts from the HOLD button, Space or R2, so clicking or dragging the
+    -- Charging only starts from the HOLD button, F or R2, so clicking or dragging the
     -- world stays free for the camera. Mid-flight (follow-cam), a click/tap anywhere bounces.
     UserInputService.InputBegan:Connect(function(oInput, bProcessed)
         if bProcessed or not tFlight then return end

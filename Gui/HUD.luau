@@ -394,7 +394,8 @@ return function(scope, props)
                             IconKey = "Icon_Target", IconSize = 70,
                             Text = scope:Computed(function(use)
                                 if use(UI.IsGamepad) then return if use(V.Charging) then "RELEASE R2!" else "HOLD R2" end
-                                return if use(V.Charging) then "LET GO!" else "HOLD"
+                                if use(V.Charging) then return "LET GO!" end
+                                return if use(UI.IsTouch) then "HOLD" else "HOLD [F]"
                             end),
                             TextSize = 44,
                             Size = UDim2.fromOffset(300, 120),
