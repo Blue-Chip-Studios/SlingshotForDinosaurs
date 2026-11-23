@@ -19,6 +19,13 @@ local Theme = require(ReplicatedStorage.Shared.Theme)
 
 local DinoModels = {}
 
+-- Split models name moving pieces "<Region>_<Group>" (Body_Head, Accent_Tail, Belly_Jaw) and carry
+-- hidden "Joint_<Group>" markers at each pivot. Colour and mutation logic only cares about the region.
+local function Region(o: Instance): string
+    return (o.Name:match("^(%a+)")) or o.Name
+end
+DinoModels.Region = Region
+
 local function P(oModel: Model, sName: string, vSize: Vector3, cf: CFrame, cColor: Color3, eShape: Enum.PartType?): Part
     local o = Instance.new("Part")
     o.Name = sName
@@ -130,7 +137,8 @@ local function ApplyMutation(oModel: Model, sMutation: string)
     if sMutation == "Normal" then return end
     local cTint = Theme.Mutation[sMutation]
     for _, o in oModel:GetDescendants() do
-        if o:IsA("BasePart") and not o.Name:match("^Eye") and o.Name ~= "Pupil" then
+        local sR = Region(o)
+        if o:IsA("BasePart") and not sR:match("^Eye") and sR ~= "Pupil" and sR ~= "Joint" then
             if sMutation == "Golden" then
                 o.Color = o.Color:Lerp(cTint, 0.75)
                 o.Material = Enum.Material.Foil
@@ -139,9 +147,9 @@ local function ApplyMutation(oModel: Model, sMutation: string)
                 o.Material = Enum.Material.Ice
             elseif sMutation == "Magma" then
                 -- Charred black rock with glowing lava on the belly, stripes, crests and sails.
-                local bGlow = o.Name == "Accent" or o.Name == "Belly" or o.Name:match("Stripe") or o.Name:match("Crest") or o.Name:match("Sail") or o.Name:match("Tail2") or o.Name:match("Plates") or o.Name:match("Frill")
+                local bGlow = sR == "Accent" or sR == "Belly" or o.Name:match("Stripe") or o.Name:match("Crest") or o.Name:match("Sail") or o.Name:match("Tail2") or o.Name:match("Plates") or o.Name:match("Frill")
                 if bGlow then
-                    o.Color = if o.Name == "Belly" then Color3.fromHex("FF8A1F") else cTint
+                    o.Color = if sR == "Belly" then Color3.fromHex("FF8A1F") else cTint
                     o.Material = Enum.Material.Neon
                 else
                     o.Color = Color3.fromHex("231A18")
@@ -149,10 +157,10 @@ local function ApplyMutation(oModel: Model, sMutation: string)
                 end
             elseif sMutation == "Toxic" then
                 -- Radioactive lime with glowing green markings and a sickly yellow belly.
-                if o.Name == "Accent" then
+                if sR == "Accent" then
                     o.Color = Color3.fromHex("7CFF2E")
                     o.Material = Enum.Material.Neon
-                elseif o.Name == "Belly" then
+                elseif sR == "Belly" then
                     o.Color = Color3.fromHex("E6FF5C")
                 else
                     o.Color = Color3.fromHex("8BE01E"):Lerp(o.Color, 0.15)
@@ -161,7 +169,7 @@ local function ApplyMutation(oModel: Model, sMutation: string)
                 o.Color = o.Color:Lerp(Color3.fromHex("2A1050"), 0.75)
                 o.Material = Enum.Material.Glass
                 o.Reflectance = 0.1
-                if o.Name == "Accent" then
+                if sR == "Accent" then
                     -- Glowing pink markings, like the cosmic aura.
                     o.Color = Color3.fromHex("FF5EDB")
                     o.Material = Enum.Material.Neon
@@ -216,7 +224,12 @@ function DinoModels.Build(tDino: { Species: string, Size: string, Mutation: stri
                 o.Material = Enum.Material.SmoothPlastic
                 o.Name = o.Name:gsub("%.%d+$", "") -- Blender duplicate-name suffixes ("Body.001")
                 -- v2 models have separate legs (LegL/LegR, LegFL/LegFR/LegBL/LegBR) coloured like the body.
-                o.Color = tRegionColours[o.Name] or (if o.Name:match("^Leg") then tRegionColours.Body else o.Color)
+                local sR = Region(o)
+                o.Color = tRegionColours[sR] or (if sR:match("^Leg") then tRegionColours.Body else o.Color)
+                if sR == "Joint" then
+                    o.Transparency = 1
+                    o.CastShadow = false
+                end
             end
         end
         local _, vSize = oModel:GetBoundingBox()
@@ -236,7 +249,9 @@ end
 -- Rest-pose data per model, captured the first time it's placed: the pivot's height above
 -- the feet (so swinging legs can't change it and bob the dino) and each leg's offset and hip.
 type LegRest = { oPart: BasePart, cfRel: CFrame, vHip: Vector3, nPhase: number }
-local tRest: { [Model]: { nAboveFeet: number, tLegs: { LegRest } } } = setmetatable({}, { __mode = "k" }) :: any
+-- Moving pieces of split models: each group's parts (offsets from the pivot) and its joint.
+type GroupRest = { vJoint: Vector3, tParts: { { oPart: BasePart, cfRel: CFrame } } }
+local tRest: { [Model]: { nAboveFeet: number, tLegs: { LegRest }, tGroups: { [string]: GroupRest } } } = setmetatable({}, { __mode = "k" }) :: any
 
 -- Diagonal pairs move together on quadrupeds; left/right alternate on bipeds.
 local LEG_PHASE = { LegL = 0, LegR = math.pi, LegFL = 0, LegBR = 0, LegFR = math.pi, LegBL = math.pi }
@@ -246,7 +261,7 @@ local function Rest(oModel: Model)
     if t then return t end
     local cfBox, vSize = oModel:GetBoundingBox()
     local cfPivot = oModel:GetPivot()
-    t = { nAboveFeet = cfPivot.Position.Y - (cfBox.Position.Y - vSize.Y / 2), tLegs = {} }
+    t = { nAboveFeet = cfPivot.Position.Y - (cfBox.Position.Y - vSize.Y / 2), tLegs = {}, tGroups = {} }
     for _, o in oModel:GetChildren() do
         if o:IsA("BasePart") and LEG_PHASE[o.Name] then
             -- Hip: near the top of the leg mesh, where it joins the body.
@@ -254,8 +269,57 @@ local function Rest(oModel: Model)
             table.insert(t.tLegs, { oPart = o, cfRel = cfPivot:ToObjectSpace(o.CFrame), vHip = cfPivot:PointToObjectSpace(vHipWorld), nPhase = LEG_PHASE[o.Name] })
         end
     end
+    -- Split pieces: a group exists only when its Joint_<Group> marker shipped with the model.
+    for _, o in oModel:GetChildren() do
+        local sJoint = o:IsA("BasePart") and o.Name:match("^Joint_(%a+)$")
+        if sJoint then
+            t.tGroups[sJoint] = { vJoint = cfPivot:PointToObjectSpace(o.Position), tParts = {} }
+        end
+    end
+    for _, o in oModel:GetChildren() do
+        local sGroup = o:IsA("BasePart") and Region(o) ~= "Joint" and o.Name:match("_(%a+)$")
+        local tGroup = sGroup and t.tGroups[sGroup]
+        if tGroup then
+            table.insert(tGroup.tParts, { oPart = o :: BasePart, cfRel = cfPivot:ToObjectSpace((o :: BasePart).CFrame) })
+        end
+    end
     tRest[oModel] = t
     return t
+end
+
+-- Poses the moving pieces of a split model relative to its body (call before any whole-body tilt).
+-- Angles in radians: head pitch (+ = nose up) and yaw (+ = turn left), jaw open (+ = open),
+-- tail yaw (side sway) and tail pitch (+ = up). Models without split pieces ignore this.
+export type Articulation = { HeadPitch: number?, HeadYaw: number?, Jaw: number?, TailYaw: number?, TailPitch: number? }
+function DinoModels.Articulate(oModel: Model, a: Articulation)
+    local t = Rest(oModel)
+    local tHead, tJaw, tTail = t.tGroups.Head, t.tGroups.Jaw, t.tGroups.Tail
+    if not (tHead or tTail) then return end
+    local cfPivot = oModel:GetPivot()
+    local cfHead = CFrame.identity
+    if tHead then
+        local j = tHead.vJoint
+        cfHead = CFrame.new(j) * CFrame.Angles(0, a.HeadYaw or 0, 0) * CFrame.Angles(a.HeadPitch or 0, 0, 0) * CFrame.new(-j)
+        for _, p in tHead.tParts do
+            p.oPart.CFrame = cfPivot * cfHead * p.cfRel
+        end
+    end
+    if tJaw then
+        local j = tJaw.vJoint
+        -- The jaw rides on the head, then hinges open (tip down = negative pitch in model space).
+        local cfJaw = cfHead * CFrame.new(j) * CFrame.Angles(-(a.Jaw or 0), 0, 0) * CFrame.new(-j)
+        for _, p in tJaw.tParts do
+            p.oPart.CFrame = cfPivot * cfJaw * p.cfRel
+        end
+    end
+    if tTail then
+        local j = tTail.vJoint
+        -- The tail points backwards (+Z), so lifting it is a negative pitch.
+        local cfTail = CFrame.new(j) * CFrame.Angles(0, a.TailYaw or 0, 0) * CFrame.Angles(-(a.TailPitch or 0), 0, 0) * CFrame.new(-j)
+        for _, p in tTail.tParts do
+            p.oPart.CFrame = cfPivot * cfTail * p.cfRel
+        end
+    end
 end
 
 -- Swings the legs around their hips. nPhase advances with walking; nAmount is the swing in radians (0 = standing).
@@ -323,18 +387,29 @@ local function Ease(x: number): number
 end
 
 -- Call every frame for a standing dino, right after PlaceAt(oModel, vFeet, vLook).
+-- Split models move their head, jaw and tail on top of the whole-body motion.
 function DinoModels.Idle(oModel: Model, vFeet: Vector3, vLook: Vector3, tState: IdleState)
     local nT = os.clock()
     local s = tState.nSeed
     local nH = RestHeight(oModel)
     local nScale = math.clamp(nH / 8, 0.4, 2.5)
+    local bSplit = Rest(oModel).tGroups.Head ~= nil
 
-    -- Look around: turn toward a new angle every few seconds, eased.
+    -- Look around: turn toward a new angle every few seconds, eased. Split models turn mostly
+    -- the head and a little of the body; whole-mesh models turn the whole body.
     if nT >= tState.nNextLook then
-        tState.nYawTarget = if math.random() < 0.35 then 0 else (math.random() - 0.5) * math.rad(70)
+        tState.nYawTarget = if math.random() < 0.35 then 0 else (math.random() - 0.5) * math.rad(80)
         tState.nNextLook = nT + 1.5 + math.random() * 4
     end
     tState.nYaw += (tState.nYawTarget - tState.nYaw) * 0.06
+    local nBodyYaw = if bSplit then tState.nYaw * 0.35 else tState.nYaw
+    local a: Articulation = {
+        HeadYaw = tState.nYaw * 0.65,
+        HeadPitch = math.sin(nT * 1.7 + s + 0.6) * 0.03,
+        Jaw = 0.02 + math.max(0, math.sin(nT * 1.7 + s)) * 0.03,     -- breathing through the mouth
+        TailYaw = math.sin(nT * 1.3 + s) * 0.16,                      -- lazy tail sway
+        TailPitch = math.sin(nT * 0.9 + s * 3) * 0.04,
+    }
 
     -- Breathing (slow nose rise and chest lift) and a lazy side-to-side weight shift.
     local nBreath = math.sin(nT * 1.7 + s)
@@ -343,10 +418,10 @@ function DinoModels.Idle(oModel: Model, vFeet: Vector3, vLook: Vector3, tState: 
     local nLift = (nBreath * 0.5 + 0.5) * 0.04 * nScale
     local nStride, nSwing = 0, 0
 
-    -- Occasional actions: a happy hop, a little stomp in place, or a sniff of the ground.
+    -- Occasional actions: a happy hop, a stomp in place, a sniff of the ground, or a big yawn.
     if not tState.sAction and nT >= tState.nNextAction then
         local r = math.random()
-        tState.sAction = if r < 0.4 then "Hop" elseif r < 0.75 then "Shuffle" else "Sniff"
+        tState.sAction = if r < 0.3 then "Hop" elseif r < 0.55 then "Shuffle" elseif r < 0.8 then "Sniff" else (if bSplit then "Yawn" else "Sniff")
         tState.nActionStart = nT
     end
     if tState.sAction then
@@ -357,20 +432,41 @@ function DinoModels.Idle(oModel: Model, vFeet: Vector3, vLook: Vector3, tState: 
                 nLift += k * 0.09 * nH
                 nPitch += k * 0.12
                 nStride, nSwing = math.pi / 2, 0.35 * k
+                a.HeadPitch = (a.HeadPitch :: number) + k * 0.25
+                a.TailPitch = (a.TailPitch :: number) + k * 0.35
+                a.Jaw = (a.Jaw :: number) + k * 0.25                  -- happy open mouth
             else
                 tState.sAction = nil
             end
         elseif tState.sAction == "Shuffle" then
             if u < 1.2 then
-                nStride, nSwing = u * 14, 0.28 * math.sin(math.pi * u / 1.2)
+                local k = math.sin(math.pi * u / 1.2)
+                nStride, nSwing = u * 14, 0.28 * k
                 nRoll += math.sin(u * 14) * 0.04
+                a.TailYaw = (a.TailYaw :: number) + math.sin(u * 14) * 0.25 * k
             else
                 tState.sAction = nil
             end
-        else -- Sniff: lower the head, two quick sniffs, back up
+        elseif tState.sAction == "Sniff" then -- lower the head, two quick sniffs, back up
             if u < 1.6 then
                 local k = Ease(u / 0.4) * (1 - Ease((u - 1.2) / 0.4))
-                nPitch -= k * 0.18 + k * math.max(0, math.sin(u * 22)) * 0.025
+                local nSniff = k * math.max(0, math.sin(u * 22))
+                if bSplit then
+                    nPitch -= k * 0.06
+                    a.HeadPitch = (a.HeadPitch :: number) - k * 0.5 - nSniff * 0.06
+                    a.TailPitch = (a.TailPitch :: number) + k * 0.15
+                else
+                    nPitch -= k * 0.18 + nSniff * 0.025
+                end
+            else
+                tState.sAction = nil
+            end
+        else -- Yawn: head tips back, jaw opens wide, slowly closes
+            if u < 1.8 then
+                local k = Ease(u / 0.5) * (1 - Ease((u - 1.2) / 0.6))
+                a.HeadPitch = (a.HeadPitch :: number) + k * 0.35
+                a.Jaw = (a.Jaw :: number) + k * 0.55
+                nPitch += k * 0.04
             else
                 tState.sAction = nil
             end
@@ -381,31 +477,54 @@ function DinoModels.Idle(oModel: Model, vFeet: Vector3, vLook: Vector3, tState: 
     end
 
     DinoModels.Pose(oModel, nStride, nSwing)
-    TiltAboutFeet(oModel, vFeet, vLook, nPitch, tState.nYaw, nRoll, nLift)
+    DinoModels.Articulate(oModel, a)
+    TiltAboutFeet(oModel, vFeet, vLook, nPitch, nBodyYaw, nRoll, nLift)
+end
+
+-- Walking pose for the moving pieces (tail swings with the stride, head bobs). Call after Pose.
+function DinoModels.WalkArticulate(oModel: Model, nStride: number)
+    DinoModels.Articulate(oModel, {
+        HeadPitch = math.sin(nStride * 2) * 0.05,
+        TailYaw = math.sin(nStride) * 0.22,
+        TailPitch = 0.05,
+        Jaw = 0.03,
+    })
 end
 
 -- Catch reveal: pop out with a bounce, rear back and roar with a shake and stamping feet.
+-- Split models throw the head back, open the jaw wide and lash the tail.
 -- Call every frame right after PlaceAt; u = seconds since the dino appeared. Returns true once done.
 function DinoModels.Roar(oModel: Model, vFeet: Vector3, vLook: Vector3, u: number): boolean
     local nH = RestHeight(oModel)
+    local bSplit = Rest(oModel).tGroups.Head ~= nil
     local nPitch, nRoll, nLift, nStride, nSwing = 0, 0, 0, 0, 0
+    local a: Articulation = {}
     if u < 0.45 then                       -- pop out of the ground with a bounce
         local k = math.sin(math.pi * u / 0.45)
         nLift = k * 0.25 * nH
         nPitch = k * 0.15
         nStride, nSwing = math.pi / 2, 0.4 * k
+        a.TailPitch = k * 0.4
     elseif u < 0.65 then                   -- landing squash: dip forward
-        nPitch = -math.sin(math.pi * (u - 0.45) / 0.2) * 0.08
+        local k = math.sin(math.pi * (u - 0.45) / 0.2)
+        nPitch = -k * 0.08
+        a.HeadPitch = -k * 0.15
     elseif u < 1.9 then                    -- rear back and roar, shaking
         local k = Ease((u - 0.65) / 0.3) * (1 - Ease((u - 1.55) / 0.35))
-        nPitch = k * 0.3
+        nPitch = k * (if bSplit then 0.18 else 0.3)
         nRoll = k * math.sin(u * 45) * 0.035
         nLift = k * 0.03 * nH
         nStride, nSwing = u * 18, k * 0.12
+        a.HeadPitch = k * 0.35 + k * math.sin(u * 40) * 0.04
+        a.HeadYaw = k * math.sin(u * 23) * 0.06
+        a.Jaw = k * 0.65
+        a.TailPitch = k * 0.3
+        a.TailYaw = k * math.sin(u * 20) * 0.3
     else
         return true
     end
     DinoModels.Pose(oModel, nStride, nSwing)
+    DinoModels.Articulate(oModel, a)
     TiltAboutFeet(oModel, vFeet, vLook, nPitch, 0, nRoll, nLift)
     return false
 end

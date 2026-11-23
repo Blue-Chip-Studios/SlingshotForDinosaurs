@@ -97,6 +97,9 @@ class Builder:
         self.meshes = {}
         self.eyewhite_budget = BUDGET["EyeWhite"]
         self.accent_budget = BUDGET["Accent"]
+        # Group: while set ("Head", "Jaw", "Tail"), new shapes go to "<Region>_<Group>" so the game can
+        # move that piece on its own (head turns, jaw opens, tail sways). Legs and joints are never grouped.
+        self.group = None
         coll = bpy.data.collections.get(name)
         if coll:
             for o in list(coll.objects):
@@ -111,7 +114,18 @@ class Builder:
         coll.hide_viewport = False
         self.coll = coll
 
+    def _g(self, region):
+        if not self.group or region.startswith("Leg") or region.startswith("Joint"):
+            return region
+        return f"{region}_{self.group}"
+
+    def joint(self, name, loc):
+        """Tiny marker mesh "Joint_<name>" the game reads as the pivot for that group (then hides)."""
+        bpy.ops.mesh.primitive_cube_add(size=0.04, location=tuple(loc))
+        return self._link(bpy.context.active_object, f"Joint_{name}")
+
     def _meta(self, region):
+        region = self._g(region)
         if region not in self.metas:
             data = bpy.data.metaballs.new(f"{self.name}{region}MB")
             data.resolution = self.META_RES
@@ -134,6 +148,7 @@ class Builder:
         return el
 
     def _link(self, o, region):
+        region = self._g(region)
         for c in o.users_collection:
             c.objects.unlink(o)
         self.coll.objects.link(o)
@@ -244,18 +259,27 @@ class Builder:
                 bpy.ops.object.join()
             o = bpy.context.active_object
             # Triangle budget per region (legs share one budget each).
-            budget = BUDGET["Leg"] if region.startswith("Leg") else BUDGET.get(region, 300)
-            if region == "Accent":
+            base, _, group = region.partition("_")
+            budget = BUDGET["Leg"] if base.startswith("Leg") else BUDGET.get(base, 300)
+            if base == "Accent":
                 budget = self.accent_budget
-            if region == "EyeWhite":
+            if base == "EyeWhite":
                 budget = self.eyewhite_budget
+            if base == "Joint":
+                budget = 10 ** 6
+            elif group or "Body_Head" in regions:
+                # Split models: share the region budget out between the body and its moving pieces.
+                share = {"": {"Body": 0.7}, "Head": {"Body": 0.32, "Belly": 0.5, "Accent": 0.6, "EyeWhite": 1.0, "Pupil": 1.0},
+                         "Jaw": {"Body": 0.1, "Belly": 0.45, "Accent": 0.3, "EyeWhite": 0.4},
+                         "Tail": {"Body": 0.25, "Belly": 0.3, "Accent": 0.5, "EyeWhite": 0.5}}
+                budget = int(budget * share.get(group, {}).get(base, 1.0 if not group else 0.4))
             tris = _tris(o)
             if tris > budget:
                 dec = o.modifiers.new("Decimate", "DECIMATE")
                 dec.ratio = budget / tris
                 bpy.ops.object.modifier_apply(modifier=dec.name)
                 # Relax decimation facets on the big soft regions only (smoothing would melt horns/teeth/frills).
-            if tris > budget and (region in ("Body", "Belly") or region.startswith("Leg")):
+            if tris > budget and (base in ("Body", "Belly") or base.startswith("Leg")):
                 sm = o.modifiers.new("Smooth", "SMOOTH")
                 sm.factor = 0.6
                 sm.iterations = 3
@@ -298,6 +322,11 @@ def theropod(b, s):
     b.chain("Body", [(0, -0.55, 2.75), tuple(neck_mid), tuple(neck_top)], [0.55 * w, 0.5 * w, 0.45 * w * hs ** 0.3])
     H = neck_top + Vector((0, -0.45 * hs, 0.32 * hs))
     hl, hd = s.get("head_len", 1.0), s.get("head_deep", 1.0)   # skull length / depth (predator silhouettes)
+    # Everything from here to the ornaments is the Head piece (turns about the top of the neck);
+    # the lower jaw is its own Jaw piece (hinged at the back of the mouth) so it can open on a roar.
+    b.joint("Head", neck_top + Vector((0, 0.05 * hs, 0.05 * hs)))
+    b.joint("Jaw", H + Vector((0, 0.02 * hs * hl, -0.3 * hs * hd)))
+    b.group = "Head"
     b.ball("Body", tuple(H), (0.6 * hs * w ** 0.5, 0.75 * hs * hl, 0.56 * hs * hd))          # cranium
     snout = H + Vector((0, -0.78 * hs * hl, -0.08 * hs))
     b.ball("Body", tuple(snout), (0.48 * hs, 0.62 * hs * hl, 0.38 * hs * hd))                # upper snout
@@ -305,19 +334,25 @@ def theropod(b, s):
     if s.get("jaw_open"):
         # Roaring: lower jaw dropped and tipped down, dark-red mouth inside, bottom teeth pointing up.
         jaw = jaw + Vector((0, 0.05 * hs, -0.2 * hs))
-        b.ball("Belly", tuple(jaw), (0.44 * hs, 0.66 * hs * hl, 0.17 * hs), rot=(16, 0, 0))
         b.ball("Accent", tuple(H + Vector((0, -0.5 * hs * hl, -0.4 * hs * hd))), (0.34 * hs, 0.42 * hs * hl, 0.2 * hs))
+        b.group = "Jaw"
+        b.ball("Belly", tuple(jaw), (0.44 * hs, 0.66 * hs * hl, 0.17 * hs), rot=(16, 0, 0))
         for side in (-1, 1):
             for i in range(3):
                 base = jaw + Vector((side * 0.3 * hs, (-0.05 - 0.2 * i) * hs * hl, 0.06 * hs - 0.06 * i * hs))
                 b.cone("EyeWhite", tuple(base), (0, 0, 1), 0.05 * hs, 0.15 * hs, verts=6)
+        b.group = "Head"
     else:
+        b.group = "Jaw"
         b.ball("Belly", tuple(jaw), (0.44 * hs, 0.66 * hs * hl, 0.17 * hs))                  # lower jaw (smile line)
+        b.group = "Head"
     sn = s.get("snout", 1.0)
     if sn != 1.0:
         # Long croc snout (Spinosaurus, Baryonyx): extra narrow snout and jaw reaching forward.
         b.ball("Body", tuple(snout + Vector((0, -0.6 * hs * (sn - 1) - 0.3 * hs, -0.05 * hs))), (0.32 * hs, 0.7 * hs * sn, 0.27 * hs))
+        b.group = "Jaw"
         b.ball("Belly", tuple(jaw + Vector((0, -0.6 * hs * (sn - 1) - 0.3 * hs, 0.05 * hs))), (0.3 * hs, 0.72 * hs * sn, 0.13 * hs))
+        b.group = "Head"
     if s.get("bill"):
         # Duck bill (hadrosaurs): broad flat beak in the belly colour.
         b.ball("Belly", tuple(snout + Vector((0, -0.45 * hs, -0.12 * hs))), (0.5 * hs, 0.55 * hs, 0.2 * hs))
@@ -372,23 +407,31 @@ def theropod(b, s):
     if s.get("helmet"):             # Corythosaurus: tall rounded helmet crest
         # half buried in the skull so it reads as a tall fin-shaped helmet, not a ball on top
         b.plate("Accent", tuple(top + Vector((0, 0.0, -0.22 * hs))), (0.1 * hs, 0.62 * hs, 0.72 * hs))
+    b.group = None
     # Long tapered tail with a slight lift.
     pts = [(0, 1.2, 2.2), (0, 2.1 * tl, 2.35), (0, 3.0 * tl, 2.45), (0, 3.8 * tl, 2.5), (0, 4.4 * tl, 2.52)]
+    b.joint("Tail", (0, 1.35, 2.25))
+    b.group = "Tail"
     tail = b.chain("Body", pts, [0.62 * w, 0.42 * w, 0.26 * w, 0.14 * w, 0.06 * w], squash=0.92)
+    b.group = None
     # Back stripes in Accent, sitting on the torso and tail tops.
     n = s.get("stripes", 0)
     if n:
         spots = [(Vector((0, -0.35, 3.18)), 0.62 * w), (Vector((0, 0.3, 3.08)), 0.66 * w), (Vector((0, 0.95, 2.92)), 0.6 * w)]
         spots += [(p + Vector((0, 0, r * 0.88)), r) for p, r in tail[2:len(tail) - 2:max(1, len(tail) // 6)]]
-        for p, r in spots[:n + 2]:
+        for i, (p, r) in enumerate(spots[:n + 2]):
+            b.group = "Tail" if i >= 3 else None
             b.ball("Accent", tuple(p), (r * 0.95, 0.11, 0.12))
+        b.group = None
     if s.get("back_spikes"):
         # Giganotosaurus: a row of short spikes down the spine, shrinking along the tail.
         spine = [Vector((0, -0.35, 3.12)), Vector((0, 0.3, 3.02)), Vector((0, 0.95, 2.86))]
         spine += [p + Vector((0, 0, r * 0.8)) for p, r in tail[1:-3:max(1, len(tail) // 7)]]
         for i, p in enumerate(spine[:9]):
             k = 1 - i / 10
+            b.group = "Tail" if i >= 3 else None
             b.cone("Accent", tuple(p), (0, 0.35, 1), 0.14 * w * k, 0.42 * w * k, verts=6)
+        b.group = None
     if s.get("osteoderms"):
         # Carnotaurus: rows of knobbly armour bumps down both flanks.
         for side in (-1, 1):
@@ -458,9 +501,14 @@ def ceratopsian(b, s):
     b.ball("Body", (0, 1.3, 2.0), (1.05, 0.9, 0.95))
     b.ball("Belly", (0, 0.15, 1.5), (1.05, 1.55, 0.6))
     H = Vector((0, -1.95, 1.85))
+    b.joint("Head", H + Vector((0, 0.65, 0.05)))
+    b.joint("Jaw", H + Vector((0, -0.1, -0.45)))
+    b.group = "Head"
     b.ball("Body", tuple(H), (0.82, 0.95, 0.74))
     b.ball("Body", tuple(H + Vector((0, -0.75, -0.25))), (0.52, 0.6, 0.46))
+    b.group = "Jaw"
     b.ball("Belly", tuple(H + Vector((0, -0.62, -0.58))), (0.46, 0.55, 0.2))
+    b.group = "Head"
     b.cone("Accent", tuple(H + Vector((0, -1.1, -0.35))), (0, -0.9, -0.42), 0.26, 0.45)       # beak
     # Frill leaning back. horns: "tri" (Triceratops), "none" (Protoceratops: small frill, no horns),
     # "styraco" (Styracosaurus: long spikes round the frill and one big nose horn).
@@ -487,7 +535,11 @@ def ceratopsian(b, s):
     for side in (-1, 1):
         _eye(b, H + Vector((side * 0.66, -0.25, 0.15)), 0.25, side)
     # Tapered tail.
+    b.group = None
+    b.joint("Tail", (0, 1.95, 1.95))
+    b.group = "Tail"
     b.chain("Body", [(0, 2.0, 1.95), (0, 3.0, 1.75), (0, 3.9, 1.5), (0, 4.5, 1.32)], [0.62, 0.38, 0.18, 0.07], squash=0.9)
+    b.group = None
     # Back spots.
     if s.get("spots"):
         for (x, y) in ((-0.45, -0.6), (0.4, -0.2), (-0.3, 0.45), (0.5, 0.85), (-0.1, 1.35), (0.15, -1.0)):
@@ -507,11 +559,17 @@ def ankylosaur(b, s):
     b.ball("Body", (0, 0.3, 1.55), (1.45, 1.95, 0.82))
     b.ball("Belly", (0, 0.25, 1.05), (1.2, 1.65, 0.45))
     H = Vector((0, -2.05, 1.35))
+    b.joint("Head", H + Vector((0, 0.55, 0.05)))
+    b.joint("Jaw", H + Vector((0, -0.2, -0.25)))
+    b.group = "Head"
     b.ball("Body", tuple(H), (0.7, 0.72, 0.52))
+    b.group = "Jaw"
     b.ball("Belly", tuple(H + Vector((0, -0.55, -0.25))), (0.45, 0.35, 0.18))
+    b.group = "Head"
     for side in (-1, 1):
         _eye(b, H + Vector((side * 0.52, -0.25, 0.2)), 0.17, side)
         b.cone("Accent", tuple(H + Vector((side * 0.55, 0.25, 0.25))), (side * 0.8, 0.4, 0.3), 0.12, 0.35, verts=6)   # head horns
+    b.group = None
     # Rows of armour spikes over the back (top of the body ellipsoid) and spikes along the sides.
     for row in range(5):
         y = -1.15 + row * 0.6
@@ -521,10 +579,13 @@ def ankylosaur(b, s):
         for side in (-1, 1):
             b.cone("EyeWhite", (side * 1.85, y, 1.45), (side, 0.15, 0.1), 0.14, 0.45, verts=6)
     # Tail and club.
+    b.joint("Tail", (0, 2.15, 1.45))
+    b.group = "Tail"
     b.chain("Body", [(0, 2.2, 1.45), (0, 3.1, 1.3), (0, 3.9, 1.2)], [0.55, 0.32, 0.18], squash=0.8)
     b.ball("Accent", (0, 4.25, 1.2), (0.5, 0.42, 0.34))
     for side in (-1, 1):
         b.ball("Accent", (side * 0.38, 4.15, 1.2), (0.28, 0.3, 0.26))
+    b.group = None
     for name, x, y in (("LegFL", -1.0, -0.95), ("LegFR", 1.0, -0.95), ("LegBL", -1.05, 1.45), ("LegBR", 1.05, 1.45)):
         b.ball(name, (x, y, 0.85), (0.4, 0.42, 0.45))
         b.ball(name, (x, y, 0.38), (0.32, 0.34, 0.36))
@@ -559,23 +620,39 @@ def sauropod(b, s):
         for p, r in neck_pts[1::2]:
             for side in (-1, 1):
                 b.cone("Accent", tuple(p + Vector((side * 0.18, 0, r * 0.6))), (side * 0.25, 0.2, 1), 0.09, 1.0, verts=6)
+    b.joint("Head", Vector(neck[-1]) + Vector((0, -0.1, 0.05)))
+    b.joint("Jaw", H + Vector((0, 0.05, -0.2)))
+    b.group = "Head"
     b.ball("Body", tuple(H), (0.48, 0.62, 0.42))
+    b.group = "Jaw"
     b.ball("Belly", tuple(H + Vector((0, -0.35, -0.25))), (0.38, 0.42, 0.15))
+    b.group = "Head"
     if style == "up":
         b.ball("Body", tuple(H + Vector((0, -0.05, 0.3))), (0.32, 0.4, 0.3))        # smooth nasal arch (skin, not a hat)
     for side in (-1, 1):
         _eye(b, H + Vector((side * 0.38, -0.1, 0.18)), 0.17, side)
+    b.group = None
     if style == "low":  # long whip tail
+        b.joint("Tail", (0, 2.25, 3.05))
+        b.group = "Tail"
         tail_pts = b.chain("Body", [(0, 2.3, 3.1), (0, 3.8, 3.0), (0, 5.3, 2.7), (0, 6.8, 2.4), (0, 8.0, 2.2)], [0.75, 0.5, 0.3, 0.14, 0.05], squash=0.9)
+        b.group = None
         # Bold bands over the back and tail, and a row of little dorsal spikes down the neck and tail.
         for y in (-0.85, -0.05, 0.75, 1.55):
             b.ball("Accent", (0, y, 4.3 - 0.12 * abs(y - 0.3)), (1.2, 0.17, 0.42))
+        b.group = "Tail"
         for p, r in tail_pts[2:len(tail_pts) - 3:3]:
             b.ball("Accent", tuple(p + Vector((0, 0, r * 0.25))), (r * 1.05, 0.14, r * 0.9))
-        for p, r in (neck_pts[1::2] + tail_pts[1:len(tail_pts) - 2:2]):
+        for p, r in tail_pts[1:len(tail_pts) - 2:2]:
+            b.cone("Accent", tuple(p + Vector((0, 0, r * 0.75))), (0, 0.25, 1), 0.08, 0.32, verts=5)
+        b.group = None
+        for p, r in neck_pts[1::2]:
             b.cone("Accent", tuple(p + Vector((0, 0, r * 0.75))), (0, 0.25, 1), 0.08, 0.32, verts=5)
     else:
+        b.joint("Tail", (0, 2.25, 3.0))
+        b.group = "Tail"
         b.chain("Body", [(0, 2.3, 3.0), (0, 3.6, 2.6), (0, 4.8, 2.2), (0, 5.7, 1.9)], [0.75, 0.45, 0.22, 0.08], squash=0.9)
+        b.group = None
     # Spots down the back and neck.
     spots = ((-0.6, 4.55), (0.2, 4.5), (1.0, 4.3), (-1.75, 5.0), (-2.1, 6.4)) if style == "up" else (((-0.6, 4.45), (0.2, 4.5), (1.0, 4.35)) if style == "spines" else ())
     for (y, z) in spots:
@@ -607,11 +684,20 @@ def stegosaur(b, s):
     b.ball("Belly", (0, 0.2, 1.55), (0.95, 1.55, 0.55), rot=(12, 0, 0))
     b.chain("Body", [(0, -1.2, 1.9), (0, -2.0, 1.45)], [0.6, 0.42])
     H = Vector((0, -2.55, 1.3))
+    b.joint("Head", H + Vector((0, 0.45, 0.05)))
+    b.joint("Jaw", H + Vector((0, -0.1, -0.18)))
+    b.group = "Head"
     b.ball("Body", tuple(H), (0.45, 0.6, 0.4))
+    b.group = "Jaw"
     b.ball("Belly", tuple(H + Vector((0, -0.4, -0.2))), (0.36, 0.42, 0.15))
+    b.group = "Head"
     for side in (-1, 1):
         _eye(b, H + Vector((side * 0.34, -0.15, 0.14)), 0.17, side)
+    b.group = None
+    b.joint("Tail", (0, 2.15, 2.4))
+    b.group = "Tail"
     tail = b.chain("Body", [(0, 2.2, 2.4), (0, 3.2, 2.1), (0, 4.1, 1.75), (0, 4.8, 1.5)], [0.6, 0.38, 0.2, 0.09], squash=0.9)
+    b.group = None
     # Back plates: alternating rows following the arch, tallest over the hips.
     for i in range(9):
         t = i / 8
@@ -626,9 +712,11 @@ def stegosaur(b, s):
             b.plate("Accent", (side * 0.16, y, hump + size * 0.45 * sc), (0.08, size * 0.42 * sc, size * 0.85 * sc), rot=(0, side * 8, 0))
     # Tail spikes (thagomizer).
     p, r = tail[-3]
+    b.group = "Tail"
     for side in (-1, 1):
         for k in (0, 1):
             b.cone("EyeWhite", tuple(p + Vector((side * r * 0.6, k * 0.45, r * 0.4))), (side, 0.25, 0.55), 0.1, 0.8, verts=6)
+    b.group = None
     if kentro:  # shoulder spikes
         for side in (-1, 1):
             b.cone("EyeWhite", (side * 1.1, -0.6, 2.0), (side, -0.1, 0.25), 0.13, 1.0, verts=6)
@@ -650,6 +738,8 @@ def flyer(b, s):
     neck_top = Vector((0, -0.7, 3.4 + 0.25 * s.get("neck", 0)))
     b.chain("Body", [(0, -0.35, 2.75), tuple(neck_top)], [0.32, 0.24])
     H = neck_top + Vector((0, -0.2, 0.25))
+    b.joint("Head", neck_top + Vector((0, 0.02, 0.02)))
+    b.group = "Head"
     b.ball("Body", tuple(H), (0.36, 0.45, 0.36))
     beak_len = 0.55 if bird else 1.25
     b.cone("Belly" if bird else "Accent", tuple(H + Vector((0, -0.25, -0.05))), (0, -1, -0.12), 0.2, beak_len, verts=10)
@@ -661,6 +751,7 @@ def flyer(b, s):
         b.cone("Accent", tuple(H + Vector((0, 0.15, 0.15))), (0, 0.85, 0.5), 0.17, 1.2 * crest, verts=8)
     for side in (-1, 1):
         _eye(b, H + Vector((side * 0.27, -0.12, 0.12)), 0.15, side)
+    b.group = None
     # Wings spread and raised: arm bones (shoulder -> elbow -> wrist -> long wing finger) with skin
     # stretched from the whole arm back to the hip, sagging between, like a real pterosaur wing.
     # bird=True: the same wing shape, finished with a row of long feathers along the trailing edge.
@@ -705,6 +796,8 @@ def bird_flyer(b, s):
     b.ball("Belly", (0, -0.2, 1.88), (0.45, 0.62, 0.45), rot=(-15, 0, 0))
     b.chain("Body", [(0, -0.6, 2.3), (0, -0.95, 2.75), (0, -1.05, 3.1)], [0.32, 0.25, 0.23])
     H = Vector((0, -1.22, 3.32))
+    b.joint("Head", Vector((0, -1.05, 3.12)))
+    b.group = "Head"
     b.ball("Body", tuple(H), (0.34, 0.42, 0.33))
     b.cone("Belly", tuple(H + Vector((0, -0.28, -0.08))), (0, -1, -0.15), 0.17, 0.5, verts=10)
     for i in range(3):
@@ -713,6 +806,7 @@ def bird_flyer(b, s):
         b.cone("Accent", tuple(H + Vector((0, 0.1 + 0.08 * k, 0.24 - 0.04 * k))), (0, 0.9, 0.45 - 0.15 * k), 0.07, 0.42 - 0.06 * k, verts=6)
     for side in (-1, 1):
         _eye(b, H + Vector((side * 0.25, -0.1, 0.08)), 0.15, side)
+    b.group = None
     for side in (-1, 1):
         sh = Vector((side * 0.42, -0.35, 2.4))
         el = sh + Vector((side * 0.8, 0.1, 0.55))           # wings raised up and out (display pose)
@@ -727,12 +821,15 @@ def bird_flyer(b, s):
             base = el.lerp(wr, t) if t > 0.33 else sh.lerp(el, 0.4 + t * 1.8)
             ln = 0.42 + 0.33 * t
             b.plate("Accent", tuple(base + Vector((side * 0.06 * t, ln * 0.85, -0.1))), (0.11, ln, 0.035), rot=(-10, 0, side * (8 + 22 * t)))
+    b.joint("Tail", (0, 0.95, 2.05))
+    b.group = "Tail"
     tail = b.chain("Body", [(0, 1.0, 2.05), (0, 1.8, 2.1), (0, 2.6, 2.15)], [0.2, 0.11, 0.06])
     for k in range(7):
         y = 1.15 + 0.24 * k
         for side in (-1, 1):
             b.plate("Accent", (side * 0.2, y + 0.05, 2.12), (0.24 - 0.01 * k, 0.09, 0.03), rot=(0, 0, side * (-25 + 3 * k)))
     b.plate("Accent", (0, 2.85, 2.15), (0.16, 0.32, 0.03))
+    b.group = None
     for side, name in ((-1, "LegL"), (1, "LegR")):
         x = side * 0.32
         b.chain(name, [(x, 0.4, 1.8), (x, 0.05, 1.05), (x, 0.3, 0.25)], [0.22, 0.14, 0.1])
@@ -753,7 +850,7 @@ def build(species):
     objs = b.finish()
     cols = {"Body": s["body"], "Belly": s["belly"], "Accent": s["accent"], "EyeWhite": "F7F3E8", "Pupil": "141218"}
     for region, o in objs.items():
-        rgb = _hex(cols.get(region, s["body"]))
+        rgb = _hex(cols.get(region.partition("_")[0], s["body"]))
         mat = bpy.data.materials.get(f"DV2_{species}_{region}") or bpy.data.materials.new(f"DV2_{species}_{region}")
         mat.use_nodes = True
         bsdf = mat.node_tree.nodes["Principled BSDF"]

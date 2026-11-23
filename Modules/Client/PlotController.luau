@@ -216,6 +216,7 @@ function mPlot.StartAsync(self)
                     if tw.vTarget then
                         DinoModels.PlaceAt(t.oModel, tw.vPos + Vector3.new(0, nBob, 0), t.vLook)
                         DinoModels.Pose(t.oModel, nStride, nSwing)
+                        DinoModels.WalkArticulate(t.oModel, nStride)
                         if nRoll ~= 0 then
                             t.oModel:PivotTo(t.oModel:GetPivot() * CFrame.Angles(0, 0, nRoll))
                         end

@@ -10,38 +10,39 @@
 ]]
 
 return {
-    -- Dinosaur models: MeshParts named Body / Belly / Accent / EyeWhite / Pupil, facing -Z.
+    -- Dinosaur models: MeshParts named Body / Belly / Accent / EyeWhite / Pupil / Leg*, facing -Z.
+    -- v7+: moving pieces are "<Region>_Head", "_Jaw" or "_Tail", pivoting on hidden "Joint_<Group>" markers.
     Dinos = {
-        Compy = 102197810471210, -- v5 (lower eyes)
-        Velociraptor = 102759722365393, -- v5 (lower eyes)
-        Parasaurolophus = 95829245190070, -- v5 (lower eyes)
-        Dilophosaurus = 94807231373210, -- v5 (lower eyes)
-        Baryonyx = 136649788262954, -- v5 (lower eyes)
-        Spinosaurus = 103265499992461, -- v5 (lower eyes)
-        Pachycephalosaurus = 105657181208915, -- v5 (lower eyes)
-        Ankylosaurus = 77953219734439, -- v2
-        Triceratops = 121257269740875, -- v2
-        Cryolophosaurus = 130787204723420, -- v5 (predator silhouettes)
-        Therizinosaurus = 113582516622719, -- v5 (lower eyes)
-        Brachiosaurus = 130829217723682, -- v6 (sauropod legs / bird pose)
-        Carnotaurus = 110466577490577, -- v5 (predator silhouettes)
-        Giganotosaurus = 111371701237174, -- v5 (predator silhouettes)
-        TRex = 80838018752271, -- v5 (predator silhouettes)
-        Protoceratops = 103452986132565, -- v2
-        Gallimimus = 123479625632359, -- v5 (lower eyes)
-        Stegosaurus = 112169800287147, -- v2
-        Iguanodon = 112618879065216, -- v5 (lower eyes)
-        Corythosaurus = 72471091667800, -- v5 (lower eyes)
-        Ouranosaurus = 104048721421044, -- v5 (lower eyes)
-        Allosaurus = 109177964894011, -- v5 (predator silhouettes)
-        Styracosaurus = 79021982595781, -- v2
-        Diplodocus = 139324583483712, -- v6 (sauropod legs / bird pose)
-        Microraptor = 88486715413084, -- v5 (lower eyes)
-        Kentrosaurus = 105056901181021, -- v2
-        Amargasaurus = 89423638834076, -- v6 (sauropod legs / bird pose)
-        Pteranodon = 93632854399722, -- v4 (review loop)
-        Archaeopteryx = 140347657320317, -- v6 (sauropod legs / bird pose)
-        Quetzalcoatlus = 112969036373880, -- v4 (review loop)
+        Compy = 96176021548533, -- v7 (split head / jaw / tail)
+        Velociraptor = 83849622134660, -- v7 (split head / jaw / tail)
+        Parasaurolophus = 100323812443752, -- v7 (split head / jaw / tail)
+        Dilophosaurus = 107792734637786, -- v7 (split head / jaw / tail)
+        Baryonyx = 140110573545911, -- v7 (split head / jaw / tail)
+        Spinosaurus = 74792799411980, -- v7 (split head / jaw / tail)
+        Pachycephalosaurus = 87909488562632, -- v7 (split head / jaw / tail)
+        Ankylosaurus = 124863246785583, -- v7 (split head / jaw / tail)
+        Triceratops = 140298623344723, -- v7 (split head / jaw / tail)
+        Cryolophosaurus = 115629973545362, -- v7 (split head / jaw / tail)
+        Therizinosaurus = 81255598468027, -- v7 (split head / jaw / tail)
+        Brachiosaurus = 132903634665251, -- v7 (split head / jaw / tail)
+        Carnotaurus = 94760700922037, -- v7 (split head / jaw / tail)
+        Giganotosaurus = 119121554642058, -- v7 (split head / jaw / tail)
+        TRex = 138317218814010, -- v7 (split head / jaw / tail)
+        Protoceratops = 83610015280670, -- v7 (split head / jaw / tail)
+        Gallimimus = 88541733137652, -- v7 (split head / jaw / tail)
+        Stegosaurus = 98923249239430, -- v7 (split head / jaw / tail)
+        Iguanodon = 136887929318957, -- v7 (split head / jaw / tail)
+        Corythosaurus = 113674981370038, -- v7 (split head / jaw / tail)
+        Ouranosaurus = 113786379917731, -- v7 (split head / jaw / tail)
+        Allosaurus = 87419287582717, -- v7 (split head / jaw / tail)
+        Styracosaurus = 127220441381170, -- v7 (split head / jaw / tail)
+        Diplodocus = 114304046969788, -- v7 (split head / jaw / tail)
+        Microraptor = 123423459139230, -- v7 (split head / jaw / tail)
+        Kentrosaurus = 74487861058264, -- v7 (split head / jaw / tail)
+        Amargasaurus = 135045752290403, -- v7 (split head / jaw / tail)
+        Pteranodon = 82112852904836, -- v7 (split head / jaw / tail)
+        Archaeopteryx = 125046402839501, -- v7 (split head / jaw / tail)
+        Quetzalcoatlus = 73372566089137, -- v7 (split head / jaw / tail)
     },
 
     -- World props (Model assets), keyed by the names WorldBuilder.PlaceProp asks for.
