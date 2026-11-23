@@ -51,3 +51,6 @@ product 3734667604 Bait_Steak
 product 3734667613 Bait_GoldenEgg
 product 3734667622 Bait_AmberMosquito
 product 3734667631 Bait_MeteorMeat
+# Robux pets (golden / cosmic tints of the plush portraits).
+product 3735175296 Pet_GoldenRex
+product 3735175313 Pet_CosmicPtero

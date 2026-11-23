@@ -33,6 +33,14 @@ def _patch(b, region, c, size, d, r):
     b.sphere(region, tuple(_surf(c, size, d, 0.86) - n * r * 0.35), r, scale=(1, 1, 0.85))
 
 
+def _stripe(b, region, c, size, z, w=1.0):
+    """A soft band across the back (three flat discs sunk into the surface so only a thin
+    horizontal strip shows): tiger stripes for the striped predators."""
+    for x in (-0.75, 0.0, 0.75):
+        d = Vector((x * w, 1, z)).normalized()
+        b.sphere(region, tuple(_surf(c, size, d, 1.0) - d * 0.26), 1.0, scale=(0.36, 0.36, 0.085))
+
+
 def _face(b, H, cs, hs, blush=True, eye=0.13):
     """Bead eyes with a shine dot, blush cheeks. H/cs: head centre and half-extents."""
     for side in (-1, 1):
@@ -108,13 +116,22 @@ def plush_theropod(b, s):
     else:
         for side in (-1, 1):              # little nostrils
             b.sphere("Pupil", tuple(_surf(muz, ms, (side * 0.3, -1, 0.45))), 0.035 * hs)
-    if s.get("teeth") and not s.get("bill"):   # two tiny cute fangs at the front of the smile
-        for side in (-1, 1):
-            b.cone("EyeWhite", tuple(_surf(muz, ms, (side * 0.2, -1, -0.5), 0.93)), (0, -0.3, -1), 0.045 * hs, 0.11 * hs, verts=8)
+    if s.get("teeth") and not s.get("bill"):
+        # Cute fangs along the front of the smile: four for the big brow-ridged hunters, two otherwise.
+        big = s.get("brow") or s.get("head", 1.0) >= 1.1
+        xs = (-0.36, -0.13, 0.13, 0.36) if big else (-0.2, 0.2)
+        tr, tl = (0.06, 0.14) if big else (0.05, 0.13)
+        for x in xs:
+            b.cone("EyeWhite", tuple(_surf(muz, ms, (x, -1, -0.5), 0.93)), (0, -0.3, -1), tr * hs, tl * hs, verts=8)
     _face(b, H, cs, hs, eye=0.13 * min(1.15, max(0.9, s.get("eyes", 1.0))))
 
     def top(d, k=0.86):
         return _surf(H, cs, d, k)
+
+    if s.get("brow"):                     # grumpy-cute brow ridge over each eye: a row of soft bumps, inner end low
+        for side in (-1, 1):
+            for j, (x, z) in enumerate(((0.22, 0.36), (0.38, 0.42), (0.54, 0.47))):
+                b.sphere("Accent", tuple(top((side * x, -0.9, z), 0.97)), (0.075 - 0.008 * j) * hs, scale=(1.25, 1, 0.8))
 
     # ---- soft head ornaments (sized to read at game distance, ~1.4x the first pass) ----
     if s.get("head_tuft"):                # raptor feather tuft
@@ -186,6 +203,13 @@ def plush_theropod(b, s):
         for side in (-1, 1):
             for (y, z) in ((0.1, 2.0), (0.35, 1.6), (0.0, 1.35), (0.4, 2.2)):
                 b.sphere("Accent", tuple(_surf(body_c, body_s, (side * 1.0, y, z - 1.45), 0.92)), 0.14, scale=(0.8, 1, 1))
+    marks = s.get("marks")
+    if marks == "stripes":                # tiger stripes across the back
+        for z in (0.9, 0.35, -0.2):
+            _stripe(b, "Accent", body_c, body_s, z, w)
+    elif marks == "spots":                # soft round spots on the back and flanks
+        for (x, y, z) in ((-0.8, 0.6, 0.45), (0.85, 0.5, 0.1), (-0.55, 0.9, -0.25), (0.45, 0.95, 0.6), (-0.95, 0.3, -0.05), (0.7, 0.75, -0.4)):
+            _patch(b, "Accent", body_c, body_s, (x, y, z), 0.17)
     arms = s.get("arms", "normal")
     if s.get("wings"):                    # Microraptor: little feathered wings on the arms
         for side in (-1, 1):
@@ -194,18 +218,18 @@ def plush_theropod(b, s):
             for k in range(4):
                 b.plate("Accent", tuple(sh + Vector((side * (0.4 + 0.25 * k), 0.25, 0.1 - 0.15 * k))), (0.1, 0.4, 0.6 - 0.05 * k), rot=(25, side * (15 + 12 * k), 0))
     else:
-        sc = {"tiny": 0.75, "normal": 1.0, "long": 1.35}.get(arms, 1.0)
+        sc = {"tiny": 0.6, "normal": 1.0, "long": 1.35}.get(arms, 1.0)   # T-Rex arms: comically tiny
         _arms(b, w, sc)
         for side in (-1, 1):
             # raised paw: the upper-front end of the stubby arm ball (tilted 28 deg, 22 deg out)
             hand = Vector((side * (0.84 * w + 0.12 * sc), -0.32 - 0.24 * sc, 1.78 + 0.33 * sc))
-            if s.get("scythe_claws"):     # Therizinosaurus: three long soft claws
+            if s.get("scythe_claws"):     # Therizinosaurus: three long soft claws (its whole identity)
                 for j in (-1, 0, 1):
-                    b.cone("EyeWhite", tuple(hand + Vector((j * 0.07, 0, 0))), (side * 0.1 + j * 0.2, -1, 0.15), 0.05, 0.5, verts=10)
-            if s.get("thumb_claw"):       # Baryonyx: one hooked claw
-                b.cone("EyeWhite", tuple(hand), (side * 0.1, -1, 0.1), 0.06, 0.3, verts=10)
+                    b.cone("EyeWhite", tuple(hand + Vector((j * 0.09, 0, 0))), (side * 0.1 + j * 0.22, -1, 0.1), 0.075, 0.78, verts=10)
+            if s.get("thumb_claw"):       # Baryonyx: one big hooked claw
+                b.cone("EyeWhite", tuple(hand), (side * 0.1, -1, 0.15), 0.09, 0.48, verts=10)
             if s.get("thumb_spike"):      # Iguanodon: thumb spike pointing up
-                b.cone("EyeWhite", tuple(hand), (side * 0.2, -0.3, 1), 0.07, 0.28, verts=10)
+                b.cone("EyeWhite", tuple(hand), (side * 0.2, -0.3, 1), 0.11, 0.45, verts=10)
     _legs(b, w)
     if s.get("sickle"):                   # Velociraptor: raised toe claw
         for side, name in ((-1, "LegL"), (1, "LegR")):
@@ -397,18 +421,20 @@ def plush_stegosaur(b, s):
     b.group = None
     # Two staggered rows of rounded plates from the back of the head down to the tail.
     body_c, body_s = (0, 0.05, 1.45), (1.0, 0.85, 1.12)
-    for i in range(5):
-        t = i / 4
-        z = 2.85 - 1.8 * t                               # behind the head down to the hips
+    # Six plates fanning OUT from the spine (not stacked upright, which reads as one sail on an
+    # upright plush body), staggered left/right so each one shows as its own fin.
+    for i in range(6):
+        t = i / 5
+        z = 2.8 - 1.75 * t                               # behind the head down to the hips
         d = Vector((0, 0.75 + 0.25 * t, (z - 1.45) * 1.1))
-        n = (d.normalized() + Vector((0, 0, 0.9))).normalized()   # plates stand up, not out
-        size = 0.7 + 0.35 * math.sin(math.pi * min(1.0, t * 1.4))   # tall enough to show over the shoulders
+        n = (d.normalized() + Vector((0, 0.15, 0.3))).normalized()
+        size = 0.88 + 0.45 * math.sin(math.pi * min(1.0, t * 1.3))
         side = 1 if i % 2 == 0 else -1
-        root = _surf(body_c, body_s, d, 0.85) + Vector((side * 0.1, 0, 0))
+        root = _surf(body_c, body_s, d, 0.85) + Vector((side * 0.22, 0, 0))
         if kentro and t > 0.5:
             b.cone("Accent", tuple(root), tuple(n + Vector((side * 0.25, 0, 0))), 0.11, size * 1.5, verts=10)
         else:
-            b.plate("Accent", tuple(root + n * size * 0.62), (0.15, size * 0.42, size), rot=(-math.degrees(math.atan2(n.y, n.z)), 0, side * 16))
+            b.plate("Accent", tuple(root + n * size * 0.6), (0.17, size * 0.33, size), rot=(-math.degrees(math.atan2(n.y, n.z)), 0, side * 12))
     _arms(b, 1.05)
     _legs(b, 1.05)
     _tail(b, 1.0, 1.0, spikes=True)
@@ -540,6 +566,41 @@ def _ink_material():
     return m
 
 
+def _fit_camera(cam, coll, centre, span, view=(-0.62, -1.0, 0.3), margin=0.05):
+    """Frame the whole dino (feet, tail tip, wing tips) in a square shot from the 3/4 view: measure
+    the real vertices in camera space, centre them, then pull back until all fit inside the margin."""
+    from bpy_extras.object_utils import world_to_camera_view
+    scene = bpy.context.scene
+    pts = []
+    for o in coll.objects:
+        if o.type == "MESH" and not o.name.startswith("Joint") and not o.is_shadow_catcher:
+            vs = o.data.vertices
+            pts += [o.matrix_world @ vs[i].co for i in range(0, len(vs), 5)]
+    d = Vector(view).normalized()
+    look = centre.copy()
+
+    def place(dist):
+        cam.location = look + d * dist
+        cam.rotation_euler = (look - cam.location).to_track_quat("-Z", "Y").to_euler()
+        bpy.context.view_layer.update()
+        uv = [world_to_camera_view(scene, cam, p) for p in pts]
+        return min(u.x for u in uv), max(u.x for u in uv), min(u.y for u in uv), max(u.y for u in uv)
+
+    for _ in range(2):
+        x0, x1, y0, y1 = place(span * 1.2)
+        # Re-aim at the middle of what the camera sees (frame width at this distance, square frame).
+        w = 2 * span * 1.2 * math.tan(cam.data.angle / 2)
+        m = cam.matrix_world.to_3x3()
+        look += m.col[0] * ((x0 + x1) / 2 - 0.5) * w + m.col[1] * ((y0 + y1) / 2 - 0.5) * w
+    dist = span * 0.5
+    while dist < span * 4:
+        x0, x1, y0, y1 = place(dist)
+        if x0 >= margin and y0 >= margin and x1 <= 1 - margin and y1 <= 1 - margin:
+            break
+        dist *= 1.03
+    return dist
+
+
 def render_plush_portrait(species, out_dir, size=512, samples=48):
     """Index-card portrait: Cycles, soft three-light studio, fuzzy sheen, contact shadow, thin ink line."""
     coll = bpy.data.collections[species]
@@ -600,9 +661,7 @@ def render_plush_portrait(species, out_dir, size=512, samples=48):
         sol.material_offset = len(o.data.materials) - 1
         hulls.append(o)
     cam = bpy.data.objects["Camera"]
-    look = centre + Vector((0, 0, (mx.z - mn.z) * 0.08))
-    cam.location = look + Vector((-0.62, -1.0, 0.3)).normalized() * span * 1.2
-    cam.rotation_euler = (look - cam.location).to_track_quat("-Z", "Y").to_euler()
+    _fit_camera(cam, coll, centre, span)
     saved["view"] = (scene.view_settings.view_transform, scene.view_settings.look)
     scene.view_settings.view_transform = "AgX"        # AgX keeps highlights soft; Punchy keeps pastels saturated
     scene.view_settings.look = "AgX - Punchy"
