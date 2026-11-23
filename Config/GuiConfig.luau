@@ -74,6 +74,7 @@ local tValues = {
     Flying = false,
     PopupOpen = false, -- Welcome Back popup showing (blocks the HOLD button underneath)
     BounceWindowOpen = false,
+    BounceApproach = 0, -- 0 when the TAP prompt appears, 1 at the perfect moment (drives the shrinking ring)
     BounceFeedback = "", -- "Perfect" | "Good" | "OK" | "Miss" | ""
     LiveMeters = 0,
     LaunchHint = "",

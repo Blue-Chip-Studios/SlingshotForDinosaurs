@@ -48,6 +48,7 @@ type Flight = {
     Aim: number,
     Tutorial: boolean,
     LastTap: number,
+    LastBounceAt: number?,
 }
 
 local tFlights: { [Player]: Flight } = {}
@@ -283,6 +284,8 @@ local function HandleBounce(oPlayer: Player, tPayload)
     local nNow = os.clock()
     if nNow - tFlight.LastTap < 0.12 then return end -- tap spam guard
     tFlight.LastTap = nNow
+    -- Double-click safety: a second tap right after a successful bounce never burns the next window.
+    if nNow - (tFlight.LastBounceAt or -1e9) < GameConfig.Bounce.AfterBounceGrace then return end
     local nServerT = nNow - tFlight.StartedAt
     local nClientT = if typeof(tPayload.T) == "number" and tPayload.T == tPayload.T then tPayload.T else nServerT
     -- Trust the client's timestamp for quality only when it agrees with the server clock.
@@ -304,6 +307,7 @@ local function HandleBounce(oPlayer: Player, tPayload)
                 if sQuality then
                     tFlight.WindowState[i] = "Used"
                     tFlight.Bounces += 1
+                    tFlight.LastBounceAt = nNow
                     tFlight.Bonus += GameConfig.Bounce[sQuality].Bonus
                     tFlight.EndsAt += nExtra
                     local nMeters, vLanding = LandingFor(tFlight)
@@ -311,7 +315,7 @@ local function HandleBounce(oPlayer: Player, tPayload)
                     FTUEServer:Reach(oPlayer, "FirstBounce")
                     RetentionServer:OnBounce(oPlayer, sQuality)
                     AnalyticsServer:Custom(oPlayer, "Bounce", 1, AnalyticsServer:Fields(sQuality))
-                elseif nError < -nOK and nError > -1.0 then
+                elseif nError < -nOK and nError > -GameConfig.Bounce.EarlyMissFrom then
                     -- Early tap: this window is lost (stops tap-spamming through every window).
                     tFlight.WindowState[i] = "Missed"
                     oBounceResult:FireClient(oPlayer, { FlightId = tFlight.Id, Window = i, Quality = "Miss" })

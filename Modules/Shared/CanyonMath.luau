@@ -90,12 +90,22 @@ function CanyonMath.BounceWindows(nSeed: number, nStuds: number, nDuration: numb
     local oRandom = Random.new(nSeed)
     local nCount = if nStuds < 180 then 1 elseif nStuds < 700 then 2 else 3
     local nMaxFraction = GameConfig.Bounce.MaxWindowFraction
+    -- Never squeeze geysers closer than MinGap: short flights get fewer of them instead.
+    local nUsable = (nMaxFraction - 0.25) * nDuration
+    nCount = math.max(1, math.min(nCount, math.floor(nUsable / GameConfig.Bounce.MinGap) + 1))
     local tWindows = {}
     local nSlot = (nMaxFraction - 0.25) / nCount
     for i = 1, nCount do
         local nLow = 0.25 + (i - 1) * nSlot
         local nFraction = nLow + oRandom:NextNumber(0.15, 0.85) * nSlot
-        table.insert(tWindows, nFraction * nDuration)
+        local nT = nFraction * nDuration
+        local nPrev = tWindows[#tWindows]
+        if nPrev and nT - nPrev < GameConfig.Bounce.MinGap then
+            nT = nPrev + GameConfig.Bounce.MinGap
+        end
+        if nT <= nMaxFraction * nDuration then
+            table.insert(tWindows, nT)
+        end
     end
     return tWindows
 end

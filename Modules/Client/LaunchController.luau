@@ -381,22 +381,27 @@ local function Fly(tPlan)
         Store.Values.LiveMeters:set(CanyonMath.ZToMeters(vPos.Z))
         -- Bounce windows: spawn the geyser just before, open the prompt around it.
         local bOpen = false
+        local nApproach = 0
+        local nLead = GameConfig.Bounce.ApproachTime
         for i in tF.Windows do
             local nW = WindowTime(tF, i)
             local sState = tF.WindowState[i]
-            if sState == "Pending" and nT >= nW - 0.6 then
+            if sState == "Pending" and nT >= nW - math.max(0.6, nLead) then
                 tF.WindowState[i] = "Shown"
                 local vAt = SegmentPoint(tF.Segment, nW)
                 Geyser(Vector3.new(vAt.X, CanyonMath.FloorY, vAt.Z), vAt.Y)
             end
-            if (sState == "Shown" or sState == "Pending") and math.abs(nT - nW) <= GameConfig.Bounce.OK.Window + 0.05 then
+            -- Prompt from ApproachTime before the perfect moment until the OK window closes.
+            if (sState == "Shown" or sState == "Pending") and nT >= nW - nLead and nT <= nW + GameConfig.Bounce.OK.Window then
                 bOpen = true
+                nApproach = math.clamp(1 - (nW - nT) / nLead, 0, 1.3)
             end
             if sState == "Shown" and nT > nW + GameConfig.Bounce.OK.Window then
                 tF.WindowState[i] = "Gone"
             end
         end
         Store.Values.BounceWindowOpen:set(bOpen)
+        Store.Values.BounceApproach:set(nApproach)
         if nAlpha >= 1 and not tF.Landed then
             oStep:Disconnect()
             task.spawn(OnLanded, tF)
