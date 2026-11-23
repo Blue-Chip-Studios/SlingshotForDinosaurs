@@ -54,3 +54,6 @@ product 3734667631 Bait_MeteorMeat
 # Robux pets (golden / cosmic tints of the plush portraits).
 product 3735175296 Pet_GoldenRex
 product 3735175313 Pet_CosmicPtero
+# Speed Boots pass and its gift product.
+pass 2093749386 Icon_Speed
+product 3735272732 Icon_Speed

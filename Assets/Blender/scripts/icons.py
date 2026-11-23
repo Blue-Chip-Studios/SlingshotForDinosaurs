@@ -355,3 +355,22 @@ def render_icon(name, out_dir):
     if sun: sun.data.energy = saved[1]
     coll.hide_render = True
     return scene.render.filepath
+
+
+# ===== Speed Boots pass: a chunky red sneaker with a golden wing and speed streaks =====
+@icon
+def Speed(b):
+    b.box("White", (0, 0, -0.55), (1.45, 0.62, 0.22), bevel=0.4)          # thick sole
+    b.box("Red", (-0.35, 0, 0.05), (0.85, 0.58, 0.55), bevel=0.35)        # heel and ankle
+    b.ico("Red", (0.55, 0, -0.18), (0.75, 0.56, 0.42), sub=3)             # rounded toe box
+    b.box("Red", (-0.55, 0, 0.75), (0.55, 0.5, 0.45), bevel=0.4)          # ankle collar
+    for k in range(3):                                                     # laces
+        b.box("White", (0.0 + k * 0.28, -0.58, 0.18 - k * 0.12), (0.08, 0.04, 0.22), rot=(0, 50, 0), bevel=0.3)
+    b.box("Gold", (-0.35, -0.6, -0.1), (0.5, 0.04, 0.1), rot=(0, -15, 0), bevel=0.3)   # side stripe
+    root = Vector((-0.5, -0.66, 0.55))                                     # golden wing: three fanned feathers
+    for k, (l, ang) in enumerate(((1.25, 35), (1.0, 12), (0.75, -10))):
+        a = math.radians(ang)
+        d = Vector((-math.cos(a), 0, math.sin(a)))
+        b.ico("Gold", tuple(root + d * l * 0.55), (l * 0.6, 0.1, 0.22), sub=2, rot=(0, -ang, 0))
+    for k, z in enumerate((-0.35, 0.05, 0.45)):                                         # speed streaks
+        b.box("Cyan", (-2.0 - k * 0.15, 0.1, z), (0.45 - k * 0.06, 0.05, 0.07), bevel=0.5)

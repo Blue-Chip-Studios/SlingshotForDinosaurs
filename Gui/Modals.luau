@@ -383,14 +383,14 @@ end
 
 local function Passes(scope)
     local tCards = {}
-    local tOrder = { "DoubleCash", "DoublePower", "DoubleLuck", "AutoLaunch", "VIP" }
-    local tIcons = { DoubleCash = "Icon_DoubleCash", DoublePower = "Icon_DoublePower", DoubleLuck = "Icon_Star", AutoLaunch = "Icon_Gear", VIP = "Icon_Crown" }
+    local tOrder = { "DoubleCash", "SpeedBoots", "DoublePower", "DoubleLuck", "AutoLaunch", "VIP" }
+    local tIcons = { DoubleCash = "Icon_DoubleCash", DoublePower = "Icon_DoublePower", DoubleLuck = "Icon_Star", AutoLaunch = "Icon_Gear", VIP = "Icon_Crown", SpeedBoots = "Icon_Speed" }
     for i, sKey in tOrder do
         local tPass = MonetizationConfig.Passes[sKey]
         local bOwned = scope:Computed(function(use) return (use(V.Passes) or {})[sKey] == true end)
         tCards[i] = Card(scope, {
             LayoutOrder = i,
-            Size = UDim2.fromOffset(204, 330),
+            Size = UDim2.fromOffset(184, 330),
             [Children] = {
                 UI.Icon(scope, { Key = tIcons[sKey], AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 4), Size = UDim2.fromOffset(80, 80) }),
                 UI.Text(scope, { Text = tPass.Name, TextSize = 28, TextScaled = true, Position = UDim2.fromOffset(10, 80), Size = UDim2.new(1, -20, 0, 36) }),
@@ -429,7 +429,7 @@ local function Passes(scope)
         Name = "Passes",
         Title = "Passes",
         Variant = "Gold",
-        Size = UDim2.fromOffset(1100, 560),
+        Size = UDim2.fromOffset(1240, 560),
         OnClose = Nav.Close,
         [Children] = {
             scope:New("Frame")({

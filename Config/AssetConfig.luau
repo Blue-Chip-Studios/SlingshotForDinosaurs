@@ -135,6 +135,7 @@ return {
         Icon_Book = 108826882497453,
         Icon_Cash = 84102090721361,
         Icon_Crown = 85550489389171,
+        Icon_Speed = 82566878336372,
         Icon_DoubleCash = 82260075122915,
         Icon_DoublePower = 110062923382559,
         Icon_Gear = 96674620702454,

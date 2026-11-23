@@ -5,7 +5,8 @@
         Keyboard   hold Shift
         Gamepad    click the left stick (toggles), or hold the stick fully over for half a second
         Touch      push the thumbstick all the way out for half a second
-    Speed eases up and down so it never snaps. Roblox's Shift-Lock option is turned off in
+    Speed eases up and down so it never snaps. The Speed Boots pass raises both speeds
+    (GameConfig.Sprint.BootsWalk / BootsRun). Roblox's Shift-Lock option is turned off in
     default.project.json (StarterPlayer.EnableMouseLockOption) so Shift is free for running.
 ]]
 
@@ -17,6 +18,7 @@ local UserInputService = game:GetService("UserInputService")
 
 local Module = require(ReplicatedStorage.Shared.Module)
 local GameConfig = require(ReplicatedStorage.Config.GameConfig)
+local DataClient = require(ReplicatedStorage.ClientModules.DataClient)
 
 local tSprint = GameConfig.Sprint
 local bShift = false          -- keyboard Shift held
@@ -52,7 +54,9 @@ function mSprint.StartAsync(self)
         end
         if nTilt < 0.1 then bToggle = false end   -- stopping ends a toggled run
         local bRun = nTilt > 0.1 and (bShift or bToggle or (nFullTiltSince ~= nil and os.clock() - nFullTiltSince > tSprint.TiltDelay))
-        local nGoal = if bRun then tSprint.Run else tSprint.Walk
+        -- Speed Boots pass: faster walk and run.
+        local bBoots = (DataClient:Get("Passes") or {}).SpeedBoots == true
+        local nGoal = if bRun then (if bBoots then tSprint.BootsRun else tSprint.Run) else (if bBoots then tSprint.BootsWalk else tSprint.Walk)
         nSpeed += (nGoal - nSpeed) * math.min(1, nDt * tSprint.Ease)
         if math.abs(oHumanoid.WalkSpeed - nSpeed) > 0.05 then
             oHumanoid.WalkSpeed = nSpeed

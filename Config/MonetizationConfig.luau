@@ -16,6 +16,7 @@ return {
         AutoLaunch = { Id = 2092638260, Price = 199, Name = "Auto-Launch", Description = "Launches for you at full charge with Good bounces." },
         DoubleLuck = { Id = 2093460329, Price = 249, Name = "2x Luck", Description = "Doubles your luck: rarer species, bigger sizes and more mutations." },
         VIP = { Id = 2093292202, Price = 299, Name = "VIP Enclosure", Description = "+4 slots, golden fence, 12h offline cap, 1.25x income." },
+        SpeedBoots = { Id = 2093749386, Price = 99, Name = "Speed Boots", Description = "Run 50% faster and walk 25% faster, everywhere." },
     },
 
     Products = {
@@ -55,6 +56,7 @@ return {
         Gift_DoubleLuck = { Id = 3734732000, Price = 249, Name = "Gift: 2x Luck", Kind = "Gift", Pass = "DoubleLuck" },
         Gift_AutoLaunch = { Id = 3734732013, Price = 199, Name = "Gift: Auto-Launch", Kind = "Gift", Pass = "AutoLaunch" },
         Gift_VIP = { Id = 3734732025, Price = 299, Name = "Gift: VIP Enclosure", Kind = "Gift", Pass = "VIP" },
+        Gift_SpeedBoots = { Id = 3735272732, Price = 99, Name = "Gift: Speed Boots", Kind = "Gift", Pass = "SpeedBoots" },
     },
 
     --[[

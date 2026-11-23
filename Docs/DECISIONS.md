@@ -236,3 +236,9 @@ Significant autonomous (BCDK Recommended) decisions, newest last. Each entry: wh
     - **Touch:** push the thumbstick all the way out for half a second.
     - **Speed:** walk 16, run 28, eased (GameConfig.Sprint).
     - **Shift-Lock:** Roblox's option is off (StarterPlayer.EnableMouseLockOption) so Shift is free.
+95. **Speed Boots pass (R$99, requested by the developer).**
+    - **Effect:** walk 20 instead of 16, and run 42 instead of 28 (GameConfig.Sprint.BootsWalk / BootsRun), on top of free running.
+    - **Price:** R$99, the same impulse tier as 2x Cash.
+    - **Shop:** it sits second in the Passes window, which now fits six cards. It has a gift product like every other pass.
+    - **Icon:** a Blender winged sneaker with speed streaks (icons.py Speed).
+    - **IDs:** pass 2093749386, gift product 3735272732.

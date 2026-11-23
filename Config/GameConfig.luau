@@ -42,6 +42,8 @@ return {
         Run = 28,
         Ease = 8,        -- how quickly speed changes (higher = snappier)
         TiltDelay = 0.5, -- seconds of full stick push before an analogue run kicks in
+        BootsWalk = 20, -- with the Speed Boots pass
+        BootsRun = 42,
     },
 
     -- Training
